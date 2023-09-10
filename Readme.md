@@ -1,4 +1,4 @@
-# Image Generation Models (work in progress)
+# Image generative models (work in progress)
 
 This repository provides implementations of several generative models applied to image data. These models are primed for understanding and experimenting with advanced image-based generative techniques.
 
@@ -10,7 +10,7 @@ The implemented models are sourced from the following research papers:
 
 ---
 
-## Table of Contents
+## Table of contents
 
 - [Running the Models](#running-the-models)
 - [Toy Datasets](#toy-datasets)
@@ -18,7 +18,7 @@ The implemented models are sourced from the following research papers:
 
 ---
 
-## Running the Models
+## Running the models
 
 The configuration files can be found in the `config_files` directory. Use the following command to run a specific model based on the desired configuration:
 
@@ -30,23 +30,23 @@ Examples are provided in the **`notebook/`** directory.
 
 ---
 
-## Toy Datasets
+## Toy datasets
 
 ### Sampling from the models:
 
-| **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic Interpolant** |
+| **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic interpolant** |
 |:--------------------------------:|:----------------------------:|:--------------------------:|
 | ![Diffusion Score trajectories](docs/assets/toy_traj_score.gif) | ![Critical Damped trajectories](docs/assets/toy_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/toy_traj_stochastic_interpolant.gif) |
 | ![Score samples](docs/assets/toy_score_sample.png) | ![CLD samples](docs/assets/toy_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/toy_stochastic_interpolant_sample.png) |
 
 ---
 
-## Image Datasets
+## Image datasets
 
 ### Sampling from the models for the Fashion MNIST dataset:
 
 
-| **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic Interpolant** |
+| **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic interpolant** |
 |:--------------------------------:|:----------------------------:|:--------------------------:|
 | ![Diffusion trajectories](docs/assets/fm_traj_score.gif) | ![CLD trajectories](docs/assets/fm_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/fm_traj_stochastic_interpolant.gif) |
 | ![Diffusion samples](docs/assets/fm_score_sample.png) | ![CLD samples](docs/assets/fm_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/fm_stochastic_interpolant_sample.png) |
