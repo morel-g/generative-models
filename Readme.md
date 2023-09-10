@@ -26,7 +26,7 @@ The configuration files can be found in the `config_files` directory. Use the fo
 python main.py --config_file "config_files/toy/score_toy_config"
 ```
 
-Examples and further illustrations are provided in the **`notebook/`** directory.
+Examples are provided in the **`notebook/`** directory.
 
 ---
 
@@ -36,20 +36,20 @@ Examples and further illustrations are provided in the **`notebook/`** directory
 
 | **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic Interpolant** |
 |:--------------------------------:|:----------------------------:|:--------------------------:|
-| ![Diffusion Score Image](docs/assets/toy_traj_score.gif) | ![Critical Damped Image](docs/assets/toy_traj_cld.gif) | ![Stochastic Image](docs/assets/toy_traj_stochastic_interpolant.gif) |
-| ![Score Sample Image](docs/assets/toy_score_sample.png) | ![Langevin Sample Image](docs/assets/toy_cld_sample.png) | ![Interpolant Sample Image](docs/assets/toy_stochastic_interpolant_sample.png) |
+| ![Diffusion Score trajectories](docs/assets/toy_traj_score.gif) | ![Critical Damped trajectories](docs/assets/toy_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/toy_traj_stochastic_interpolant.gif) |
+| ![Score samples](docs/assets/toy_score_sample.png) | ![CLD samples](docs/assets/toy_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/toy_stochastic_interpolant_sample.png) |
 
 ---
 
 ## Image Datasets
 
-### Sampling from the Fashion MNIST dataset:
+### Sampling from the models for the Fashion MNIST dataset:
 
 
 | **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic Interpolant** |
 |:--------------------------------:|:----------------------------:|:--------------------------:|
-| ![Diffusion MNIST Image](docs/assets/fm_traj_score.gif) | ![Langevin MNIST Image](docs/assets/fm_traj_cld.gif) | TODO |
-| ![Diffusion MNIST Sample](docs/assets/fm_score_sample.png) | ![Langevin MNIST Sample](docs/assets/fm_cld_sample.png) | TODO |
+| ![Diffusion trajectories](docs/assets/fm_traj_score.gif) | ![CLD trajectories](docs/assets/fm_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/fm_traj_stochastic_interpolant.gif) |
+| ![Diffusion samples](docs/assets/fm_score_sample.png) | ![CLD samples](docs/assets/fm_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/fm_stochastic_interpolant_sample.png) |
 
 ---
 
