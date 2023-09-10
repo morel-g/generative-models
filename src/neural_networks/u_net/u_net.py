@@ -1,0 +1,43 @@
+# from diffusers import UNet2DModel
+from .u_net2 import UNet2DModel
+from torch import nn
+
+
+class UNetFM(nn.Module):
+    def __init__(
+        self,
+        dim,
+        image_channels=3,
+        n_resblocks=8,
+        n_channels=128,
+        ch_mult=(1, 2, 2, 2),
+        block_types=None,
+        embedding_type="positional",
+    ):
+        super().__init__()
+        block_out_channels = tuple(n_channels * cm for cm in ch_mult)
+        if block_types is None:
+            block_types = ["Block2D"] * len(ch_mult)
+            block_types[-2] = "AttnBlock2D"
+            block_types = tuple(block_types)
+
+        self.model = UNet2DModel(
+            sample_size=dim,  # the target image resolution
+            in_channels=image_channels,  # the number of input channels, 3 for RGB images
+            out_channels=image_channels,  # the number of output channels
+            time_embedding_type=embedding_type,
+            layers_per_block=n_resblocks,  # how many ResNet layers to use per UNet block
+            block_out_channels=tuple(
+                n_channels * cm for cm in ch_mult
+            ),  # the number of output channes for each UNet block
+            # block_out_channels=block_out_channels,
+            down_block_types=tuple(
+                bt.replace("Block2D", "DownBlock2D") for bt in block_types
+            ),
+            up_block_types=tuple(
+                bt.replace("Block2D", "UpBlock2D") for bt in block_types
+            )[::-1],
+        )
+
+    def forward(self, x, time):
+        return self.model(x, time, return_dict=False)[0]
