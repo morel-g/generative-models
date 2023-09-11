@@ -13,6 +13,9 @@ from typing import Optional, Tuple, Union, Any, List
 
 
 class Model(torch.nn.Module):
+    """
+    Base class for the models.
+    """
     def __init__(
         self,
         data_type: str,
