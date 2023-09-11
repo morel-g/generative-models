@@ -3,18 +3,17 @@
 This repository provides implementations of several generative models applied to image data. These models are primed for understanding and experimenting with advanced image-based generative techniques.
 
 The implemented models are sourced from the following research papers:
-- [Score based model](https://arxiv.org/abs/2011.13456)
-- [Diffusion model](https://arxiv.org/abs/2006.11239)
+- [Score based models](https://arxiv.org/abs/2011.13456) / [Diffusion models](https://arxiv.org/abs/2006.11239)
 - [Critically-Damped Langevin Diffusion](https://arxiv.org/abs/2112.07068)
-- [Stochastic interpolant](https://arxiv.org/abs/2303.08797)
+- [Stochastic interpolants](https://arxiv.org/abs/2303.08797)
 
 ---
 
 ## Table of contents
 
-- [Running the Models](#running-the-models)
-- [Toy Datasets](#toy-datasets)
-- [Image Datasets](#image-datasets)
+- [Running the models](#running-the-models)
+- [Toy datasets](#toy-datasets)
+- [Image datasets](#image-datasets)
 
 ---
 
