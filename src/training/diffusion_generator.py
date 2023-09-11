@@ -1,16 +1,12 @@
 import os
 import torch
 import pytorch_lightning as pl
-from torch.nn import functional as F
-from torch.optim.lr_scheduler import StepLR
-from diffusers.optimization import get_cosine_schedule_with_warmup
 from typing import Union, Tuple, Optional, Any, List, Dict
 
 # from .probability_distribution import ProbabilityDistribution
 from src.data_manager.data import Data
 from src.case import Case
 from src.data_manager.data_type import toy_data_type
-from src.models.denoise_model.denoise_model import DenoiseModel
 from src.models.score_model import ScoreModel
 from src.models.score_model_critical_damped import ScoreModelCriticalDamped
 from src.models.stochastic_interpolant import StochasticInterpolant
@@ -38,18 +34,7 @@ class DiffusionGenerator(pl.LightningModule):
         self.save_hyperparameters()
         self.data = data
 
-        if data.model_type == Case.denoise_model:
-            self.model = DenoiseModel(
-                data.data_type,
-                data.model_params,
-                data.scheme_params["nb_time_steps_eval"],
-                data.scheme_params["nb_time_steps_train"],
-                T_final=data.scheme_params["T_final"],
-                img_model_case=data.scheme_params.get(
-                    "img_model_case", Case.u_net
-                ),
-            )
-        elif data.model_type == Case.score_model:
+        if data.model_type == Case.score_model:
             self.model = ScoreModel(
                 data.data_type,
                 data.model_params,
