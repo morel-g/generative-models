@@ -99,19 +99,19 @@ def compute_outputs_2d(
         s=s,
     )
 
-    # Compute and save forward trajectories
-    x_forward_v = net.forward_pass(
-        X[:5000], use_training_velocity=True, return_trajectories=True
-    )
-    save_trajectories(
-        net,
-        x_forward_v,
-        output_dir,
-        bounds,
-        s,
-        name="Velocity forward",
-        forward=True,
-    )
+    # # Compute and save forward trajectories
+    # x_forward_v = net.forward_pass(
+    #     X[:5000], use_training_velocity=True, return_trajectories=True
+    # )
+    # save_trajectories(
+    #     net,
+    #     x_forward_v,
+    #     output_dir,
+    #     bounds,
+    #     s,
+    #     name="Velocity forward",
+    #     forward=True,
+    # )
 
     x_forward_exact = net.forward_pass(
         X[:5000], use_training_velocity=False, return_trajectories=True
