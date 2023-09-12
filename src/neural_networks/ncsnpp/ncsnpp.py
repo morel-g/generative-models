@@ -120,9 +120,6 @@ class NCSNpp(nn.Module):
         if self.embedding_type == "no_embedding":
             temb_dim = None
             channels += 1
-        elif self.embedding_type == "no_embedding2":
-            temb_dim = None
-            channels = 2 * channels
         else:
             if self.embedding_type == "fourier":
                 modules.append(
@@ -380,13 +377,6 @@ class NCSNpp(nn.Module):
         if self.embedding_type == "no_embedding":
             temb = t.reshape(-1, 1, 1, 1).expand(
                 (x.shape[0], 1, x.shape[2], x.shape[3])
-            )
-            x = torch.cat((x, temb), dim=1)
-            temb = None
-            hs = [x]
-        elif self.embedding_type == "no_embedding2":
-            temb = t.reshape(-1, 1, 1, 1).expand(
-                (x.shape[0], x.shape[1], x.shape[2], x.shape[3])
             )
             x = torch.cat((x, temb), dim=1)
             temb = None

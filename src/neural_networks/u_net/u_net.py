@@ -1,5 +1,5 @@
 # from diffusers import UNet2DModel
-from .u_net2 import UNet2DModel
+from src.neural_networks.u_net.u_net_2d_model import UNet2DModel
 from torch import nn
 
 
