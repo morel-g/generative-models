@@ -82,8 +82,8 @@ def setup_callbacks(data: Data, log_dir: str) -> list:
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     callbacks.append(lr_monitor)
     
-    if is_notebook():
-        callbacks.append(TQDMNotebookProgressBar())
+    # if is_notebook():
+    #     callbacks.append(TQDMNotebookProgressBar())
 
     return callbacks
 
