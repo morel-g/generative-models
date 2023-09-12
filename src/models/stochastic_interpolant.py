@@ -25,7 +25,7 @@ class StochasticInterpolant(Model):
         self.decay_case = decay_case
         self.interpolant = interpolant
         self.noise_addition = noise_addition
-
+        T_final = self._get_final_time(T_final)
         super(StochasticInterpolant, self).__init__(
             data_type,
             model_params,
@@ -40,6 +40,13 @@ class StochasticInterpolant(Model):
         self.default_times_eval = self.times_eval.clone()
         self.T_init = 0.0
         self.exp_weight = exp_weight
+
+    def _get_final_time(self, T_final):
+        if self.interpolant != Case.bgk:
+            # Manually configure the final time to be 1.0 
+            return 1.0
+
+        return T_final
 
     def get_backward_schemes(self):
         return [Case.euler_explicit]
@@ -159,18 +166,15 @@ class StochasticInterpolant(Model):
             It = exp_t * x0 + (1 - exp_t) * x1
             dt_It = -exp_t * x0 + exp_t * x1
         elif interpolant in (Case.linear, Case.poly):
-            t = self.normalize_time(t)
             It = x0 * (1 - t) + t * x1
             dt_It = x1 - x0
                 
         elif interpolant == Case.linear_scale:
-            t = self.normalize_time(t)
             eps = 1e-5
             x0_coef, x1_coef = torch.sqrt(1 - t + eps), torch.sqrt(t + eps)
             It = x0 * x0_coef + x1_coef * x1
             dt_It = (x1 / x1_coef - x0 / x0_coef) / (2) 
         elif interpolant == Case.trigonometric:
-            t = self.normalize_time(t)
             It = x0 * torch.cos(0.5 * pi * t) + torch.sin(0.5 * pi * t) * x1
             dt_It = (
                 (-x0 * torch.sin(0.5 * pi * t) + torch.cos(0.5 * pi * t) * x1)
