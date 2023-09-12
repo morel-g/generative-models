@@ -196,12 +196,6 @@ class Model(torch.nn.Module):
             "This method should be overridden by subclass."
         )
 
-    def exact_conditional_forward(self, x, id, noise=None):
-        """Must be implemented in subclass."""
-        raise NotImplementedError(
-            "This method should be overridden by subclass."
-        )
-
     def sample_prior_v(self, shape, device):
         """Must be implemented in subclass."""
         raise NotImplementedError(
