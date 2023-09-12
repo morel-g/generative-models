@@ -14,8 +14,8 @@ from src.eval.plots_2d import compute_outputs_2d
 from src.data_manager.data_type import toy_data_type
 from src.save_load_obj import save_obj, load_obj
 from src.training.ema import EMA
-from src.case import Case
 from src.data_manager.data import Data
+from src.training.tqdm_notebook_progress_bar import TQDMNotebookProgressBar, is_notebook
 
 
 def load_data(data: Data) -> Data:
@@ -81,6 +81,9 @@ def setup_callbacks(data: Data, log_dir: str) -> list:
 
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     callbacks.append(lr_monitor)
+    
+    if is_notebook():
+        callbacks.append(TQDMNotebookProgressBar())
 
     return callbacks
 
