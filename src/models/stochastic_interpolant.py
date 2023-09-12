@@ -164,7 +164,10 @@ class StochasticInterpolant(Model):
             dt_It = x1 - x0
             if self.add_noise:
                 z = torch.randn_like(x0)
-                It += torch.sqrt(2 * t * (1 - t)) * z
+                time_noise = torch.sqrt(2 * t * (1 - t)) 
+                It += time_noise * z
+                dt_It += (2.-4.*t)*z/ (2.*time_noise)
+                
         elif interpolant == Case.linear_scale:
             t = self.normalize_time(t)
             eps = 1e-5
