@@ -138,8 +138,8 @@ def train_model(
     # Set device for training
     device = data.device if data.accelerator == "gpu" else "auto"
 
-    # Print data
-    data.print()
+    # Print and save data
+    data.write(logger.log_dir + "/data.txt", print=True)
 
     # Initialize trainer and start training
     trainer = pl.Trainer(
@@ -174,99 +174,6 @@ def train_model(
         )
         net = DiffusionGenerator.load_from_checkpoint(
             trainer.checkpoint_callback.best_model_path, data=data
-        )
-
-    print("Execution time =", datetime.now() - startTime)
-
-    # Set the model device
-    net_device = (
-        torch.device("cuda")
-        if data.accelerator == "gpu"
-        else torch.device("cpu")
-    )
-    net.to(net_device)
-
-    return net
-
-    # Initialize logger if not provided
-    if logger is None:
-        logger = get_logger(data.logger_path)
-    log_dir = logger.log_dir
-
-    startTime = datetime.now()
-
-    # Initialize or load model from checkpoint
-    if not data.checkpoint_dict["restore_training"]:
-        net = DiffusionGenerator(data)
-    else:
-        data = (
-            load_data(data)
-            if data.checkpoint_dict.get("load_data", False)
-            else data
-        )
-        net = DiffusionGenerator.load_from_checkpoint(
-            data.checkpoint_dict["training_ckpt_path"], data=data
-        )
-
-    # Setup checkpoint callback for model saving
-    val_loss_str = "val_loss"
-    save_top_k = data.checkpoint_dict.get("save_top", 2)
-    checkpoint_callback = ModelCheckpoint(
-        monitor=val_loss_str,
-        dirpath=log_dir,
-        save_top_k=save_top_k,
-        save_last=True,
-        mode="min",
-        filename="Checkpoint_{epoch}-{val_loss:.3f}",
-        every_n_epochs=1,
-    )
-
-    # Setup callbacks
-    callbacks = [checkpoint_callback]
-    if data.training_params.get("ema", False):
-        if "ema_rate" not in data.training_params:
-            raise RuntimeError("ema_rate not specified in training params.")
-        ema = EMA(data.training_params["ema_rate"])
-        callbacks.append(ema)
-
-    lr_monitor = LearningRateMonitor(logging_interval="epoch")
-    callbacks.append(lr_monitor)
-
-    # Set device for training
-    device = data.device if data.accelerator == "gpu" else "auto"
-
-    # Initialize trainer and start training
-    trainer = pl.Trainer(
-        # Training parameters
-        max_epochs=data.training_params["epochs"],
-        accelerator=data.accelerator,
-        devices=device,
-        callbacks=callbacks,
-        logger=logger,
-        check_val_every_n_epoch=data.training_params[
-            "check_val_every_n_epochs"
-        ],
-        enable_progress_bar=data.training_params["enable_progress_bar"],
-        gradient_clip_val=data.training_params.get("gradient_clip_val", 0.0),
-        reload_dataloaders_every_n_epochs=0,
-    )
-
-    if not data.checkpoint_dict["restore_training"]:
-        trainer.fit(net, datamodule=data_module)
-    elif data.training_params["epochs"] > 0:
-        trainer.fit(
-            net,
-            ckpt_path=data.checkpoint_dict["training_ckpt_path"],
-            datamodule=data_module,
-        )
-    else:
-        data_module.setup()
-
-    # Load the best model checkpoint
-    if checkpoint_callback.best_model_path != "":
-        print("Loading checkpoint " + checkpoint_callback.best_model_path)
-        net = DiffusionGenerator.load_from_checkpoint(
-            checkpoint_callback.best_model_path, data=data
         )
 
     print("Execution time =", datetime.now() - startTime)
