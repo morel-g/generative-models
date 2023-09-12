@@ -1,9 +1,8 @@
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-from .dataset import Dataset, get_dataset
+from .dataset import get_dataset
 from torchvision import transforms
-from ..utils import id_to_device, get_logger
-from torch.utils.data import Subset
+from ..utils import id_to_device
 from torch.utils.data import default_collate
 
 
@@ -33,7 +32,7 @@ class DataModule(pl.LightningDataModule):
         normalized_img = (
             data.normalized_img if hasattr(data, "normalized_img") else False
         )
-        # Get the mean and std if needed
+
         (
             self.train_data,
             self.val_data,
