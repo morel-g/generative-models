@@ -13,6 +13,7 @@ class UNetFM(nn.Module):
         ch_mult=(1, 2, 2, 2),
         block_types=None,
         embedding_type="positional",
+        norm_num_groups=32,
     ):
         super().__init__()
         block_out_channels = tuple(n_channels * cm for cm in ch_mult)
@@ -37,6 +38,7 @@ class UNetFM(nn.Module):
             up_block_types=tuple(
                 bt.replace("Block2D", "UpBlock2D") for bt in block_types
             )[::-1],
+            norm_num_groups=norm_num_groups,
         )
 
     def forward(self, x, time):
