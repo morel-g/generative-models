@@ -19,8 +19,6 @@ class ScoreModelCriticalDamped(Model):
         init_var_v=0.04,
         zeros_S0_vv=False,
     ):
-        if beta_case == Case.vanilla:
-            T_final = 1.0
         self.beta_case = beta_case
         self.pde_coefs = {"gamma": 2.0}
         self.init_var_v = init_var_v

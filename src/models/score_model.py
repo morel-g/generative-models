@@ -270,22 +270,6 @@ class ScoreModel(Model):
         sigma = self.sigma_eval(t2, t0=t1)
         return mu + sigma * noise
 
-    def exact_conditional_forward(
-        self, x: torch.Tensor, t: float, noise: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        Execute the conditional forward step with a starting time of 0.
-
-        Parameters:
-        - x (torch.Tensor): Input tensor.
-        - t (float): Ending time.
-        - noise (torch.Tensor): Noise tensor.
-
-        Returns:
-        - torch.Tensor: Result of the forward step.
-        """
-        return self.conditional_forward_step(x, 0.0, t, noise)
-
     def sample_from_array(
         self, times: torch.Tensor, t_shape: tuple, device: torch.device
     ) -> torch.Tensor:
