@@ -4,7 +4,7 @@ import torch.nn as nn
 # from src.neural_networks.diffusion_model.u_net.old_u_net import UNet
 from src.neural_networks.ncsnpp.ncsnpp import NCSNpp
 from .vector_field import VectorField
-from src.neural_networks.u_net.u_net2 import UNet2DModel
+from neural_networks.u_net.u_net_2d_model import UNet2DModel
 from src.neural_networks.u_net.u_net import UNetFM
 from src.case import Case
 from src.utils import time_dependent_var
