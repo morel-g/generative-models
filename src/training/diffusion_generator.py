@@ -85,6 +85,9 @@ class DiffusionGenerator(pl.LightningModule):
                 img_model_case=data.scheme_params.get(
                     "img_model_case", Case.u_net
                 ),
+                noise_addition = data.scheme_params.get(
+                    "noise_addition", None
+                ),
             )
         else:
             raise ValueError("Model type not recognized")

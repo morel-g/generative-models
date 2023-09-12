@@ -18,13 +18,13 @@ class StochasticInterpolant(Model):
         decay_case=Case.no_decay,
         interpolant=Case.linear,
         img_model_case=Case.u_net,
-        add_noise=False,
+        noise_addition=None,
         exp_weight=1.0,
     ):
         self.beta_case = beta_case
         self.decay_case = decay_case
         self.interpolant = interpolant
-        self.add_noise = add_noise
+        self.noise_addition = noise_addition
 
         super(StochasticInterpolant, self).__init__(
             data_type,
@@ -186,7 +186,28 @@ class StochasticInterpolant(Model):
             raise NotImplementedError(
                 f"Unkown interpolant {self.interpolant}."
             )
+            
+        It_noise, dt_It_noise = self._compute_noise_addition(x0,t)
+        It += It_noise
+        dt_It += dt_It_noise
+        
         return It, dt_It
+
+    def _compute_noise_addition(self, x, t):
+        if self.noise_addition is None:
+            It = torch.zeros_like(x)
+            dt_It = torch.zeros_like(x)
+        elif self.noise_addition == Case.linear_noise:
+            z = torch.randn_like(x)
+            It = t*(1-t)*z
+            dt_It = (1-2*t)*z
+        elif self.noise_addition == Case.sqrt_noise:
+            z = torch.randn_like(x)
+            time_noise = torch.sqrt(2 * t * (1 - t))
+            It = time_noise *z
+            dt_It = (2.-4.*t)*z/ (2.*time_noise)
+            
+        return It, dt_It         
 
     def eval_path(self, x0, x1, t):
         return self.eval_interpolant_path(x0, x1, t, self.interpolant)
