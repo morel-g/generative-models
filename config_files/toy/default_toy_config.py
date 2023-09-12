@@ -23,7 +23,7 @@ CONFIG = {
         "lr": 5e-3,
         "weight_decay": 1e-3,
         "check_val_every_n_epochs": 20,
-        "enable_progress_bar": True,
+
         "ema": not True,
         "ema_rate": 0.999,
         "gradient_clip_val": 0.0,
@@ -44,7 +44,7 @@ CONFIG = {
         "load_data": False,
         "save_top": 5,
     },
-    "print_opt": {"ot_costs": False},
+    "print_opt": {"ot_costs": False, "enable_progress_bar": True,},
     "logger_path": "../outputs/",
     "accelerator": "cpu",
     "device": [0],

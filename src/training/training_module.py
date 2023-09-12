@@ -154,7 +154,7 @@ def train_model(
         check_val_every_n_epoch=data.training_params[
             "check_val_every_n_epochs"
         ],
-        enable_progress_bar=data.training_params["enable_progress_bar"],
+        enable_progress_bar=data.print_opt.get("enable_progress_bar",True),
         gradient_clip_val=data.training_params.get("gradient_clip_val", 0.0),
         reload_dataloaders_every_n_epochs=0,
     )

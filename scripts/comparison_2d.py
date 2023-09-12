@@ -30,7 +30,6 @@ PARAMS = {
     "gradient": False,
     "gamma": 0.5,
     "decay_case": Case.sig_sig,
-    "enable_progress_bar": False,
     "check_val_every_n_epochs": 5,
     "print_ot_costs": True,
     "limit_num_threads": False,

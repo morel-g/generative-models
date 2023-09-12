@@ -72,7 +72,6 @@ DATA_DICT = {
         "lr": 5e-3,
         "weight_decay": 1e-3,
         "check_val_every_n_epochs": 20,
-        "enable_progress_bar": True,
         "ema": not True,
         "ema_rate": 0.999,
         "gradient_clip_val": 0.0,
