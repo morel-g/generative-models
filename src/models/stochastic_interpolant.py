@@ -168,7 +168,7 @@ class StochasticInterpolant(Model):
             eps = 1e-5
             x0_coef, x1_coef = torch.sqrt(1 - t + eps), torch.sqrt(t + eps)
             It = x0 * x0_coef + x1_coef * x1
-            dt_It = (x1 / x1_coef - x0 / x0_coef) / (2)  # * Tf)
+            dt_It = (x1 / x1_coef - x0 / x0_coef) / (2) 
         elif interpolant == Case.trigonometric:
             t = self.normalize_time(t)
             It = x0 * torch.cos(0.5 * pi * t) + torch.sin(0.5 * pi * t) * x1
