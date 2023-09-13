@@ -11,7 +11,8 @@ from .plot_utils import (
 )
 from src.case import Case
 from src.utils import ensure_directory_exists, write_outputs
-import ot
+
+# import ot
 import pytorch_lightning as pl
 
 
@@ -397,61 +398,61 @@ def save_velocities_2d(
 # -----------------------------------------------------------------------------
 
 
-def compute_ot_cost(
-    x1: np.ndarray, x2: np.ndarray, num_iter: int = 1000000
-) -> float:
-    """
-    Compute the Optimal Transport (OT) cost between two distributions.
+# def compute_ot_cost(
+#     x1: np.ndarray, x2: np.ndarray, num_iter: int = 1000000
+# ) -> float:
+#     """
+#     Compute the Optimal Transport (OT) cost between two distributions.
 
-    Args:
-        x1: The first distribution, represented as an array of samples.
-        x2: The second distribution, represented as an array of samples.
-        num_iter: Maximum number of iterations for EMD (Earth Mover's Distance) computation.
+#     Args:
+#         x1: The first distribution, represented as an array of samples.
+#         x2: The second distribution, represented as an array of samples.
+#         num_iter: Maximum number of iterations for EMD (Earth Mover's Distance) computation.
 
-    Returns:
-        The OT cost between the two distributions.
-    """
-    C = ot.dist(x1, x2)
-    return ot.emd2([], [], C, numItermax=num_iter)
+#     Returns:
+#         The OT cost between the two distributions.
+#     """
+#     C = ot.dist(x1, x2)
+#     return ot.emd2([], [], C, numItermax=num_iter)
 
 
-def save_ot_costs(
-    net: pl.LightningModule,
-    backward_schemes: List[str],
-    X: torch.Tensor,
-    output_dir: str,
-    nb_samples: int = 10000,
-) -> None:
-    """
-    Save the OT costs between the model's samples and the given samples.
+# def save_ot_costs(
+#     net: pl.LightningModule,
+#     backward_schemes: List[str],
+#     X: torch.Tensor,
+#     output_dir: str,
+#     nb_samples: int = 10000,
+# ) -> None:
+#     """
+#     Save the OT costs between the model's samples and the given samples.
 
-    Args:
-        net: The network object.
-        backward_schemes: List of backward schemes to use for sampling.
-        X: The samples to compare against, usually the true samples.
-        output_dir: The directory where to save the outputs.
-        nb_samples: Number of samples to draw from the model.
-        kde: Optional KDE model to draw samples from.
-    """
-    ensure_directory_exists(output_dir)
+#     Args:
+#         net: The network object.
+#         backward_schemes: List of backward schemes to use for sampling.
+#         X: The samples to compare against, usually the true samples.
+#         output_dir: The directory where to save the outputs.
+#         nb_samples: Number of samples to draw from the model.
+#         kde: Optional KDE model to draw samples from.
+#     """
+#     ensure_directory_exists(output_dir)
 
-    # Store default backward scheme to revert to it later
-    model = net.model
-    default_backward_scheme = model.backward_scheme
+#     # Store default backward scheme to revert to it later
+#     model = net.model
+#     default_backward_scheme = model.backward_scheme
 
-    # Loop through backward schemes, sample, compute and save OT costs
-    for scheme in backward_schemes:
-        model.backward_scheme = scheme
-        x_sample = net.sample(nb_samples)
-        ot_cost = compute_ot_cost(
-            X[:nb_samples].cpu().detach().numpy(),
-            x_sample.cpu().detach().numpy(),
-        )
-        ot_str = f"OT cost {scheme} = {ot_cost}"
-        write_outputs(output_dir, ot_str, display_content=True)
+#     # Loop through backward schemes, sample, compute and save OT costs
+#     for scheme in backward_schemes:
+#         model.backward_scheme = scheme
+#         x_sample = net.sample(nb_samples)
+#         ot_cost = compute_ot_cost(
+#             X[:nb_samples].cpu().detach().numpy(),
+#             x_sample.cpu().detach().numpy(),
+#         )
+#         ot_str = f"OT cost {scheme} = {ot_cost}"
+#         write_outputs(output_dir, ot_str, display_content=True)
 
-    # Revert to the default backward scheme
-    model.backward_scheme = default_backward_scheme
+#     # Revert to the default backward scheme
+#     model.backward_scheme = default_backward_scheme
 
 
 # -----------------------------------------------------------------------------
