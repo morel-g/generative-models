@@ -311,7 +311,7 @@ class StochasticInterpolant(Model):
         x0: torch.Tensor,
         x1: torch.Tensor,
         t: torch.Tensor,
-        interpolant: str = Case.something,
+        interpolant: str,
     ) -> (torch.Tensor, torch.Tensor):
         """
         Evaluate the interpolant path and its time derivative given two points, a time tensor, and an interpolant type.
