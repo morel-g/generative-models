@@ -1,24 +1,49 @@
 import torch
-from .model import Model
-from ..case import Case
-from .adapt_dt import adapt_dt_pdf
+from typing import Optional, Union, List, Tuple
+
+from src.models.model import Model
+from src.case import Case
+from src.models.adapt_dt import adapt_dt_pdf
 
 
 class ScoreModelCriticalDamped(Model):
+    """
+    Score based critical damped Langevin model.
+    """
+
     def __init__(
         self,
-        data_type,
-        model_params,
-        nb_time_steps_eval,
-        nb_time_steps_train=None,
-        T_final=1.0,
-        beta_case=Case.constant,
-        adapt_dt=True,
-        decay_case=Case.vanilla_sigma,
-        img_model_case=Case.u_net,
-        init_var_v=0.04,
-        zeros_S0_vv=False,
-    ):
+        data_type: str,
+        model_params: dict,
+        nb_time_steps_eval: int,
+        nb_time_steps_train: int = None,
+        T_final: float = 1.0,
+        beta_case: str = Case.constant,
+        adapt_dt: bool = True,
+        decay_case: str = Case.vanilla_sigma,
+        img_model_case: str = Case.u_net,
+        init_var_v: float = 0.04,
+        zeros_S0_vv: bool = False,
+    ) -> None:
+        """
+        Initializes the ScoreModelCriticalDamped instance.
+
+        Parameters:
+        - data_type (str): The type of data for the model.
+        - model_params (dict): The parameters for the model.
+        - nb_time_steps_eval (int): The number of time steps for evaluation.
+        - nb_time_steps_train (int, optional): The number of time steps for training.
+        - T_final (float, optional): The final time value.
+        - beta_case (str, optional): The beta case value.
+        - adapt_dt (bool, optional): Whether to adapt dt.
+        - decay_case (str, optional): The decay case value.
+        - img_model_case (str, optional): The image model case value.
+        - init_var_v (float, optional): The initial variance value.
+        - zeros_S0_vv (bool, optional): Flag to determine if S0_vv=0.
+
+        Returns:
+        - None
+        """
         self.beta_case = beta_case
         self.pde_coefs = {"gamma": 2.0}
         self.init_var_v = init_var_v
@@ -26,6 +51,7 @@ class ScoreModelCriticalDamped(Model):
         self.add_numerical_eps_to_sigma = not zeros_S0_vv
         self.numerical_eps = 1e-9
         self.decay_case = decay_case
+
         super(ScoreModelCriticalDamped, self).__init__(
             data_type,
             model_params,
@@ -37,104 +63,135 @@ class ScoreModelCriticalDamped(Model):
         )
         self.backward_scheme = Case.euler_explicit
 
-    def register_buffers(self):
-        super(ScoreModelCriticalDamped, self).register_buffers()
-        self.register_buffer("times_1", None)
-        self.register_buffer("dt_1", None)
-        self.register_buffer("times_2", None)
-        self.register_buffer("dt_2", None)
+    # def register_buffers(self):
+    #     super(ScoreModelCriticalDamped, self).register_buffers()
+    #     self.register_buffer("times_1", None)
+    #     self.register_buffer("dt_1", None)
+    #     self.register_buffer("times_2", None)
+    #     self.register_buffer("dt_2", None)
 
-    def get_initial_var(self):
+    def get_initial_var(self) -> torch.Tensor:
+        """
+        Computes the initial variance.
+
+        Parameters:
+        - None
+
+        Returns:
+        - torch.Tensor: Initial variance value.
+        """
         gamma = self.pde_coefs["gamma"]
-        S0_vv = (
-            self.init_var_v * (gamma**2) / 4.0
-        )  # m*0.04 with m = gamma**2/4.
+        S0_vv = self.init_var_v * (gamma**2) / 4.0
         return torch.tensor(S0_vv)
 
-    def sample_init_v(self, shape, device):
+    def sample_init_v(
+        self, shape: torch.Size, device: torch.device
+    ) -> torch.Tensor:
+        """
+        Samples initial velocities based on shape and device.
+
+        Parameters:
+        - shape (torch.Size): The desired shape of the tensor.
+        - device (torch.device): The device to create the tensor on.
+
+        Returns:
+        - torch.Tensor: A tensor of sampled initial velocities.
+        """
         return torch.sqrt(self.get_initial_var()) * torch.randn(
             shape, device=device
         )
 
-    def cov_eval_vanilla(self, t, var0x=None, var0v=None):
-        """
-        Evaluating the variance of the conditional perturbation kernel.
-        """
-        t = t.type(torch.float64)
-        beta = 1.0
-        numerical_eps = 1e-9
-        if var0x is None:
-            var0x = torch.zeros_like(t, dtype=torch.float64)
-            # var0x = add_dimensions(
-            #     torch.zeros_like(t, dtype=torch.float64, device=t.device),
-            #     False,
-            # )
-        gamma, m_inv = self.pde_coefs["gamma"], 4.0
-        if var0v is None:
-            var0v = self.get_initial_var() * torch.ones_like(
-                t, dtype=torch.float64
-            )
-            # var0v = add_dimensions(var0v, False)
-        g = 1.0 / torch.tensor(gamma, dtype=torch.float64)
-        beta_int = beta * t  # self.beta_int_fn(t)
-        f = torch.tensor(gamma, dtype=torch.float64)
-        # beta_int = add_dimensions(self.beta_int_fn(t), False)
-        multiplier = torch.exp(-4.0 * beta_int * g)
-        var_xx = (
-            var0x
-            + (1.0 / multiplier)
-            - 1.0
-            + 4.0 * beta_int * g * (var0x - 1.0)
-            + 4.0 * beta_int**2.0 * g**2.0 * (var0x - 2.0)
-            + 16.0 * g**4.0 * beta_int**2.0 * var0v
-        )
-        var_xv = (
-            -var0x * beta_int
-            + 4.0 * g**2.0 * beta_int * var0v
-            - 2.0 * g * beta_int**2.0 * (var0x - 2.0)
-            - 8.0 * g**3.0 * beta_int**2.0 * var0v
-        )
-        var_vv = (
-            f**2.0 * ((1.0 / multiplier) - 1.0) / 4.0
-            + f * beta_int
-            - 4.0 * g * beta_int * var0v
-            + 4.0 * g**2.0 * beta_int**2.0 * var0v
-            + var0v
-            + beta_int**2.0 * (var0x - 2.0)
-        )
-        return [
-            var_xx * multiplier + numerical_eps,
-            var_xv * multiplier,
-            var_vv * multiplier + numerical_eps,
-        ]
+    # def cov_eval_vanilla(self, t, var0x=None, var0v=None):
+    #     """
+    #     Evaluating the variance of the conditional perturbation kernel.
+    #     """
+    #     t = t.type(torch.float64)
+    #     beta = 1.0
+    #     numerical_eps = 1e-9
+    #     if var0x is None:
+    #         var0x = torch.zeros_like(t, dtype=torch.float64)
+    #         # var0x = add_dimensions(
+    #         #     torch.zeros_like(t, dtype=torch.float64, device=t.device),
+    #         #     False,
+    #         # )
+    #     gamma, m_inv = self.pde_coefs["gamma"], 4.0
+    #     if var0v is None:
+    #         var0v = self.get_initial_var() * torch.ones_like(
+    #             t, dtype=torch.float64
+    #         )
+    #         # var0v = add_dimensions(var0v, False)
+    #     g = 1.0 / torch.tensor(gamma, dtype=torch.float64)
+    #     beta_int = beta * t  # self.beta_int_fn(t)
+    #     f = torch.tensor(gamma, dtype=torch.float64)
+    #     # beta_int = add_dimensions(self.beta_int_fn(t), False)
+    #     multiplier = torch.exp(-4.0 * beta_int * g)
+    #     var_xx = (
+    #         var0x
+    #         + (1.0 / multiplier)
+    #         - 1.0
+    #         + 4.0 * beta_int * g * (var0x - 1.0)
+    #         + 4.0 * beta_int**2.0 * g**2.0 * (var0x - 2.0)
+    #         + 16.0 * g**4.0 * beta_int**2.0 * var0v
+    #     )
+    #     var_xv = (
+    #         -var0x * beta_int
+    #         + 4.0 * g**2.0 * beta_int * var0v
+    #         - 2.0 * g * beta_int**2.0 * (var0x - 2.0)
+    #         - 8.0 * g**3.0 * beta_int**2.0 * var0v
+    #     )
+    #     var_vv = (
+    #         f**2.0 * ((1.0 / multiplier) - 1.0) / 4.0
+    #         + f * beta_int
+    #         - 4.0 * g * beta_int * var0v
+    #         + 4.0 * g**2.0 * beta_int**2.0 * var0v
+    #         + var0v
+    #         + beta_int**2.0 * (var0x - 2.0)
+    #     )
+    #     return [
+    #         var_xx * multiplier + numerical_eps,
+    #         var_xv * multiplier,
+    #         var_vv * multiplier + numerical_eps,
+    #     ]
 
     def cov_eval(
         self,
-        t,
-        t0=0.0,
-        S0_vv=torch.tensor(0.0),
-        S0_xx=torch.tensor(0.0),
-        return_ratio=False,
-        double_precision=False,
-        apply_log=False,
-    ):
-        """Evaluation of the std of the augmented forward process with S0_xx=0.
-
-        Args:
-            t: time to evaluate the std.
+        t: torch.Tensor,
+        t0: float = 0.0,
+        S0_vv: torch.Tensor = torch.tensor(0.0),
+        S0_xx: torch.Tensor = torch.tensor(0.0),
+        return_ratio: bool = False,
+        double_precision: bool = False,
+        apply_log: bool = False,
+    ) -> Union[
+        torch.Tensor,
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
+    ]:
         """
+        Evaluation of the standard deviation of the augmented forward process with S0_xx=0.
+
+        Parameters:
+        - t (torch.Tensor): Time to evaluate the std.
+        - t0 (float): Initial time. Default is 0.0.
+        - S0_vv (torch.Tensor): Initial value of S0_vv. Default is 0.0 tensor.
+        - S0_xx (torch.Tensor): Initial value of S0_xx. Default is 0.0 tensor.
+        - return_ratio (bool): If True, returns ratio in the results. Default is False.
+        - double_precision (bool): If True, returns tensor with double precision. Default is False.
+        - apply_log (bool): If True, applies log to the time variable. Default is False.
+
+        Returns:
+        - torch.Tensor or tuple of torch.Tensor: Standard deviations and optionally ratio.
+        """
+
         t = t - t0
         return_type = torch.float64 if double_precision else torch.float32
         gamma = self.pde_coefs["gamma"]
-        # if S0_vv is None:
-        #     S0_vv = self.get_initial_var()
-        t, S0_vv = (
-            t.type(torch.float64),
-            S0_vv.type(torch.float64),
-        )
+
+        t, S0_vv = t.type(torch.float64), S0_vv.type(torch.float64)
         exp_eval = torch.exp(-4 * t / gamma)
+
         if apply_log:
             t, exp_eval = -torch.log(t), t ** (4.0 / gamma)
+
         S_xx = (
             1
             + (
@@ -157,9 +214,6 @@ class ScoreModelCriticalDamped(Model):
             - 2 * (t**2)
         ) * exp_eval
 
-        # eps = 1e-9
-        # S_xx += self.numerical_eps
-        # S_vv += self.numerical_eps
         if self.add_numerical_eps_to_sigma:
             S_xx += self.numerical_eps
             S_vv += self.numerical_eps
@@ -218,10 +272,8 @@ class ScoreModelCriticalDamped(Model):
         apply_log=False,
     ):
         if self.decay_case == Case.vanilla_sigma:
-            var0v = torch.tensor(0.0) if self.zeros_S0_vv else None
-            S_xx, S_xv, S_vv = self.cov_eval_vanilla(
+            S_xx, S_xv, S_vv = self.cov_eval(
                 t,
-                var0v=var0v,
             )
             sigma = torch.sqrt(S_vv - S_xv**2 / S_xx)
         else:
