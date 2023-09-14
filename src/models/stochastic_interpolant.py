@@ -1,5 +1,5 @@
 import torch
-from typing import List, Union, Optional
+from typing import Tuple, Optional
 
 from src.models.model import Model
 from src.case import Case
