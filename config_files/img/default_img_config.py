@@ -6,7 +6,7 @@ CONFIG = {
     "model_params": {
         "ch_mult": (1, 2, 4),
         "n_channels": 16,
-        "embedding_type": "no_embedding", 
+        "embedding_type": "no_embedding",
         "n_resblocks": 2,  #
         # "attn_resolutions": (14,),
     },
@@ -17,13 +17,13 @@ CONFIG = {
         "adapt_dt": True,
         "beta_case": Case.constant,
         "decay_case": Case.no_decay,
-        "img_model_case": Case.ncsnpp, 
+        "img_model_case": Case.ncsnpp,
     },
     "model_type": Case.score_model,
     "training_params": {
         "epochs": 50,
-        "batch_size": 32,
-        "batch_size_eval": 32,
+        "batch_size": 64,
+        "batch_size_eval": 64,
         "lr": 3e-4,
         "weight_decay": 1e-3,
         "check_val_every_n_epochs": 10,
@@ -45,7 +45,10 @@ CONFIG = {
         "load_data": False,
         "save_top": 5,
     },
-    "print_opt": {"ot_costs": False, "enable_progress_bar": True,},
+    "print_opt": {
+        "ot_costs": False,
+        "enable_progress_bar": True,
+    },
     "logger_path": "../outputs/",
     "accelerator": "gpu",
     "device": [0],
