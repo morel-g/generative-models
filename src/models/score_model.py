@@ -346,7 +346,7 @@ class ScoreModel(Model):
         - torch.Tensor: Computed loss value.
         """
         t = self.sample_time(x.shape, x.device)
-        noise = torch.randn_like(x)
+        noise = self._get_noise_like(x)
         x_n = self.mean_eval(t) * x + self.sigma_eval(t) * noise
         nn = self.eval_nn(x_n, t)
 
@@ -401,7 +401,7 @@ class ScoreModel(Model):
             l = 1.0
             int_coef = self.integral_time_coef(t, t + dt)
             int_coef = -int_coef if backward else int_coef
-            z = torch.randn_like(x)
+            z = self._get_noise_like(x)
             if t[0] + 1e-7 > self.times_eval[2]:
                 x = (
                     x

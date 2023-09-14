@@ -16,6 +16,7 @@ class Model(torch.nn.Module):
     """
     Base class for the models.
     """
+
     def __init__(
         self,
         data_type: str,
@@ -77,6 +78,10 @@ class Model(torch.nn.Module):
         self.register_buffer("times_train", None)
         self.register_buffer("dt_eval", None)
         self.register_buffer("times_eval", None)
+
+    @staticmethod
+    def _get_noise_like(size_like: torch.Tensor) -> torch.Tensor:
+        return torch.randn_like(size_like)
 
     def get_nb_time_steps_eval(self):
         return self.nb_time_steps_eval
@@ -196,19 +201,13 @@ class Model(torch.nn.Module):
             "This method should be overridden by subclass."
         )
 
-    def sample_prior_v(self, shape, device):
+    def sample_prior_v(self, x):
         """Must be implemented in subclass."""
         raise NotImplementedError(
             "This method should be overridden by subclass."
         )
 
     def velocity_step(self, x, t_id, backward=False):
-        """Must be implemented in subclass."""
-        raise NotImplementedError(
-            "This method should be overridden by subclass."
-        )
-
-    def sample_init_v(self, shape, device):
         """Must be implemented in subclass."""
         raise NotImplementedError(
             "This method should be overridden by subclass."
@@ -417,7 +416,7 @@ class Model(torch.nn.Module):
 
     def _augment_input(self, x: torch.Tensor) -> torch.Tensor:
         if self.is_augmented():
-            v = self.sample_prior_v(x.shape, x.device)
+            v = self.sample_prior_v(x)
             return x, v
 
         return x
