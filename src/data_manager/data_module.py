@@ -7,14 +7,17 @@ from torch.utils.data import default_collate
 
 
 class DataModule(pl.LightningDataModule):
-    def __init__(self, data, log_dir=None):
-        """Initialize data module.
+    def __init__(self, data: object, log_dir: str = None):
+        """
+        Initialize the data module.
 
-        Args:
-            data: A data object containing all the parameters of the simulation.
-            logger: A logger if available to store the outputs. Defaults to None.
+        Parameters:
+        - data (object): A data object containing all the parameters of the
+        simulation.
+        - log_dir (str, optional): Directory for logs. Defaults to None.
         """
         super().__init__()
+
         self.data = data
         self.device = (
             id_to_device(data.accelerator, data.device)
@@ -25,20 +28,14 @@ class DataModule(pl.LightningDataModule):
         self.batch_size_eval = data.training_params.get(
             "batch_size_eval", self.batch_size
         )
-        self.pin_memory = False if (self.device == "cpu") else True
-        self.map = None
+        self.pin_memory = self.device != "cpu"
         self.train_img_data, self.val_img_data = None, None
-        n_samples = data.n_samples if hasattr(data, "n_samples") else None
-        normalized_img = (
-            data.normalized_img if hasattr(data, "normalized_img") else False
-        )
+        n_samples = getattr(data, "n_samples", None)
+        normalized_img = getattr(data, "normalized_img", False)
 
-        (
-            self.train_data,
-            self.val_data,
-        ) = get_dataset(
-            self.data.data_type,
-            log_dir,
+        self.train_data, self.val_data = get_dataset(
+            data_type=self.data.data_type,
+            log_dir=log_dir,
             normalized_img=normalized_img,
             n_samples=n_samples,
         )
@@ -46,7 +43,8 @@ class DataModule(pl.LightningDataModule):
         self.custom_val_data = None
         self.use_custom_data = False
 
-        if self.train_data.transform is not None:
+        normalize = None
+        if self.train_data.transform:
             normalize = next(
                 (
                     t
@@ -55,11 +53,7 @@ class DataModule(pl.LightningDataModule):
                 ),
                 None,
             )
-        else:
-            normalize = None
-        self.mean_std = (
-            (normalize.mean, normalize.std) if normalize is not None else None
-        )
+        self.mean_std = (normalize.mean, normalize.std) if normalize else None
 
     def prepare_data(self):
         pass
@@ -67,7 +61,17 @@ class DataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         pass
 
-    def collate_fn(self, dataset, batch):
+    def collate_fn(self, dataset: object, batch: list) -> list:
+        """
+        Custom collation function for batching data.
+
+        Parameters:
+        - dataset (object): Dataset object to collate.
+        - batch (list): List of data to collate.
+
+        Returns:
+        - list: Collated batch.
+        """
         if hasattr(dataset, "update"):
             dataset.update()
         return default_collate(batch)
@@ -115,5 +119,12 @@ class DataModule(pl.LightningDataModule):
             collate_fn=lambda batch: self.collate_fn(data, batch),
         )
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader:
+        """
+        Return the dataloader of the encoded validation set.
+        Note: This method currently uses the validation dataloader.
+
+        Returns:
+        - DataLoader: Dataloader of the encoded validation set.
+        """
         return self.val_dataloader()
