@@ -3,7 +3,7 @@ from src.neural_networks.u_net.u_net_2d_model import UNet2DModel
 from torch import nn
 
 
-class UNetFM(nn.Module):
+class UNet(nn.Module):
     def __init__(
         self,
         dim,

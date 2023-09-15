@@ -245,9 +245,6 @@ class Model(torch.nn.Module):
         elif model_type == Case.ncsnpp:
             if is_augmented:
                 model_params["v_input"] = True
-        elif model_type == Case.u_net_fashion_mnist:
-            if is_augmented:
-                raise RuntimeError("Augmentation not implemented yet")
         else:
             raise RuntimeError("Model type not implemented")
 

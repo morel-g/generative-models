@@ -34,7 +34,6 @@ class Case:
     # architectures.
     ncsnpp = "ncsnpp"
     u_net = "u_net"
-    u_net_fashion_mnist = "u_net_fashion_mnist"
     vector_field = "vector_field"
 
     # Functions: Activation or mathematical functions that can be utilized
@@ -98,7 +97,7 @@ class Case:
     # Embeding type for the u_net architecture
     no_embeding = "no_embeding"
     fourier = "fourier"
-    
+
     # Noise addition for the stochastic interpolant model
     linear_noise = "linear_noise"
     sqrt_noise = "sqrt_noise"

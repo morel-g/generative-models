@@ -5,7 +5,7 @@ import torch.nn as nn
 from src.neural_networks.ncsnpp.ncsnpp import NCSNpp
 from .vector_field import VectorField
 from src.neural_networks.u_net.u_net_2d_model import UNet2DModel
-from src.neural_networks.u_net.u_net import UNetFM
+from src.neural_networks.u_net.u_net import UNet
 from src.case import Case
 from src.utils import time_dependent_var
 
@@ -15,12 +15,10 @@ class NeuralNetwork(torch.nn.Module):
         super(NeuralNetwork, self).__init__()
         params_net = params.copy()
         self.model_type = model_type
-        if self.model_type == Case.u_net:
-            self.net = UNet2DModel(**params_net)
-        elif self.model_type == Case.ncsnpp:
+        if self.model_type == Case.ncsnpp:
             self.net = NCSNpp(**params_net)
-        elif self.model_type == Case.u_net_fashion_mnist:
-            self.net = UNetFM(**params_net)
+        elif self.model_type == Case.u_net:
+            self.net = UNet(**params_net)
         elif self.model_type == Case.vector_field:
             if add_time:
                 params_net["dim_in"] += 1
@@ -36,7 +34,6 @@ class NeuralNetwork(torch.nn.Module):
         if self.model_type in (
             Case.u_net,
             Case.ncsnpp,
-            Case.u_net_fashion_mnist,
         ):
             return self.net(x, t.view(-1)) if t is not None else self.net(x)
         else:
