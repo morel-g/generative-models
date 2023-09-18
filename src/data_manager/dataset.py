@@ -3,6 +3,8 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset as TorchDataset
 from torchvision import datasets, transforms
 from torchvision.datasets import CIFAR10, FashionMNIST, MNIST
+from torchvision.transforms import Compose
+
 
 from src.distribution_toy import inf_train_gen
 from src.data_manager.data_type import toy_data_type, img_data_type
