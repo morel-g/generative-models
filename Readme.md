@@ -52,5 +52,16 @@ Examples are provided in the **`notebook/`** directory.
 
 ---
 
+### Sampling from the models for the CIFAR dataset:
 
 
+**Note**: The models have not been trained extensively in order to save computational power. However, training them for longer durations could improve the results.
+
+| **Diffusion / Score Based Model** |  **Stochastic interpolant** |
+|:--------------------------------:|:--------------------------:|
+| ![Diffusion trajectories](docs/assets/cifar_traj_score.gif) | ![Stochastic interpolant trajectories](docs/assets/cifar_traj_stochastic_interpolant.gif) |
+| ![Diffusion samples](docs/assets/cifar_score_sample.png) | ![Stochastic interpolant samples](docs/assets/cifar_stochastic_interpolant_sample.png) |
+
+
+
+---
