@@ -55,7 +55,7 @@ Examples are provided in the **`notebook/`** directory.
 ### Sampling from the models for the CIFAR dataset:
 
 
-**Note**: The models have not been trained extensively in order to save computational power. However, training them for longer durations could improve the results.
+**Note**: The models have not been trained extensively in order to save computational power. However, training them for longer durations could improve the results. See the configuration files from the original papers if needed.
 
 | **Diffusion / Score Based Model** |  **Stochastic interpolant** |
 |:--------------------------------:|:--------------------------:|
