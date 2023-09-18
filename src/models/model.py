@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 from src.case import Case
-from src.data_manager.data_type import toy_data_type
+from src.data_manager.data_type import toy_data_type, img_data_type
 from src.neural_networks.neural_network import NeuralNetwork
 from src.models.model_utils import (
     reduce_length_array,
@@ -295,7 +295,7 @@ class Model(torch.nn.Module):
         """
         if self.data_type in toy_data_type:
             return (self.model_params["dim_out"],)
-        else:
+        elif self.data_type in img_data_type:
             return (
                 self.model_params["image_channels"],
                 self.model_params["dim"],

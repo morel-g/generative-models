@@ -16,3 +16,5 @@ toy_data_type = [
     Case.gaussian,
     Case.multimodal_swissroll,
 ]
+
+img_data_type = [Case.fashion_mnist, Case.cifar10, Case.cifar10_grayscale]

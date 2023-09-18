@@ -9,11 +9,10 @@ from src.data_manager.data import dict_to_str
 from src.case import Case
 from src.data_manager.data_module import DataModule
 from src.data_manager.data_parser import parse_viz
-from src.data_manager.data_type import toy_data_type
+from src.data_manager.data_type import toy_data_type, img_data_type
 from src.eval.fid.fid_utils import compute_fid_v1, compute_fid_v3
 from src.eval.plots import (
     compute_imgs_outputs,
-    sample,
     save_loader_imgs,
     save_sample_imgs,
 )
@@ -165,7 +164,7 @@ if __name__ == "__main__":
     elif data.data_type in toy_data_type:
         x_val = data_module.val_data.x
         compute_outputs_2d(net, x_val, output_dir)
-    else:
+    elif data.data_type in img_data_type:
         nb_rows, nb_cols = args.nb_imgs[0], args.nb_imgs[1]
         val_dataset = data_module.val_data
         compute_imgs_outputs(net, val_dataset, output_dir, nb_rows, nb_cols)

@@ -1,21 +1,19 @@
-from datetime import datetime
-from typing import Optional, Tuple
-
+import torch
+import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
-import pytorch_lightning as pl
-import torch
+from datetime import datetime
+from typing import Optional, Tuple
 
 from src.data_manager.data_module import DataModule
 from src.training.diffusion_generator import DiffusionGenerator
 from src.utils import get_logger
 from src.eval.plots import compute_imgs_outputs
 from src.eval.plots_2d import compute_outputs_2d
-from src.data_manager.data_type import toy_data_type
+from src.data_manager.data_type import toy_data_type, img_data_type
 from src.save_load_obj import save_obj, load_obj
 from src.training.ema import EMA
 from src.data_manager.data import Data
-from src.training.tqdm_notebook_progress_bar import TQDMNotebookProgressBar, is_notebook
 
 
 def load_data(data: Data) -> Data:
@@ -81,7 +79,7 @@ def setup_callbacks(data: Data, log_dir: str) -> list:
 
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     callbacks.append(lr_monitor)
-    
+
     # if is_notebook():
     #     callbacks.append(TQDMNotebookProgressBar())
 
@@ -154,7 +152,7 @@ def train_model(
         check_val_every_n_epoch=data.training_params[
             "check_val_every_n_epochs"
         ],
-        enable_progress_bar=data.print_opt.get("enable_progress_bar",True),
+        enable_progress_bar=data.print_opt.get("enable_progress_bar", True),
         gradient_clip_val=data.training_params.get("gradient_clip_val", 0.0),
         reload_dataloaders_every_n_epochs=0,
     )
@@ -213,10 +211,12 @@ def run_sim(data: Data) -> Tuple[DiffusionGenerator, TensorBoardLogger]:
         if data.data_type in toy_data_type:
             x_val = data_module.train_data.x
             compute_outputs_2d(net, x_val, logger.log_dir)
-        else:
+        elif data.data_type in img_data_type:
             val_dataset = data_module.val_data
             compute_imgs_outputs(
                 net, val_dataset, logger.log_dir, nb_rows=5, nb_cols=5
             )
+        else:
+            raise RuntimeError(f"Uknown data_type {data.data_type}")
 
     return net, logger

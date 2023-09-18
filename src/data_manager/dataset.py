@@ -3,20 +3,10 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset as TorchDataset
 from torchvision import datasets, transforms
 from torchvision.datasets import CIFAR10, FashionMNIST, MNIST
-from ..distribution_toy import inf_train_gen
-from .data_type import toy_data_type
-from ..case import Case
 
-import torch
-from sklearn.model_selection import train_test_split
-
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-from torchvision.transforms import Compose
-from ..distribution_toy import inf_train_gen
-from .data_type import toy_data_type
-from torchvision.datasets import CIFAR10, FashionMNIST, MNIST
-from ..case import Case
+from src.distribution_toy import inf_train_gen
+from src.data_manager.data_type import toy_data_type, img_data_type
+from src.case import Case
 
 
 class Dataset(TorchDataset):
@@ -121,11 +111,13 @@ def get_dataset(
                 "For 2d dataset the number of samples should be an integer > 0."
             )
         return prepare_toy_dataset(data_type, n_samples, log_dir)
-    else:
+    elif data_type in img_data_type:
         if not normalized_img:
             return prepare_dataset(data_type)
         mean_std = compute_mean_and_std(data_type)
         return prepare_dataset(data_type, mean_std=mean_std)
+    else:
+        raise RuntimeError(f"Uknown data_type {data_type}")
 
 
 def scale_imgs(t: torch.Tensor) -> torch.Tensor:

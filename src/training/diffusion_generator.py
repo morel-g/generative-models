@@ -6,7 +6,7 @@ from typing import Union, Tuple, Optional, Any, List, Dict
 # from .probability_distribution import ProbabilityDistribution
 from src.data_manager.data import Data
 from src.case import Case
-from src.data_manager.data_type import toy_data_type
+from src.data_manager.data_type import toy_data_type, img_data_type
 from src.models.score_model import ScoreModel
 from src.models.score_model_critical_damped import ScoreModelCriticalDamped
 from src.models.stochastic_interpolant import StochasticInterpolant
@@ -85,9 +85,7 @@ class DiffusionGenerator(pl.LightningModule):
                 img_model_case=data.scheme_params.get(
                     "img_model_case", Case.u_net
                 ),
-                noise_addition = data.scheme_params.get(
-                    "noise_addition", None
-                ),
+                noise_addition=data.scheme_params.get("noise_addition", None),
             )
         else:
             raise ValueError("Model type not recognized")
@@ -163,7 +161,7 @@ class DiffusionGenerator(pl.LightningModule):
             return_velocities=return_velocities,
         )
 
-        if self.data.data_type not in toy_data_type:
+        if self.data.data_type in img_data_type:
             if self.model.is_augmented():
                 x, v = x
                 x, v = (x + 1.0) / 2.0, (v + 1.0) / 2.0
@@ -274,7 +272,7 @@ class DiffusionGenerator(pl.LightningModule):
         # Check the data type and call the appropriate sampling function
         if self.data.data_type in toy_data_type:
             sample_2d(self, sample_path, name)
-        else:
+        elif self.data.data_type in img_data_type:
             sample_img(
                 self,
                 sample_path,
