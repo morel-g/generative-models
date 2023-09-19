@@ -102,36 +102,14 @@ def save_viz_infos(
         file.write(viz_str)
 
 
-if __name__ == "__main__":
-    args = parse_viz()
-    start_time = time.time()
-    # For reproducibility
-    # np.random.seed(42)
-    # torch.manual_seed(42)
-    # random.seed(42)
+def configure_viz_infos(args, net, data):
+    """Configures the visualization information based on the arguments."""
     viz_infos = {}
-    ckpt_path = args.ckpt_path
-    nb_time_steps_eval = args.nb_time_steps_eval
-    nb_time_validation = args.nb_time_validation
-    batch_size_eval = args.batch_size_eval
     adapt_dt = args.adapt_dt
-    compute_loss = args.loss
-    fid = args.fid
-    gpu = args.gpu
-    name = args.name
-    output_dir = args.output_dir
+    nb_time_steps_eval = args.nb_time_steps_eval
+    batch_size_eval = args.batch_size_eval
     scheme = args.scheme
-
-    device = torch.device("cuda:" + str(gpu) if gpu != -1 else "cpu")
-    load_path = os.path.dirname(ckpt_path)
-    output_dir = load_path if output_dir is None else output_dir
-    data = load_obj(load_path + "/data.obj")
-
-    data_type = data.data_type
-
-    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, data=data)
-    net.eval()
-
+    nb_time_validation = args.nb_time_validation
     if adapt_dt is not None:
         viz_infos["adapt_dt"] = adapt_dt
         net.set_adapt_dt(adapt_dt)
@@ -148,10 +126,69 @@ if __name__ == "__main__":
         viz_infos["Backward scheme"] = scheme
         net.set_backward_scheme(scheme)
 
+    return viz_infos
+
+
+def compute_fid(net, data, data_module, args, viz_infos, device):
+    print("Computing fid...")
+    fid_choice = args.fid_choice
+    print(f"Computing fid {fid_choice}")
+    if fid_choice != Case.fid_metrics_v3:
+        fid_batch_size = args.batch_size_eval or 250
+        path_to_stats = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "assets/stats/cifar10_stats.npz",
+        )
+        inceptionv3 = fid_choice == Case.fid_v3
+        fid = compute_fid_v1(
+            net,
+            path_to_stats,
+            data.data_type,
+            batch_size=fid_batch_size,
+            inceptionv3=inceptionv3,
+        )
+    else:
+        fid_batch_size = args.batch_size_eval or 500
+        # save_images(net, data_module, output_dir, batch_size, nb_samples)
+        fid = compute_fid_v3(
+            net, data_module, device, batch_size=fid_batch_size
+        )
+    print("FID = ", fid)
+    viz_infos["FID infos"] = {
+        "FID": fid,
+        "FID choice": fid_choice,
+        "Backward scheme": net.get_backward_scheme(),
+        "nb_time_steps_eval": net.get_nb_time_steps_eval(),
+    }
+
+
+if __name__ == "__main__":
+    args = parse_viz()
+    # For reproducibility
+    # np.random.seed(42)
+    # torch.manual_seed(42)
+    # random.seed(42)
+    ckpt_path = args.ckpt_path
+    gpu = args.gpu
+    name = args.name
+    output_dir = args.output_dir
+
+    device = torch.device("cuda:" + str(gpu) if gpu != -1 else "cpu")
+    load_path = os.path.dirname(ckpt_path)
+    output_dir = load_path if output_dir is None else output_dir
+    data = load_obj(load_path + "/data.obj")
+
+    data_type = data.data_type
+
+    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, data=data)
+    net.eval()
+
+    viz_infos = configure_viz_infos(args, net, data)
+
     net.to(device)
     data_module = DataModule(data)
 
-    if compute_loss:
+    if args.loss:
         val_loader = data_module.val_dataloader()
         loss = 0.0
 
@@ -167,41 +204,8 @@ if __name__ == "__main__":
             "nb_time_steps_eval": net.get_nb_time_steps_eval(),
         }
 
-    elif fid:
-        print("Computing fid...")
-        fid_choice = args.fid_choice
-        print(f"Computing fid {fid_choice}")
-        if fid_choice != Case.fid_metrics_v3:
-            fid_batch_size = (
-                batch_size_eval if batch_size_eval is not None else 250
-            )
-            path_to_stats = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "assets/stats/cifar10_stats.npz",
-            )
-            inceptionv3 = fid_choice == Case.fid_v3
-            fid = compute_fid_v1(
-                net,
-                path_to_stats,
-                data.data_type,
-                batch_size=fid_batch_size,
-                inceptionv3=inceptionv3,
-            )
-        else:
-            fid_batch_size = (
-                batch_size_eval if batch_size_eval is not None else 500
-            )
-            # save_images(net, data_module, output_dir, batch_size, nb_samples)
-            fid = compute_fid_v3(
-                net, data_module, device, batch_size=fid_batch_size
-            )
-        print("FID = ", fid)
-        viz_infos["FID infos"] = {
-            "FID": fid,
-            "FID choice": fid_choice,
-            "Backward scheme": net.get_backward_scheme(),
-            "nb_time_steps_eval": net.get_nb_time_steps_eval(),
-        }
+    elif args.fid:
+        compute_fid(net, data, data_module, args, viz_infos, device)
     elif data.data_type in toy_data_type:
         x_val = data_module.val_data.x
         compute_outputs_2d(net, x_val, output_dir)
@@ -211,8 +215,3 @@ if __name__ == "__main__":
         compute_imgs_outputs(net, val_dataset, output_dir, nb_rows, nb_cols)
 
     save_viz_infos(viz_infos, os.path.join(output_dir, "viz_infos"))
-    end_time = time.time()
-    duration_seconds = end_time - start_time
-    duration_minutes = duration_seconds / 60.0
-    print("Duration:", duration_minutes, "minutes")
-    print("End viz.")
