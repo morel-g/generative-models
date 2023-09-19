@@ -1,7 +1,7 @@
 import os
 import time
 import torch
-from typing import Dict, Union, List, Optional
+from typing import Dict, Union, List, Any
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -11,6 +11,7 @@ from src.case import Case
 from src.data_manager.data_module import DataModule
 from src.data_manager.data_parser import parse_viz
 from src.data_manager.data_type import toy_data_type, img_data_type
+from src.data_manager.data import Data
 from src.eval.fid.fid_utils import compute_fid_v1, compute_fid_v3
 from src.eval.plots import (
     compute_imgs_outputs,
@@ -102,34 +103,64 @@ def save_viz_infos(
         file.write(viz_str)
 
 
-def configure_viz_infos(args, net, data):
-    """Configures the visualization information based on the arguments."""
-    viz_infos = {}
-    adapt_dt = args.adapt_dt
-    nb_time_steps_eval = args.nb_time_steps_eval
-    batch_size_eval = args.batch_size_eval
-    scheme = args.scheme
-    nb_time_validation = args.nb_time_validation
-    if adapt_dt is not None:
-        viz_infos["adapt_dt"] = adapt_dt
-        net.set_adapt_dt(adapt_dt)
-    if nb_time_steps_eval is not None:
-        viz_infos["nb_time_steps_eval"] = nb_time_steps_eval
-        net.set_nb_time_steps(nb_time_steps_eval, eval=True)
-    if nb_time_validation is not None:
-        viz_infos["nb_time_validation"] = nb_time_validation
-        net.nb_time_validation = nb_time_validation
-    if batch_size_eval is not None:
-        viz_infos["batch_size_eval"] = batch_size_eval
-        data.training_params["batch_size_eval"] = batch_size_eval
-    if scheme is not None:
-        viz_infos["Backward scheme"] = scheme
-        net.set_backward_scheme(scheme)
+def configure_viz_infos(
+    args: Any, net: DiffusionGenerator, data: Data
+) -> Dict[str, Any]:
+    """
+    Configures the visualization information based on the provided arguments.
+
+    Parameters:
+    - args (Any): Arguments containing parameters for the visualization.
+    - net (DiffusionGenerator): Neural network model.
+    - data (Data): Data used for the model.
+
+    Returns:
+    - Dict[str, Any]: Dictionary containing visualization information.
+    """
+
+    viz_infos = {
+        "adapt_dt": args.adapt_dt,
+        "nb_time_steps_eval": args.nb_time_steps_eval,
+        "nb_time_validation": args.nb_time_validation,
+        "batch_size_eval": args.batch_size_eval,
+        "Backward scheme": args.scheme,
+    }
+    if viz_infos["adapt_dt"]:
+        net.set_adapt_dt(viz_infos["adapt_dt"])
+    if viz_infos["nb_time_steps_eval"]:
+        net.set_nb_time_steps(viz_infos["nb_time_steps_eval"], eval=True)
+    if viz_infos["nb_time_validation"]:
+        net.nb_time_validation = viz_infos["nb_time_validation"]
+    if viz_infos["batch_size_eval"]:
+        data.training_params["batch_size_eval"] = viz_infos["batch_size_eval"]
+    if viz_infos["Backward scheme"]:
+        net.set_backward_scheme(viz_infos["Backward scheme"])
 
     return viz_infos
 
 
-def compute_fid(net, data, data_module, args, viz_infos, device):
+def compute_fid(
+    net: DiffusionGenerator,
+    data: Data,
+    data_module: DataModule,
+    args: Any,
+    viz_infos: Dict[str, Any],
+    device: torch.device,
+) -> None:
+    """
+    Compute the Frechet Inception Distance (FID) based on the provided arguments.
+
+    Parameters:
+    - net (DiffusionGenerator): Neural network model.
+    - data (Data): Parameters used for the model.
+    - data_module (DataModule): Data loading and processing module.
+    - args (Any): Arguments containing parameters for computing FID.
+    - viz_infos (Dict[str, Any]): Dictionary containing visualization information.
+    - device (torch.device): Device on which computations are performed.
+
+    Returns:
+    - None
+    """
     print("Computing fid...")
     fid_choice = args.fid_choice
     print(f"Computing fid {fid_choice}")
