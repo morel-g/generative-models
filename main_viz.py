@@ -1,7 +1,8 @@
 import os
 import time
-
 import torch
+from typing import Dict, Union, List, Optional
+
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -21,7 +22,26 @@ from src.save_load_obj import load_obj
 from src.training.diffusion_generator import DiffusionGenerator
 
 
-def save_images(net, data_module, output_dir, batch_size, nb_samples):
+def save_images(
+    net: DiffusionGenerator,
+    data_module: DataModule,
+    output_dir: str,
+    batch_size: int,
+    nb_samples: int,
+) -> None:
+    """
+    Saves images to the specified output directory.
+
+    Parameters:
+    - net (DiffusionGenerator): The neural network model.
+    - data_module (DataModule): Data management module.
+    - output_dir (str): Directory to save the images.
+    - batch_size (int): Batch size for the DataLoader.
+    - nb_samples (int): Number of samples.
+
+    Returns:
+    - None
+    """
     train_loader = DataLoader(
         data_module.train_data,
         batch_size=batch_size,
@@ -36,7 +56,16 @@ def save_images(net, data_module, output_dir, batch_size, nb_samples):
     save_sample_imgs(net, batch_size, nb_samples, output_dir, name="img_fake")
 
 
-def get_infos_index(directory):
+def get_infos_index(directory: str) -> int:
+    """
+    Get the index for the file name to avoid overwriting.
+
+    Parameters:
+    - directory (str): The directory where files are saved.
+
+    Returns:
+    - int: The index for the next file to be saved.
+    """
     i = 0
     while True:
         filename = f"viz_infos_{i}.txt"
@@ -46,9 +75,21 @@ def get_infos_index(directory):
         i += 1
 
 
-def save_viz_infos(viz_dict, directory):
+def save_viz_infos(
+    viz_dict: Dict[str, Union[str, int, float]], directory: str
+) -> None:
+    """
+    Save visualization information to a text file in the given directory.
+
+    Parameters:
+    - viz_dict (Dict[str, Union[str, int, float]]): Dictionary containing visualization information.
+    - directory (str): Directory to save the text file.
+
+    Returns:
+    - None
+    """
     viz_str = dict_to_str(viz_dict)
-    # Create the directory if it doesn't exist
+
     if not os.path.exists(directory):
         os.makedirs(directory)
 
