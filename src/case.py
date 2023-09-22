@@ -29,6 +29,8 @@ class Case:
     fashion_mnist = "fashion_mnist"
     cifar10 = "cifar10"
     cifar10_grayscale = "cifar10_grayscale"
+    audio_diffusion_256 = "audio_diffusion_256"
+    audio_diffusion_64 = "audio_diffusion_64"
 
     # Architecture type: Constants representing different neural network
     # architectures.

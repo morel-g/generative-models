@@ -31,29 +31,15 @@ class DataModule(pl.LightningDataModule):
         self.pin_memory = self.device != "cpu"
         self.train_img_data, self.val_img_data = None, None
         n_samples = getattr(data, "n_samples", None)
-        normalized_img = getattr(data, "normalized_img", False)
 
         self.train_data, self.val_data = get_dataset(
             data_type=self.data.data_type,
             log_dir=log_dir,
-            normalized_img=normalized_img,
             n_samples=n_samples,
         )
         self.custom_train_data = None
         self.custom_val_data = None
         self.use_custom_data = False
-
-        normalize = None
-        if self.train_data.transform:
-            normalize = next(
-                (
-                    t
-                    for t in self.train_data.transform.transforms
-                    if isinstance(t, transforms.Normalize)
-                ),
-                None,
-            )
-        self.mean_std = (normalize.mean, normalize.std) if normalize else None
 
     def prepare_data(self):
         pass

@@ -5,8 +5,10 @@ import pytorch_lightning as pl
 from pathlib import Path
 
 from src.eval.plot_utils import save_images_as_grid_video, save_images_as_grid
+from src.eval.eval_audio import imgs_to_audio
 from src.case import Case
 from src.utils import ensure_directory_exists
+from src.data_manager.data_type import audio_data_type
 
 
 @torch.no_grad()
@@ -76,6 +78,7 @@ def sample_img(
     nb_cols: int = 3,
     backward_scheme: Optional[str] = None,
     save_gifs: bool = True,
+    save_audio_if_needed: bool = True,
 ) -> None:
     """
     Sample and save individual images.
@@ -86,14 +89,18 @@ def sample_img(
         name (str): The name of the output image file.
         nb_rows (int): Number of rows in the output image grid. Default is 3.
         nb_cols (int): Number of columns in the output image grid. Default is 3.
-        backward_scheme (str, optional): The backward scheme to use for sampling. Default is None.
+        backward_scheme (str, optional): The backward scheme to use for sampling.
+        Default is None.
         save_gifs (bool): Whether to save the images as GIFs. Default is True.
+        save_audio_if_needed (bool): Whether to save the audio if images are spectograms.
+        Default is True.
     """
     # Validate parameters
     if nb_rows <= 0 or nb_cols <= 0:
         raise ValueError(
             "Number of rows and columns must be positive integers."
         )
+    ensure_directory_exists(output_dir)
 
     nb_samples = nb_rows * nb_cols
 
@@ -106,6 +113,16 @@ def sample_img(
     if save_gifs:
         save_images_as_grid_video(
             imgs, output_dir, nb_rows, nb_cols, name=name
+        )
+
+    # Check if images are spectograms and save audio files if needed
+    if save_audio_if_needed and net.data.data_type in audio_data_type:
+        nb_audio_files = min(4, nb_samples)
+        imgs_to_audio(
+            imgs[-1][:nb_audio_files],
+            net.data.data_type,
+            output_dir,
+            name=name,
         )
 
     save_images_as_grid(imgs[-1], output_dir, nb_rows, nb_cols, name=name)

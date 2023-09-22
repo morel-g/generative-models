@@ -11,12 +11,18 @@ from src.precision import torch_float_precision
 
 
 # Constants
+MNIST_DIM = 28
+MNIST_CHANNELS = 1
 FASHION_MNIST_DIM = 28
 FASHION_MNIST_CHANNELS = 1
 CIFAR10_DIM = 32
 CIFAR10_CHANNELS = 3
 CIFAR10_GRAYSCALE_DIM = 32
 CIFAR10_GRAYSCALE_CHANNELS = 1
+AUDIO_DIFFUSION_256_DIM = 256
+AUDIO_DIFFUSION_256_CHANNELS = 1
+AUDIO_DIFFUSION_64_DIM = 64
+AUDIO_DIFFUSION_64_CHANNELS = 1
 
 
 def set_img_default_params(data_type: str) -> Dict[str, int]:
@@ -29,6 +35,11 @@ def set_img_default_params(data_type: str) -> Dict[str, int]:
     Returns:
     - dict: default parameters for the given data type
     """
+    if data_type == Case.mnist:
+        return {
+            "dim": MNIST_DIM,
+            "image_channels": MNIST_CHANNELS,
+        }
     if data_type == Case.fashion_mnist:
         return {
             "dim": FASHION_MNIST_DIM,
@@ -40,6 +51,16 @@ def set_img_default_params(data_type: str) -> Dict[str, int]:
         return {
             "dim": CIFAR10_GRAYSCALE_DIM,
             "image_channels": CIFAR10_GRAYSCALE_CHANNELS,
+        }
+    elif data_type == Case.audio_diffusion_256:
+        return {
+            "dim": AUDIO_DIFFUSION_256_DIM,
+            "image_channels": AUDIO_DIFFUSION_256_CHANNELS,
+        }
+    elif data_type == Case.audio_diffusion_64:
+        return {
+            "dim": AUDIO_DIFFUSION_64_DIM,
+            "image_channels": AUDIO_DIFFUSION_64_CHANNELS,
         }
     return {}
 

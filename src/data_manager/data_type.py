@@ -22,4 +22,11 @@ img_data_type = [
     Case.fashion_mnist,
     Case.cifar10,
     Case.cifar10_grayscale,
+    # Audio are also considered as images data type since the signal is
+    # converted to a Mel spectogram
+    Case.audio_diffusion_256,
+    Case.audio_diffusion_64,
 ]
+
+
+audio_data_type = [Case.audio_diffusion_256, Case.audio_diffusion_64]

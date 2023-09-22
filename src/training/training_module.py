@@ -155,6 +155,9 @@ def train_model(
         enable_progress_bar=data.print_opt.get("enable_progress_bar", True),
         gradient_clip_val=data.training_params.get("gradient_clip_val", 0.0),
         reload_dataloaders_every_n_epochs=0,
+        accumulate_grad_batches=data.training_params.get(
+            "accumulate_grad_batches", 1
+        ),
     )
 
     if not data.checkpoint_dict["restore_training"]:

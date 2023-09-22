@@ -6,7 +6,11 @@ from typing import Union, Tuple, Optional, Any, List, Dict
 # from .probability_distribution import ProbabilityDistribution
 from src.data_manager.data import Data
 from src.case import Case
-from src.data_manager.data_type import toy_data_type, img_data_type
+from src.data_manager.data_type import (
+    toy_data_type,
+    img_data_type,
+    audio_data_type,
+)
 from src.models.score_model import ScoreModel
 from src.models.score_model_critical_damped import ScoreModelCriticalDamped
 from src.models.stochastic_interpolant import StochasticInterpolant
@@ -273,11 +277,17 @@ class DiffusionGenerator(pl.LightningModule):
         if self.data.data_type in toy_data_type:
             sample_2d(self, sample_path, name)
         elif self.data.data_type in img_data_type:
+            if self.data.data_type in audio_data_type:
+                nb_rows = 2
+                nb_cols = 3
+            else:
+                nb_rows = 5
+                nb_cols = 5
             sample_img(
                 self,
                 sample_path,
                 name,
-                nb_rows=5,
-                nb_cols=5,
+                nb_rows=nb_rows,
+                nb_cols=nb_cols,
                 save_gifs=False,
             )

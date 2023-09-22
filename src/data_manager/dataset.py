@@ -7,8 +7,13 @@ from torchvision.transforms import Compose
 
 
 from src.distribution_toy import inf_train_gen
-from src.data_manager.data_type import toy_data_type, img_data_type
 from src.case import Case
+from src.data_manager.data_type import (
+    toy_data_type,
+    img_data_type,
+    audio_data_type,
+)
+from src.data_manager.audio_data_manager import load_audio_dataset
 
 
 class Dataset(TorchDataset):
@@ -74,7 +79,7 @@ def compute_mean_and_std(data_type: str) -> (torch.Tensor, torch.Tensor):
     Returns:
     - Tuple[torch.Tensor]: Mean and standard deviation tensors.
     """
-    dataset = prepare_dataset(data_type)[0]
+    dataset = prepare_img_dataset(data_type)[0]
     loader = DataLoader(dataset, batch_size=len(dataset) // 100)
     mean, std = None, None
     nb_samples = 0
@@ -92,7 +97,6 @@ def compute_mean_and_std(data_type: str) -> (torch.Tensor, torch.Tensor):
 def get_dataset(
     data_type: str,
     log_dir: str,
-    normalized_img: bool = True,
     n_samples: int = None,
 ) -> TorchDataset:
     """
@@ -101,7 +105,6 @@ def get_dataset(
     Parameters:
     - data_type (str): Type of the data.
     - log_dir (str): Directory for logs.
-    - normalized_img (bool, optional): Whether to normalize the image. Defaults to True.
     - n_samples (int, optional): Number of samples, required for 2D datasets.
 
     Returns:
@@ -113,11 +116,10 @@ def get_dataset(
                 "For 2d dataset the number of samples should be an integer > 0."
             )
         return prepare_toy_dataset(data_type, n_samples, log_dir)
+    elif data_type in audio_data_type:
+        return load_audio_dataset(data_type)
     elif data_type in img_data_type:
-        if not normalized_img:
-            return prepare_dataset(data_type)
-        mean_std = compute_mean_and_std(data_type)
-        return prepare_dataset(data_type, mean_std=mean_std)
+        return prepare_img_dataset(data_type)
     else:
         raise RuntimeError(f"Uknown data_type {data_type}")
 
@@ -135,7 +137,7 @@ def scale_imgs(t: torch.Tensor) -> torch.Tensor:
     return (t * 2) - 1
 
 
-def prepare_dataset(
+def prepare_img_dataset(
     name: str, mean_std: tuple = None
 ) -> (torch.utils.data.Dataset, torch.utils.data.Dataset):
     """
