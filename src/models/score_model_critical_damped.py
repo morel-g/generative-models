@@ -25,6 +25,7 @@ class ScoreModelCriticalDamped(Model):
         img_model_case: str = Case.u_net,
         init_var_v: float = 0.04,
         zeros_S0_vv: bool = False,
+        use_vanilla_cov=False,
     ) -> None:
         """
         Initializes the ScoreModelCriticalDamped instance.
@@ -52,6 +53,9 @@ class ScoreModelCriticalDamped(Model):
         self.add_numerical_eps_to_sigma = not zeros_S0_vv
         self.numerical_eps = 1e-9
         self.decay_case = decay_case
+        self.use_vanilla_cov = use_vanilla_cov
+        print(f"use vanilla cov = {self.use_vanilla_cov}")
+        print("Using original cov")
 
         super(ScoreModelCriticalDamped, self).__init__(
             data_type,
@@ -145,8 +149,6 @@ class ScoreModelCriticalDamped(Model):
         self,
         t: torch.Tensor,
         t0: float = 0.0,
-        S0_vv: torch.Tensor = torch.tensor(0.0),
-        S0_xx: torch.Tensor = torch.tensor(0.0),
         return_ratio: bool = False,
         double_precision: bool = False,
         apply_log: bool = False,
@@ -160,8 +162,6 @@ class ScoreModelCriticalDamped(Model):
         Parameters:
         - t (torch.Tensor): Time to evaluate the std.
         - t0 (float): Initial time. Default is 0.0.
-        - S0_vv (torch.Tensor): Initial value of S0_vv. Default is 0.0 tensor.
-        - S0_xx (torch.Tensor): Initial value of S0_xx. Default is 0.0 tensor.
         - return_ratio (bool): If True, returns ratio in the results. Default is False.
         - double_precision (bool): If True, returns tensor with double precision. Default is False.
         - apply_log (bool): If True, applies log to the time variable. Default is False.
@@ -174,9 +174,13 @@ class ScoreModelCriticalDamped(Model):
         return_type = torch.float64 if double_precision else torch.float32
         gamma = self.pde_coefs["gamma"]
 
-        t, S0_vv = self._convert_tensor(
-            t, torch.float64
-        ), self._convert_tensor(S0_vv, torch.float64)
+        S0_vv = (
+            torch.tensor(0.0, dtype=torch.float64)
+            if self.zeros_S0_vv
+            else self.get_initial_var()
+            * torch.ones_like(t, dtype=torch.float64)
+        )
+        t = self._convert_tensor(t, torch.float64)
         exp_eval = torch.exp(-4 * t / gamma)
 
         if apply_log:
@@ -266,20 +270,20 @@ class ScoreModelCriticalDamped(Model):
         Returns:
         - torch.Tensor or tuple of torch.Tensor: Standard deviation sigma and optionally S_vv.
         """
-
         if self.decay_case == Case.vanilla_sigma:
-            S_xx, S_xv, S_vv = self.cov_eval(t)
+            # if self.use_vanilla_cov:
+            #     var0v = torch.tensor(0.0) if self.zeros_S0_vv else None
+            #     S_xx, S_xv, S_vv = self.cov_eval_vanilla(
+            #         t,
+            #         var0v=var0v,
+            #     )
+            #     sigma = torch.sqrt(S_vv - S_xv**2 / S_xx)
+            # else:
+            S_xx, S_xv, S_vv = self.cov_eval(t, double_precision=True)
             sigma = torch.sqrt(S_vv - S_xv**2 / S_xx)
         else:
-            S0_vv = (
-                torch.tensor(0.0)
-                if self.zeros_S0_vv
-                else self.get_initial_var() * torch.ones_like(t)
-            )
-            S0_vv = self._convert_tensor(S0_vv, torch.float64)
             S_xx, S_xv, S_vv, ratio = self.cov_eval(
                 t,
-                S0_vv=S0_vv,
                 return_ratio=True,
                 double_precision=True,
                 apply_log=apply_log,
@@ -411,7 +415,6 @@ class ScoreModelCriticalDamped(Model):
         t1: float,
         t2: float,
         noise: Optional[torch.Tensor] = None,
-        S0_vv: torch.Tensor = torch.tensor(0.0),
         apply_log: bool = False,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
@@ -422,7 +425,6 @@ class ScoreModelCriticalDamped(Model):
         - t1 (float): Start time.
         - t2 (float): End time.
         - noise (Optional[torch.Tensor]): The noise tensor. Defaults to None.
-        - S0_vv (torch.Tensor): Tensor S0_vv. Defaults to torch.tensor(0.0).
         - apply_log (bool): If True, the logarithm will be applied. Defaults to False.
 
         Returns:
@@ -433,7 +435,11 @@ class ScoreModelCriticalDamped(Model):
         noise_v = self._get_noise_like(x) if noise is None else noise
         mu_x, mu_v = self.mean_eval(t2, x0=x, v0=v, t0=t1, apply_log=apply_log)
         S_xx, S_xv, S_vv, ratio = self.cov_eval(
-            t2, t0=t1, S0_vv=S0_vv, return_ratio=True, apply_log=apply_log
+            t2,
+            t0=t1,
+            return_ratio=True,
+            double_precision=True,
+            apply_log=apply_log,
         )
 
         x = mu_x + torch.sqrt(S_xx) * noise_x
@@ -442,6 +448,9 @@ class ScoreModelCriticalDamped(Model):
             + torch.sqrt(ratio) * noise_x
             + torch.sqrt(S_vv - ratio) * noise_v
         )
+
+        x = self._convert_tensor(x, torch.float32)
+        v = self._convert_tensor(v, torch.float32)
 
         return (x, v)
 
@@ -467,18 +476,11 @@ class ScoreModelCriticalDamped(Model):
         noise_v = self._get_noise_like(x) if noise is None else noise
         v = torch.sqrt(self.get_initial_var()) * self._get_noise_like(x)
         z = x, v
-        S0_vv = (
-            torch.tensor(0.0)
-            if self.zeros_S0_vv
-            else self.get_initial_var()
-            * torch.ones_like(t, dtype=torch.float64)
-        )
         return self.conditional_forward_step(
             z,
             0.0,
             t,
             noise=noise_v,
-            S0_vv=S0_vv,
             apply_log=apply_log,
         )
 
