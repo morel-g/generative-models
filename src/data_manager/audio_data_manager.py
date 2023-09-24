@@ -74,8 +74,9 @@ def load_audio_dataset(name):
         train_size = int(0.9 * len(dataset))
         test_size = len(dataset) - train_size
 
+        generator = torch.Generator().manual_seed(42)
         train_dataset, test_dataset = random_split(
-            dataset, [train_size, test_size]
+            dataset, [train_size, test_size], generator=generator
         )
     else:
         raise RuntimeError(f"Unkwown audio dataset {name}")
