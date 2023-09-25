@@ -57,11 +57,10 @@ Examples are provided in the **`notebook/`** directory.
 
 **Note**: The models have not been trained extensively in order to save computational time. However, training them for longer durations should improve the results. See the configuration files from the original papers if needed.
 
-| **Diffusion / Score Based Model** |  **Stochastic interpolant** |
-|:--------------------------------:|:--------------------------:|
-| ![Diffusion trajectories](docs/assets/cifar_traj_score.gif) | ![Stochastic interpolant trajectories](docs/assets/cifar_traj_stochastic_interpolant.gif) |
-| ![Diffusion samples](docs/assets/cifar_score_sample.png) | ![Stochastic interpolant samples](docs/assets/cifar_stochastic_interpolant_sample.png) |
-
+| **Diffusion / Score Based Model** | **Critical-damped Langevin** |  **Stochastic interpolant** |
+|:--------------------------------:|:--------------------------:|:--------------------------:|
+| ![Diffusion trajectories](docs/assets/cifar_traj_score.gif) |  ![CLD trajectories](docs/assets/cifar_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/cifar_traj_stochastic_interpolant.gif) |
+| ![Diffusion samples](docs/assets/cifar_score_sample.png) | ![CLD samples](docs/assets/cifar_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/cifar_stochastic_interpolant_sample.png) |
 
 
 ---
