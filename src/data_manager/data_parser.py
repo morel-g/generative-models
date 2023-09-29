@@ -134,7 +134,7 @@ def parse_viz() -> argparse.Namespace:
         "-gpu",
         "--gpu",
         type=int,
-        default=-1,
+        default=0,
         metavar="",
         help="GPU id used, -1 for CPU.",
     )
