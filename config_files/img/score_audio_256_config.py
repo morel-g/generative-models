@@ -8,7 +8,7 @@ CONFIG["scheme_params"].update(
     {
         "beta_case": Case.vanilla,
         "decay_case": Case.vanilla_sigma,
-        "nb_time_steps_eval": 200,
+        "nb_time_steps_eval": 400,
     }
 )
 CONFIG["training_params"].update(
