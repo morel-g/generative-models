@@ -13,12 +13,16 @@ CONFIG["scheme_params"].update(
 )
 CONFIG["training_params"].update(
     {
-        "epochs": 25,
+        "epochs": 100,
         "batch_size": 4,
         "batch_size_eval": 8,
         "check_val_every_n_epochs": 2,
         "lr": 1e-4,
+        "weight_decay": 0.0,
         "accumulate_grad_batches": 4,
+        "ema": True,
+        "ema_rate": 0.9999,
+        "gradient_clip_val": 1.0,
     }
 )
 CONFIG["model_params"].update(
@@ -27,11 +31,5 @@ CONFIG["model_params"].update(
         "n_channels": 128,
         "ch_mult": (1, 1, 2, 2, 4, 4),
         "n_resblocks": 2,
-    }
-)
-CONFIG["checkpoint_dict"].update(
-    {
-        "restore_training": not True,
-        "training_ckpt_path": "../outputs/audio_1_epoch/last.ckpt",
     }
 )
