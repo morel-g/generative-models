@@ -14,6 +14,7 @@ The implemented models are sourced from the following research papers:
 - [Running the models](#running-the-models)
 - [Toy datasets](#toy-datasets)
 - [Image datasets](#image-datasets)
+- [Audio datasets](#audio-datasets)
 
 ---
 
@@ -52,15 +53,11 @@ Examples are provided in the **`notebook/`** directory.
 
 ---
 
-### Sampling from the models for the CIFAR dataset:
+## Audio datasets
 
+For audio data, the raw audio signals are first converted into mel spectrograms. These spectrograms are then treated as images, and the generative models are applied to them. The models are trained from the [**audio-diffusion-256**](https://huggingface.co/datasets/teticio/audio-diffusion-256) dataset see also the [original repository](https://github.com/teticio/audio-diffusion).
 
-**Note**: The models have not been trained extensively in order to save computational time. However, training them for longer durations should improve the results. See the configuration files from the original papers if needed.
-
-| **Diffusion / Score Based Model** | **Critical-damped Langevin** |  **Stochastic interpolant** |
-|:--------------------------------:|:--------------------------:|:--------------------------:|
-| ![Diffusion trajectories](docs/assets/cifar_traj_score.gif) |  ![CLD trajectories](docs/assets/cifar_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/cifar_traj_stochastic_interpolant.gif) |
-| ![Diffusion samples](docs/assets/cifar_score_sample.png) | ![CLD samples](docs/assets/cifar_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/cifar_stochastic_interpolant_sample.png) |
-
+### Listening to the generated audio:
 
 ---
+
