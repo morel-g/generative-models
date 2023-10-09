@@ -59,5 +59,13 @@ For audio data, the raw audio signals are first converted into mel spectrograms.
 
 Listening to the generated audio (here again the quality of the generated audio can potentially be improved by increasing the computation time):
 
+
+https://github.com/morel-g/generative-models/assets/123385560/0222ae71-cf8a-4e59-a83c-86b353f71055
+
+
+
+https://github.com/morel-g/generative-models/assets/123385560/ddd2f379-54b2-4c79-84b4-682d2e99f787
+
+
 ---
 
