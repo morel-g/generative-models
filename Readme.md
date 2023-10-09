@@ -55,9 +55,11 @@ Examples are provided in the **`notebook/`** directory.
 
 ## Audio datasets
 
-For audio data, the raw audio signals are first converted into mel spectrograms. These spectrograms are then treated as images, and the generative models are applied to them. The models are trained from the [**audio-diffusion-256**](https://huggingface.co/datasets/teticio/audio-diffusion-256) dataset see also the [original repository](https://github.com/teticio/audio-diffusion).
+For audio data, the raw audio signals are first converted into mel spectrograms. These spectrograms are then treated as images, and the generative models are applied to them. The models are trained on music samples from the [**audio-diffusion-256**](https://huggingface.co/datasets/teticio/audio-diffusion-256) dataset see also the [original repository](https://github.com/teticio/audio-diffusion).
 
-Listening to the generated audio (here again the quality of the generated audio can potentially be improved by increasing the computation time):
+![Mel spectrograms](docs/assets/sample_mel_spectrogram.png)
+
+Listening to the generated audio with a diffusion / score based model (here again the quality of the generated audio can potentially be improved by increasing the computation time):
 
 
 https://github.com/morel-g/generative-models/assets/123385560/0222ae71-cf8a-4e59-a83c-86b353f71055
