@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from typing import Union, Tuple, Optional, Any, List, Dict
 
 # from .probability_distribution import ProbabilityDistribution
-from params import Params
+from src.params import Params
 from src.case import Case
 from src.data_manager.data_type import (
     toy_data_type,

@@ -13,7 +13,7 @@ from src.eval.plots_2d import compute_outputs_2d
 from src.data_manager.data_type import toy_data_type, img_data_type
 from src.save_load_obj import save_obj, load_obj
 from src.training.ema import EMA
-from params import Params
+from src.params import Params
 
 
 def load_params(params: Params) -> Params:

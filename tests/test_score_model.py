@@ -8,7 +8,7 @@ from scipy.integrate import quad
 from src.models.adapt_dt import exact_adapt_dt_constant_pde_coef, adapt_dt_pdf
 from optim.diffusion_generator import DiffusionGenerator
 from src.data_manager.data_module import DataModule
-from params import Params
+from src.params import Params
 from src.case import Case
 from torch.utils.data import DataLoader, Dataset
 import pytorch_lightning as pl

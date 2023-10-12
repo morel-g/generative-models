@@ -2,7 +2,7 @@ import torch
 import importlib
 from typing import Dict, Any
 
-from params import Params
+from src.params import Params
 from src.case import Case
 from src.data_manager.data_type import toy_data_type
 from src.training.training_module import run_sim

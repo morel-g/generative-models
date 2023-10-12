@@ -6,12 +6,12 @@ from typing import Dict, Union, List, Any
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from params import dict_to_str
+from src.params import dict_to_str
 from src.case import Case
 from src.data_manager.data_module import DataModule
 from src.data_manager.data_parser import parse_viz
 from src.data_manager.data_type import toy_data_type, img_data_type
-from params import Params
+from src.params import Params
 from src.eval.fid.fid_utils import compute_fid_v1, compute_fid_v3
 from src.eval.plots import (
     compute_imgs_outputs,

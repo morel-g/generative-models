@@ -8,7 +8,7 @@ from main import parser_to_data
 import itertools
 import subprocess
 from src.eval.plots_2d import write_to_file
-from params import Params
+from src.params import Params
 from src.training.training_module import run_sim
 from utils import write_to_file
 import json
@@ -41,7 +41,7 @@ CUSTOM_PARAMS = {
     "gamma": [0.25, 0.5, 1.0],
     # "score_function_case": [Case.classic_score, Case.time_exp],
 }
-# Adapt the parameters from PARAMS depending on the values of CUSTOM_PARAMS
+# Adapt the parameters from src.params depending on the values of CUSTOM_PARAMS
 ADAPT_PARAMS = {
     "gamma": {
         0.25: {"T_final": 4 * 3.0},
