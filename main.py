@@ -1,8 +1,8 @@
 import torch
 import importlib
-from typing import Dict, Union, List, Any
+from typing import Dict, Any
 
-from src.data_manager.data import Data
+from params import Params
 from src.case import Case
 from src.data_manager.data_type import toy_data_type
 from src.training.training_module import run_sim
@@ -108,5 +108,5 @@ if __name__ == "__main__":
     torch.set_default_dtype(torch_float_precision)
     args = parse_main()
     params = get_params(args)
-    data = Data(**params)
-    run_sim(data)
+    params = Params(**params)
+    run_sim(params)

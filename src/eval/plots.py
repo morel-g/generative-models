@@ -48,7 +48,7 @@ def compute_imgs_outputs(
         )
         break
 
-    if net.data.model_type == Case.score_model:
+    if net.params.model_type == Case.score_model:
         backward_schemes = net.get_backward_schemes()
         default_backward_scheme = net.get_backward_scheme()
 
@@ -116,11 +116,11 @@ def sample_img(
         )
 
     # Check if images are spectograms and save audio files if needed
-    if save_audio_if_needed and net.data.data_type in audio_data_type:
+    if save_audio_if_needed and net.params.data_type in audio_data_type:
         nb_audio_files = min(4, nb_samples)
         imgs_to_audio(
             imgs[-1][:nb_audio_files],
-            net.data.data_type,
+            net.params.data_type,
             output_dir,
             name=name,
         )

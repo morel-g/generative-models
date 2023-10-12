@@ -67,8 +67,8 @@ def compute_outputs_2d(
     """
     ensure_directory_exists(output_dir)
     # Initialize
-    data = net.data
-    bound, s = get_bounds_and_s(data.data_type)
+    params = net.params
+    bound, s = get_bounds_and_s(params.data_type)
     bounds = (-bound, bound, -bound, bound)
 
     # Save velocities for non-augmented networks
@@ -78,7 +78,7 @@ def compute_outputs_2d(
     nb_samples = 10000
     X = X.to(net.device)
 
-    if net.data.model_type in (
+    if net.params.model_type in (
         Case.score_model,
         Case.score_model_critical_damped,
     ):
@@ -290,7 +290,7 @@ def save_trajectories_infos(
     )
 
     # Compute and save OT cost if needed
-    if net.data.print_opt.get("ot_costs", False):
+    if net.params.print_opt.get("ot_costs", False):
         ot_cost = compute_ot_cost(
             X[:nb_samples].cpu().detach().numpy(), final_x_traj
         )

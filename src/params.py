@@ -36,9 +36,9 @@ def dict_to_str(d, indent=0, s="-"):
     return result
 
 
-class Data:
+class Params:
     def __init__(self, **kwargs):
-        """General data object to store parameters."""
+        """General params object to store parameters."""
         # for key, value in INIT_DICT.items():
         #     self.__setattr__(key, value)
         self.logger_path = "outputs/tensorboard_logs"
@@ -53,7 +53,7 @@ class Data:
         """
         s = ""
         s += "-" * 50 + "  \n"
-        s += "Data values" + "  \n"
+        s += " Params values" + "  \n"
         s += "-" * 50 + " "
         s += dict_to_str(vars(self))
         s += "  \n  "
@@ -63,10 +63,10 @@ class Data:
         return s
 
     def print(self, f=sys.stdout):
-        """Print the data.
+        """Print the parameters.
 
         Args:
-            f: Where to print data. Defaults to sys.stdout.
+            f: Where to print params. Defaults to sys.stdout.
         """
         print(self.to_string(), file=f)
 

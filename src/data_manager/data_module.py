@@ -4,36 +4,37 @@ from .dataset import get_dataset
 from torchvision import transforms
 from ..utils import id_to_device
 from torch.utils.data import default_collate
+from src.params import Params
 
 
 class DataModule(pl.LightningDataModule):
-    def __init__(self, data: object, log_dir: str = None):
+    def __init__(self, params: Params, log_dir: str = None):
         """
         Initialize the data module.
 
         Parameters:
-        - data (object): A data object containing all the parameters of the
+        - params (Params): A Params object containing all the parameters of the
         simulation.
         - log_dir (str, optional): Directory for logs. Defaults to None.
         """
         super().__init__()
 
-        self.data = data
+        self.params = params
         self.device = (
-            id_to_device(data.accelerator, data.device)
-            if isinstance(data.device, list)
+            id_to_device(params.accelerator, params.device)
+            if isinstance(params.device, list)
             else None
         )
-        self.batch_size = data.training_params["batch_size"]
-        self.batch_size_eval = data.training_params.get(
+        self.batch_size = params.training_params["batch_size"]
+        self.batch_size_eval = params.training_params.get(
             "batch_size_eval", self.batch_size
         )
         self.pin_memory = self.device != "cpu"
         self.train_img_data, self.val_img_data = None, None
-        n_samples = getattr(data, "n_samples", None)
+        n_samples = getattr(params, "n_samples", None)
 
         self.train_data, self.val_data = get_dataset(
-            data_type=self.data.data_type,
+            data_type=self.params.data_type,
             log_dir=log_dir,
             n_samples=n_samples,
         )

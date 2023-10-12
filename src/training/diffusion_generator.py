@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 from typing import Union, Tuple, Optional, Any, List, Dict
 
 # from .probability_distribution import ProbabilityDistribution
-from src.data_manager.data import Data
+from params import Params
 from src.case import Case
 from src.data_manager.data_type import (
     toy_data_type,
@@ -26,70 +26,72 @@ class DiffusionGenerator(pl.LightningModule):
 
     def __init__(
         self,
-        data: Data,
+        params: Params,
     ) -> None:
         """
         Initialize the DiffusionGenerator model.
 
         Parameters:
-            data: Configuration and scheme parameters for the diffusion generator.
+            params: Configuration and scheme parameters for the diffusion generator.
         """
         super(DiffusionGenerator, self).__init__()
         self.save_hyperparameters()
-        self.data = data
+        self.params = params
 
-        if data.model_type == Case.score_model:
+        if params.model_type == Case.score_model:
             self.model = ScoreModel(
-                data.data_type,
-                data.model_params,
-                data.scheme_params["nb_time_steps_eval"],
-                data.scheme_params["nb_time_steps_train"],
-                T_final=data.scheme_params["T_final"],
-                beta_case=data.scheme_params.get("beta_case", Case.vanilla),
-                adapt_dt=data.scheme_params["adapt_dt"],
-                pde_coefs=data.scheme_params.get(
+                params.data_type,
+                params.model_params,
+                params.scheme_params["nb_time_steps_eval"],
+                params.scheme_params["nb_time_steps_train"],
+                T_final=params.scheme_params["T_final"],
+                beta_case=params.scheme_params.get("beta_case", Case.vanilla),
+                adapt_dt=params.scheme_params["adapt_dt"],
+                pde_coefs=params.scheme_params.get(
                     "pde_coefs",
                     {"gamma": 1.0},
                 ),
-                decay_case=data.scheme_params.get(
+                decay_case=params.scheme_params.get(
                     "decay_case", Case.vanilla_sigma
                 ),
-                img_model_case=data.scheme_params.get(
+                img_model_case=params.scheme_params.get(
                     "img_model_case", Case.u_net
                 ),
             )
-        elif data.model_type == Case.score_model_critical_damped:
+        elif params.model_type == Case.score_model_critical_damped:
             self.model = ScoreModelCriticalDamped(
-                data.data_type,
-                data.model_params,
-                data.scheme_params["nb_time_steps_eval"],
-                data.scheme_params["nb_time_steps_train"],
-                T_final=data.scheme_params["T_final"],
-                adapt_dt=data.scheme_params["adapt_dt"],
-                decay_case=data.scheme_params.get(
+                params.data_type,
+                params.model_params,
+                params.scheme_params["nb_time_steps_eval"],
+                params.scheme_params["nb_time_steps_train"],
+                T_final=params.scheme_params["T_final"],
+                adapt_dt=params.scheme_params["adapt_dt"],
+                decay_case=params.scheme_params.get(
                     "decay_case", Case.vanilla_sigma
                 ),
-                img_model_case=data.scheme_params.get(
+                img_model_case=params.scheme_params.get(
                     "img_model_case", Case.u_net
                 ),
-                init_var_v=data.scheme_params.get("init_var_v", 0.04),
-                zeros_S0_vv=data.scheme_params.get("zeros_S0_vv", False),
+                init_var_v=params.scheme_params.get("init_var_v", 0.04),
+                zeros_S0_vv=params.scheme_params.get("zeros_S0_vv", False),
             )
-        elif data.model_type == Case.stochastic_interpolant:
+        elif params.model_type == Case.stochastic_interpolant:
             self.model = StochasticInterpolant(
-                data.data_type,
-                data.model_params,
-                data.scheme_params["nb_time_steps_eval"],
-                data.scheme_params["nb_time_steps_train"],
-                T_final=data.scheme_params["T_final"],
-                beta_case=data.scheme_params["beta_case"],
-                adapt_dt=data.scheme_params["adapt_dt"],
-                decay_case=data.scheme_params.get("decay_case", Case.exp),
-                interpolant=data.scheme_params["interpolant"],
-                img_model_case=data.scheme_params.get(
+                params.data_type,
+                params.model_params,
+                params.scheme_params["nb_time_steps_eval"],
+                params.scheme_params["nb_time_steps_train"],
+                T_final=params.scheme_params["T_final"],
+                beta_case=params.scheme_params["beta_case"],
+                adapt_dt=params.scheme_params["adapt_dt"],
+                decay_case=params.scheme_params.get("decay_case", Case.exp),
+                interpolant=params.scheme_params["interpolant"],
+                img_model_case=params.scheme_params.get(
                     "img_model_case", Case.u_net
                 ),
-                noise_addition=data.scheme_params.get("noise_addition", None),
+                noise_addition=params.scheme_params.get(
+                    "noise_addition", None
+                ),
             )
         else:
             raise ValueError("Model type not recognized")
@@ -165,7 +167,7 @@ class DiffusionGenerator(pl.LightningModule):
             return_velocities=return_velocities,
         )
 
-        if self.data.data_type in img_data_type:
+        if self.params.data_type in img_data_type:
             if self.model.is_augmented():
                 x, v = x
                 x, v = (x + 1.0) / 2.0, (v + 1.0) / 2.0
@@ -247,10 +249,10 @@ class DiffusionGenerator(pl.LightningModule):
         - Either a single optimizer or a tuple containing a list of
         optimizers and a list of scheduler dictionaries.
         """
-        optimizer = create_optimizer(self.model, self.data.training_params)
+        optimizer = create_optimizer(self.model, self.params.training_params)
         scheduler = create_scheduler(
             optimizer,
-            self.data.training_params,
+            self.params.training_params,
             data_module=self.trainer.datamodule,
         )
 
@@ -274,10 +276,10 @@ class DiffusionGenerator(pl.LightningModule):
         sample_path = os.path.join(checkpoint_dir, "training_samples")
 
         # Check the data type and call the appropriate sampling function
-        if self.data.data_type in toy_data_type:
+        if self.params.data_type in toy_data_type:
             sample_2d(self, sample_path, name)
-        elif self.data.data_type in img_data_type:
-            if self.data.data_type in audio_data_type:
+        elif self.params.data_type in img_data_type:
+            if self.params.data_type in audio_data_type:
                 nb_rows = 2
                 nb_cols = 3
             else:

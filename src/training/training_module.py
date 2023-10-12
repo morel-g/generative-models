@@ -13,40 +13,40 @@ from src.eval.plots_2d import compute_outputs_2d
 from src.data_manager.data_type import toy_data_type, img_data_type
 from src.save_load_obj import save_obj, load_obj
 from src.training.ema import EMA
-from src.data_manager.data import Data
+from params import Params
 
 
-def load_data(data: Data) -> Data:
-    """Loads the data from a checkpoint.
+def load_params(params: Params) -> Params:
+    """Loads the parameters from a checkpoint.
 
     Args:
-        data (Data): Data object containing checkpoint information.
+        params (Params): Params object containing checkpoint information.
 
     Returns:
-        Data: Loaded data with some attributes replaced by the input data's attributes.
+        Params: Loaded params with some attributes replaced by the input params's attributes.
     """
-    ckpt_path = data.checkpoint_dict["training_ckpt_path"]
+    ckpt_path = params.checkpoint_dict["training_ckpt_path"]
     load_path = ckpt_path[: ckpt_path.index("/Checkpoint")]
-    data_load = load_obj(load_path + "/data.obj")
+    data_load = load_obj(load_path + "/params.obj")
 
-    data_load.checkpoint_dict = data.checkpoint_dict
-    data_load.accelerator = data.accelerator
-    data_load.device = data.device
-    data_load.seed = data.seed
+    data_load.checkpoint_dict = params.checkpoint_dict
+    data_load.accelerator = params.accelerator
+    data_load.device = params.device
+    data_load.seed = params.seed
     return data_load
 
 
-def setup_callbacks(data: Data, log_dir: str) -> list:
+def setup_callbacks(params: Params, log_dir: str) -> list:
     """
     Set up the necessary callbacks for training.
 
     This function prepares the list of callbacks required for the training
     process. This includes setting up the checkpoint saving mechanism and
     optionally, the EMA (Exponential Moving Average) and learning rate monitor
-    callbacks, based on the provided data settings.
+    callbacks, based on the provided params settings.
 
     Args:
-        data (Data): Data object which contains all necessary parameters
+        params (Params): Params object which contains all necessary parameters
         including checkpoint settings, EMA settings,and others.
         logger_dir (str): The directory where the logs are saved.
 
@@ -59,7 +59,7 @@ def setup_callbacks(data: Data, log_dir: str) -> list:
     """
 
     val_loss_str = "val_loss"
-    save_top_k = data.checkpoint_dict.get("save_top", 2)
+    save_top_k = params.checkpoint_dict.get("save_top", 2)
     checkpoint_callback = ModelCheckpoint(
         monitor=val_loss_str,
         dirpath=log_dir,
@@ -71,10 +71,10 @@ def setup_callbacks(data: Data, log_dir: str) -> list:
     )
 
     callbacks = [checkpoint_callback]
-    if data.training_params.get("ema", False):
-        if "ema_rate" not in data.training_params:
+    if params.training_params.get("ema", False):
+        if "ema_rate" not in params.training_params:
             raise RuntimeError("ema_rate not specified in training params.")
-        ema = EMA(data.training_params["ema_rate"])
+        ema = EMA(params.training_params["ema_rate"])
         callbacks.append(ema)
 
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
@@ -86,13 +86,13 @@ def setup_callbacks(data: Data, log_dir: str) -> list:
     return callbacks
 
 
-def initialize_or_load_model(data: Data) -> DiffusionGenerator:
+def initialize_or_load_model(params: Params) -> DiffusionGenerator:
     """
     Initialize a new model or load an existing one from a checkpoint based on
-    provided data settings.
+    provided params settings.
 
     Args:
-        data (Data): Data object which contains all necessary parameters
+        params (Params): Params object which contains all necessary parameters
         including checkpoint settings and others.
 
     Returns:
@@ -100,28 +100,28 @@ def initialize_or_load_model(data: Data) -> DiffusionGenerator:
         from a checkpoint.
     """
 
-    if not data.checkpoint_dict["restore_training"]:
-        return DiffusionGenerator(data)
+    if not params.checkpoint_dict["restore_training"]:
+        return DiffusionGenerator(params)
 
-    data = (
-        load_data(data)
-        if data.checkpoint_dict.get("load_data", False)
-        else data
+    params = (
+        load_params(params)
+        if params.checkpoint_dict.get("load_data", False)
+        else params
     )
     return DiffusionGenerator.load_from_checkpoint(
-        data.checkpoint_dict["training_ckpt_path"], data=data
+        params.checkpoint_dict["training_ckpt_path"], params=params
     )
 
 
 def train_model(
-    data: Data,
+    params: Params,
     data_module: DataModule,
     logger: Optional[TensorBoardLogger] = None,
 ) -> DiffusionGenerator:
     """Main training function.
 
     Args:
-        data (Data): Input data object.
+        params (Params): Input params object.
         data_module (DataModule): Data module for loading training and validation datasets.
         logger (Optional[TensorBoardLogger], optional): Logger used to save the results. Defaults to None.
 
@@ -129,43 +129,43 @@ def train_model(
         DiffusionGenerator: The trained network.
     """
     if logger is None:
-        logger = get_logger(data.logger_path)
+        logger = get_logger(params.logger_path)
 
     startTime = datetime.now()
 
-    net = initialize_or_load_model(data)
-    callbacks = setup_callbacks(data, logger.log_dir)
+    net = initialize_or_load_model(params)
+    callbacks = setup_callbacks(params, logger.log_dir)
 
     # Set device for training
-    device = data.device if data.accelerator == "gpu" else "auto"
+    device = params.device if params.accelerator == "gpu" else "auto"
 
-    # Print and save data
-    data.write(logger.log_dir + "/data.txt", print=True)
+    # Print and save params
+    params.write(logger.log_dir + "/params.txt", print=True)
 
     # Initialize trainer and start training
     trainer = pl.Trainer(
-        max_epochs=data.training_params["epochs"],
-        accelerator=data.accelerator,
+        max_epochs=params.training_params["epochs"],
+        accelerator=params.accelerator,
         devices=device,
         callbacks=callbacks,
         logger=logger,
-        check_val_every_n_epoch=data.training_params[
+        check_val_every_n_epoch=params.training_params[
             "check_val_every_n_epochs"
         ],
-        enable_progress_bar=data.print_opt.get("enable_progress_bar", True),
-        gradient_clip_val=data.training_params.get("gradient_clip_val", 0.0),
+        enable_progress_bar=params.print_opt.get("enable_progress_bar", True),
+        gradient_clip_val=params.training_params.get("gradient_clip_val", 0.0),
         reload_dataloaders_every_n_epochs=0,
-        accumulate_grad_batches=data.training_params.get(
+        accumulate_grad_batches=params.training_params.get(
             "accumulate_grad_batches", 1
         ),
     )
 
-    if not data.checkpoint_dict["restore_training"]:
+    if not params.checkpoint_dict["restore_training"]:
         trainer.fit(net, datamodule=data_module)
-    elif data.training_params["epochs"] > 0:
+    elif params.training_params["epochs"] > 0:
         trainer.fit(
             net,
-            ckpt_path=data.checkpoint_dict["training_ckpt_path"],
+            ckpt_path=params.checkpoint_dict["training_ckpt_path"],
             datamodule=data_module,
         )
     else:
@@ -177,7 +177,7 @@ def train_model(
             "Loading checkpoint " + trainer.checkpoint_callback.best_model_path
         )
         net = DiffusionGenerator.load_from_checkpoint(
-            trainer.checkpoint_callback.best_model_path, data=data
+            trainer.checkpoint_callback.best_model_path, params=params
         )
 
     print("Execution time =", datetime.now() - startTime)
@@ -185,7 +185,7 @@ def train_model(
     # Set the model device
     net_device = (
         torch.device("cuda")
-        if data.accelerator == "gpu"
+        if params.accelerator == "gpu"
         else torch.device("cpu")
     )
     net.to(net_device)
@@ -193,33 +193,33 @@ def train_model(
     return net
 
 
-def run_sim(data: Data) -> Tuple[DiffusionGenerator, TensorBoardLogger]:
+def run_sim(params: Params) -> Tuple[DiffusionGenerator, TensorBoardLogger]:
     """Runs the complete simulation including training and evaluation.
 
     Args:
-        data (Data): Input data object.
+        params (Params): Input params object.
 
     Returns:
         Tuple[DiffusionGenerator, TensorBoardLogger]: The trained network and logger used.
     """
-    logger = get_logger(data.logger_path)
-    save_obj(data, logger.log_dir + "/data.obj")
+    logger = get_logger(params.logger_path)
+    save_obj(params, logger.log_dir + "/params.obj")
 
-    data_module = DataModule(data, logger.log_dir)
-    net = train_model(data, data_module, logger)
+    data_module = DataModule(params, logger.log_dir)
+    net = train_model(params, data_module, logger)
 
     # Evaluate the model
     net.eval()
     with torch.no_grad():
-        if data.data_type in toy_data_type:
+        if params.data_type in toy_data_type:
             x_val = data_module.train_data.x
             compute_outputs_2d(net, x_val, logger.log_dir)
-        elif data.data_type in img_data_type:
+        elif params.data_type in img_data_type:
             val_dataset = data_module.val_data
             compute_imgs_outputs(
                 net, val_dataset, logger.log_dir, nb_rows=5, nb_cols=5
             )
         else:
-            raise RuntimeError(f"Uknown data_type {data.data_type}")
+            raise RuntimeError(f"Uknown data_type {params.data_type}")
 
     return net, logger

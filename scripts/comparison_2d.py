@@ -8,7 +8,7 @@ from main import parser_to_data
 import itertools
 import subprocess
 from src.eval.plots_2d import write_to_file
-from src.data_manager.data import Data
+from params import Params
 from src.training.training_module import run_sim
 from utils import write_to_file
 import json
@@ -119,8 +119,8 @@ if __name__ == "__main__":
         adapt_params_to_custom(PARAMS)
         PARAMS["logger_path"] = LOGGER_PATH
         args = CustomArgs(**PARAMS)
-        data = parser_to_data(args)
-        _, logger = run_sim(data)
+        params = parser_to_data(args)
+        _, logger = run_sim(params)
         write_outputs(logger.log_dir, d)
 
         # args = dict_to_args(params)

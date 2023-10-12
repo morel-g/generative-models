@@ -6,12 +6,12 @@ from typing import Dict, Union, List, Any
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.data_manager.data import dict_to_str
+from params import dict_to_str
 from src.case import Case
 from src.data_manager.data_module import DataModule
 from src.data_manager.data_parser import parse_viz
 from src.data_manager.data_type import toy_data_type, img_data_type
-from src.data_manager.data import Data
+from params import Params
 from src.eval.fid.fid_utils import compute_fid_v1, compute_fid_v3
 from src.eval.plots import (
     compute_imgs_outputs,
@@ -104,7 +104,7 @@ def save_viz_infos(
 
 
 def configure_viz_infos(
-    args: Any, net: DiffusionGenerator, data: Data
+    args: Any, net: DiffusionGenerator, params: Params
 ) -> Dict[str, Any]:
     """
     Configures the visualization information based on the provided arguments.
@@ -112,7 +112,7 @@ def configure_viz_infos(
     Parameters:
     - args (Any): Arguments containing parameters for the visualization.
     - net (DiffusionGenerator): Neural network model.
-    - data (Data): Data used for the model.
+    - params (Params): Parameters used for the model.
 
     Returns:
     - Dict[str, Any]: Dictionary containing visualization information.
@@ -132,7 +132,9 @@ def configure_viz_infos(
     if viz_infos["nb_time_validation"]:
         net.nb_time_validation = viz_infos["nb_time_validation"]
     if viz_infos["batch_size_eval"]:
-        data.training_params["batch_size_eval"] = viz_infos["batch_size_eval"]
+        params.training_params["batch_size_eval"] = viz_infos[
+            "batch_size_eval"
+        ]
     if viz_infos["Backward scheme"]:
         net.set_backward_scheme(viz_infos["Backward scheme"])
 
@@ -141,7 +143,7 @@ def configure_viz_infos(
 
 def compute_fid(
     net: DiffusionGenerator,
-    data: Data,
+    params: Params,
     data_module: DataModule,
     args: Any,
     viz_infos: Dict[str, Any],
@@ -152,7 +154,7 @@ def compute_fid(
 
     Parameters:
     - net (DiffusionGenerator): Neural network model.
-    - data (Data): Parameters used for the model.
+    - params (Params): Parameters used for the model.
     - data_module (DataModule): Data loading and processing module.
     - args (Any): Arguments containing parameters for computing FID.
     - viz_infos (Dict[str, Any]): Dictionary containing visualization information.
@@ -174,7 +176,7 @@ def compute_fid(
         fid = compute_fid_v1(
             net,
             path_to_stats,
-            data.data_type,
+            params.data_type,
             batch_size=fid_batch_size,
             inceptionv3=inceptionv3,
         )
@@ -207,17 +209,17 @@ if __name__ == "__main__":
     device = torch.device("cuda:" + str(gpu) if gpu != -1 else "cpu")
     load_path = os.path.dirname(ckpt_path)
     output_dir = load_path if output_dir is None else output_dir
-    data = load_obj(load_path + "/data.obj")
+    params = load_obj(load_path + "/params.obj")
 
-    data_type = data.data_type
+    data_type = params.data_type
 
-    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, data=data)
+    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, params=params)
     net.eval()
 
-    viz_infos = configure_viz_infos(args, net, data)
+    viz_infos = configure_viz_infos(args, net, params)
 
     net.to(device)
-    data_module = DataModule(data)
+    data_module = DataModule(params)
 
     if args.loss:
         val_loader = data_module.val_dataloader()
@@ -236,11 +238,11 @@ if __name__ == "__main__":
         }
 
     elif args.fid:
-        compute_fid(net, data, data_module, args, viz_infos, device)
-    elif data.data_type in toy_data_type:
+        compute_fid(net, params, data_module, args, viz_infos, device)
+    elif params.data_type in toy_data_type:
         x_val = data_module.val_data.x
         compute_outputs_2d(net, x_val, output_dir)
-    elif data.data_type in img_data_type:
+    elif params.data_type in img_data_type:
         nb_rows, nb_cols = args.nb_imgs[0], args.nb_imgs[1]
         val_dataset = data_module.val_data
         compute_imgs_outputs(net, val_dataset, output_dir, nb_rows, nb_cols)

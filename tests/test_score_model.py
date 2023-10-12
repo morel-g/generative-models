@@ -8,7 +8,7 @@ from scipy.integrate import quad
 from src.models.adapt_dt import exact_adapt_dt_constant_pde_coef, adapt_dt_pdf
 from optim.diffusion_generator import DiffusionGenerator
 from src.data_manager.data_module import DataModule
-from src.data_manager.data import Data
+from params import Params
 from src.case import Case
 from torch.utils.data import DataLoader, Dataset
 import pytorch_lightning as pl
@@ -116,23 +116,23 @@ class DiracDataset(Dataset):
 
 class TestScoreModel(unittest.TestCase):
     def test_score(self):
-        data = Data(**DATA_DICT)
+        data = Params(**DATA_DICT)
         x_init = torch.randn(2)
         train_dataset = DiracDataset(x_init, num_samples=100)
         train_dataloader = DataLoader(
             train_dataset, batch_size=32, shuffle=True
         )
-        net = DiffusionGenerator(data)
+        net = DiffusionGenerator(params)
         trainer = pl.Trainer(max_epochs=10)
         trainer.fit(net, train_dataloader)
 
 
 if __name__ == "__main__":
     # unittest.main()
-    data = Data(**DATA_DICT)
+    params = Params(**DATA_DICT)
     x_init = torch.randn(2)
     train_dataset = DiracDataset(x_init, num_samples=100)
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    net = DiffusionGenerator(data)
+    net = DiffusionGenerator(params)
     trainer = pl.Trainer(max_epochs=10)
     trainer.fit(net, train_dataloader)
