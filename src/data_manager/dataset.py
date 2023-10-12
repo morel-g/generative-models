@@ -6,7 +6,7 @@ from torchvision.datasets import CIFAR10, FashionMNIST, MNIST
 from torchvision.transforms import Compose
 
 
-from src.distribution_toy import inf_train_gen
+from src.data_manager.data_toy import inf_train_gen
 from src.case import Case
 from src.data_manager.data_type import (
     toy_data_type,
