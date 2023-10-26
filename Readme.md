@@ -79,7 +79,7 @@ For audio data, the raw audio signals are first converted into mel spectrograms.
 <img src="docs/assets/sample_mel_spectrogram.png" alt="Mel spectrograms" width="434" height="250">
 </div>
 
-Listening to some audio generated with a diffusion / score based model, here again the quality of the generated audio can potentially be improved by increasing the training duration and allocating more computational resources:
+Listening to selected audio generated with a diffusion/score based model. Here again the quality of the generated audio can potentially be improved by training for longer duration and allocating more computational resources.
 
 
 https://github.com/morel-g/generative-models/assets/123385560/ddd2f379-54b2-4c79-84b4-682d2e99f787
