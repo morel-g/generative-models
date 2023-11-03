@@ -68,7 +68,7 @@ def compute_fid_v1(
     all_pools = []
     for r in range(num_sampling_rounds):
         samples = net.sample(batch_size, return_trajectories=False)
-        if net.model.is_augmented():
+        if net.is_augmented():
             samples, _ = samples
         samples = np.clip(
             samples.permute(0, 2, 3, 1).cpu().numpy() * 255.0, 0, 255

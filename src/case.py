@@ -103,3 +103,7 @@ class Case:
     # Noise addition for the stochastic interpolant model
     linear_noise = "linear_noise"
     sqrt_noise = "sqrt_noise"
+    
+    # EMA interval
+    step = "step"
+    epoch = "epoch"

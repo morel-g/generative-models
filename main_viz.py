@@ -213,21 +213,23 @@ if __name__ == "__main__":
 
     data_type = params.data_type
 
-    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, params=params)
+    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, params=params)    
     net.eval()
 
     viz_infos = configure_viz_infos(args, net, params)
 
-    net.to(device)
     data_module = DataModule(params)
+    net.prepare_for_inference(data_module.train_dataloader(), device)
 
     if args.loss:
         val_loader = data_module.val_dataloader()
         loss = 0.0
+        model = net.get_model()
 
         for x in tqdm(val_loader, desc="Computing the validation loss"):
             x = x[0] if isinstance(x, list) else x
-            val_loss = net.model.loss(x.to(device)).cpu().item()
+            
+            val_loss = model.loss(x.to(device)).cpu().item()
             loss += val_loss
 
         print("Validation loss = ", loss / len(val_loader))

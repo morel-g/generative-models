@@ -23,9 +23,9 @@ CONFIG = {
         "lr": 5e-3,
         "weight_decay": 1e-3,
         "check_val_every_n_epochs": 20,
-
         "ema": not True,
         "ema_rate": 0.999,
+        "ema_interval": Case.epoch,
         "gradient_clip_val": 0.0,
         "nb_time_validation": 3,
         "scheduler_dict": {
@@ -44,7 +44,10 @@ CONFIG = {
         "load_data": False,
         "save_top": 5,
     },
-    "print_opt": {"ot_costs": False, "enable_progress_bar": True,},
+    "print_opt": {
+        "ot_costs": False,
+        "enable_progress_bar": True,
+    },
     "logger_path": "../outputs/",
     "accelerator": "cpu",
     "device": [0],

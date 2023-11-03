@@ -71,11 +71,11 @@ def setup_callbacks(params: Params, log_dir: str) -> list:
     )
 
     callbacks = [checkpoint_callback]
-    if params.training_params.get("ema", False):
-        if "ema_rate" not in params.training_params:
-            raise RuntimeError("ema_rate not specified in training params.")
-        ema = EMA(params.training_params["ema_rate"])
-        callbacks.append(ema)
+    # if params.training_params.get("ema", False):
+    #     if "ema_rate" not in params.training_params:
+    #         raise RuntimeError("ema_rate not specified in training params.")
+    #     ema = EMA(params.training_params["ema_rate"])
+    #     callbacks.append(ema)
 
     lr_monitor = LearningRateMonitor(logging_interval="epoch")
     callbacks.append(lr_monitor)
@@ -188,8 +188,8 @@ def train_model(
         if params.accelerator == "gpu"
         else torch.device("cpu")
     )
-    net.to(net_device)
-
+    net.prepare_for_inference(data_module.train_dataloader(), net_device)
+    
     return net
 
 
