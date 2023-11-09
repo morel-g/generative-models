@@ -11,8 +11,6 @@ CONFIG["training_params"].update(
         "epochs": 150,
         "batch_size": 128,
         "batch_size_eval": 256,
-        "ema": not True,
-        "ema_rate": 0.99,
         "check_val_every_n_epochs": 10,
     }
 )

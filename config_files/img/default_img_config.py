@@ -27,8 +27,7 @@ CONFIG = {
         "lr": 3e-4,
         "weight_decay": 1e-3,
         "check_val_every_n_epochs": 10,
-        "ema": not True,
-        "ema_rate": 0.99,
+        "ema_dict": {"use_ema": False},
         "gradient_clip_val": 0.0,
         "scheduler_dict": {
             "scheduler": Case.cosine_with_warmup,
