@@ -1,6 +1,6 @@
 from src.case import Case
 
-toy_data_type = [
+toy_continuous_data_type = [
     Case.two_spirals,
     Case.moons,
     Case.cross_gaussians,
@@ -12,9 +12,22 @@ toy_data_type = [
     Case.uniform,
     Case.circles,
     Case.conditionnal8gaussians,
-    Case.n_dim_gaussians,
-    Case.gaussian,
     Case.multimodal_swissroll,
+]
+
+toy_discrete_data_type = [
+    Case.two_spirals_discrete,
+    Case.moons_discrete,
+    Case.cross_gaussians_discrete,
+    Case.swissroll_discrete,
+    Case.joint_gaussian_discrete,
+    Case.eight_gaussians_discrete,
+    Case.pinwheel_discrete,
+    Case.checkerboard_discrete,
+    Case.uniform_discrete,
+    Case.circles_discrete,
+    Case.conditionnal8gaussians_discrete,
+    Case.multimodal_swissroll_discrete,
 ]
 
 img_data_type = [
@@ -28,5 +41,10 @@ img_data_type = [
     Case.audio_diffusion_64,
 ]
 
+text_data_type = [Case.wiki, Case.lm1b, Case.lm1b_short]
+
+toy_data_type = toy_continuous_data_type + toy_discrete_data_type
 
 audio_data_type = [Case.audio_diffusion_256, Case.audio_diffusion_64]
+
+discrete_data_type = toy_discrete_data_type + text_data_type

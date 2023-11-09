@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 import numpy as np
 from typing import Union, List, Tuple
 
@@ -27,23 +28,34 @@ def append_last_element(
     return arr
 
 
-def reduce_length_array(
-    input_array: Union[np.ndarray, List, torch.Tensor], target_size: int = 40
-) -> Union[np.ndarray, List, torch.Tensor]:
-    """Reduce the length of an array. Use to compute times to save trajectories.
+def equally_spaced_integers(
+    total_size: int, target_size: int = 40
+) -> List[int]:
+    """
+    Generates a list of equally spaced integers based on the total size and target size.
 
-    Args:
-        input_array (Union[np.ndarray, List, torch.Tensor]): The array to reduce the length of.
-        target_size (int, optional): The target size to reduce to. Defaults to 40.
+    Parameters:
+    - total_size (int): The maximum value in the list.
+    - target_size (int, optional): The number of integers to generate. Default is 40.
 
     Returns:
-        Union[np.ndarray, List, torch.Tensor]: The reduced array.
+    - List[int]: A list of equally spaced integers.
+
+    Raises:
+    - ValueError: If total_size or target_size is negative.
+    - ValueError: If target_size is 0, since division by zero is not allowed.
     """
-    step = max(len(input_array) // target_size, 1)
-    reduced_array = input_array[::step]
-    if len(input_array) % step != 1 and len(input_array) > target_size:
-        reduced_array = append_last_element(reduced_array, input_array[-1])
-    return reduced_array
+    if target_size < 0 or total_size < 0:
+        raise ValueError("total_size and target_size must be non-negative")
+
+    if target_size > total_size:
+        return list(range(total_size + 1))
+
+    result = [
+        int(round(i * total_size / (target_size - 1)))
+        for i in range(target_size)
+    ]
+    return result
 
 
 def append_trajectories(

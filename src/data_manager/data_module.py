@@ -5,6 +5,8 @@ from torchvision import transforms
 from ..utils import id_to_device
 from torch.utils.data import default_collate
 from src.params import Params
+from src.case import Case
+from src.data_manager.data_type import toy_discrete_data_type, text_data_type
 
 
 class DataModule(pl.LightningDataModule):
@@ -33,14 +35,27 @@ class DataModule(pl.LightningDataModule):
         self.train_img_data, self.val_img_data = None, None
         n_samples = getattr(params, "n_samples", None)
 
+        kwargs = self.get_kwargs_dataset()
         self.train_data, self.val_data = get_dataset(
             data_type=self.params.data_type,
             log_dir=log_dir,
             n_samples=n_samples,
+            **kwargs
         )
         self.custom_train_data = None
         self.custom_val_data = None
         self.use_custom_data = False
+
+    def get_kwargs_dataset(self):
+        kwargs = {}
+        if self.params.data_type in toy_discrete_data_type:
+            kwargs["nb_tokens"] = self.params.model_params["nb_tokens"]
+        if self.params.data_type in text_data_type:
+            kwargs["seq_length"] = self.params.scheme_params["seq_length"]
+            kwargs["tokenizer_name"] = self.params.scheme_params.get(
+                "tokenizer_name", Case.gpt2
+            )
+        return kwargs
 
     def prepare_data(self):
         pass

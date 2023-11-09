@@ -4,11 +4,11 @@ from typing import Dict, Any
 
 from src.params import Params
 from src.case import Case
-from src.data_manager.data_type import toy_data_type
+from src.data_manager.data_type import img_data_type, text_data_type
 from src.training.training_module import run_sim
 from src.data_manager.data_parser import parse_main
 from src.precision import torch_float_precision
-
+from src.data_manager.text_data_manager import get_nb_tokens
 
 # Constants
 MNIST_DIM = 28
@@ -62,7 +62,8 @@ def set_img_default_params(data_type: str) -> Dict[str, int]:
             "dim": AUDIO_DIFFUSION_64_DIM,
             "image_channels": AUDIO_DIFFUSION_64_CHANNELS,
         }
-    return {}
+    else:
+        raise ValueError(f"Unknown data type {data_type}")
 
 
 def update_params_with_defaults(params: Dict[str, Any]) -> None:
@@ -75,9 +76,17 @@ def update_params_with_defaults(params: Dict[str, Any]) -> None:
     Returns:
     - None
     """
-    if params["data_type"] not in toy_data_type:
+    if params["data_type"] in img_data_type:
         params["model_params"].update(
             set_img_default_params(params["data_type"])
+        )
+    elif params["data_type"] in text_data_type:
+        params["model_params"].update(
+            {
+                "nb_tokens": get_nb_tokens(
+                    params["scheme_params"]["tokenizer_name"]
+                )
+            }
         )
 
 
@@ -97,6 +106,10 @@ def get_params(args: Any) -> Dict[str, Any]:
     if args.gpu is not None:
         params["device"] = (
             [args.gpu] if isinstance(args.gpu, int) else list(args.gpu)
+        )
+    if args.restore:
+        params["checkpoint_dict"].update(
+            {"restore_training": True, "training_ckpt_path": args.restore}
         )
 
     update_params_with_defaults(params)

@@ -8,9 +8,17 @@ from typing import Optional, Tuple
 from src.data_manager.data_module import DataModule
 from src.training.diffusion_generator import DiffusionGenerator
 from src.utils import get_logger
-from src.eval.plots import compute_imgs_outputs
-from src.eval.plots_2d import compute_outputs_2d
-from src.data_manager.data_type import toy_data_type, img_data_type
+from src.eval.plots import compute_imgs_outputs, compute_text_outputs
+from src.eval.plots_2d import (
+    compute_continuous_outputs_2d,
+    compute_discrete_outputs_2d,
+)
+from src.data_manager.data_type import (
+    toy_continuous_data_type,
+    toy_discrete_data_type,
+    img_data_type,
+    text_data_type,
+)
 from src.save_load_obj import save_obj, load_obj
 from src.training.ema import EMA
 from src.params import Params
@@ -211,14 +219,20 @@ def run_sim(params: Params) -> Tuple[DiffusionGenerator, TensorBoardLogger]:
     # Evaluate the model
     net.eval()
     with torch.no_grad():
-        if params.data_type in toy_data_type:
+        if params.data_type in toy_continuous_data_type:
             x_val = data_module.train_data.x
-            compute_outputs_2d(net, x_val, logger.log_dir)
+            compute_continuous_outputs_2d(net, x_val, logger.log_dir)
+        elif params.data_type in toy_discrete_data_type:
+            x_val = data_module.train_data.x
+            compute_discrete_outputs_2d(net, x_val, logger.log_dir)
         elif params.data_type in img_data_type:
             val_dataset = data_module.val_data
             compute_imgs_outputs(
                 net, val_dataset, logger.log_dir, nb_rows=5, nb_cols=5
             )
+        elif params.data_type in text_data_type:
+            val_dataset = data_module.val_data
+            compute_text_outputs(net, val_dataset, logger.log_dir)
         else:
             raise RuntimeError(f"Uknown data_type {params.data_type}")
 

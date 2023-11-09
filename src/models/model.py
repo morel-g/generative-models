@@ -2,12 +2,17 @@ import torch
 import numpy as np
 
 from src.case import Case
-from src.data_manager.data_type import toy_data_type, img_data_type
+from src.data_manager.data_type import (
+    toy_continuous_data_type,
+    toy_discrete_data_type,
+    img_data_type,
+    discrete_data_type,
+)
 from src.neural_networks.neural_network import NeuralNetwork
-from src.models.model_utils import (
-    reduce_length_array,
+from src.models.helpers.model_utils import (
     append_trajectories,
     trajectories_to_array,
+    equally_spaced_integers,
 )
 from typing import Optional, Tuple, Union, Any, List
 
@@ -43,6 +48,7 @@ class Model(torch.nn.Module):
         - img_model_case (Case): Specifies the case of the image model.
         - use_neural_net (bool): Whether to use a neural network for the model.
 
+
         Returns:
         - None
         """
@@ -62,11 +68,15 @@ class Model(torch.nn.Module):
             self.nb_time_steps_train = None
 
         if use_neural_net:
-            model_case = (
-                Case.vector_field
-                if data_type in toy_data_type
-                else img_model_case
-            )
+            if data_type in toy_continuous_data_type:
+                model_case = Case.vector_field
+            elif data_type in discrete_data_type:
+                model_case = Case.transformer
+            elif data_type in img_data_type:
+                model_case = img_model_case
+            else:
+                raise NotImplementedError(f"Uknown data type {data_type}")
+
             self.process_params(model_case, model_params)
             self.neural_network = NeuralNetwork(model_case, model_params)
         else:
@@ -207,6 +217,9 @@ class Model(torch.nn.Module):
             "This method should be overridden by subclass."
         )
 
+    def sample_prior_x(self, shape, device):
+        return torch.randn(shape, device=device)
+
     def velocity_step(self, x, t_id, backward=False):
         """Must be implemented in subclass."""
         raise NotImplementedError(
@@ -245,6 +258,8 @@ class Model(torch.nn.Module):
         elif model_type == Case.ncsnpp:
             if is_augmented:
                 model_params["v_input"] = True
+        elif model_type == Case.transformer:
+            pass
         else:
             raise RuntimeError("Model type not implemented")
 
@@ -273,14 +288,14 @@ class Model(torch.nn.Module):
         )
         x = self._augment_input(x)
         x_traj = self._initialize_trajectories(x, return_trajectories)
-        save_idx_times = (
-            self._get_traj_idx(forward=True) if return_trajectories else []
-        )
+        save_idx_times = self._get_traj_idx() if return_trajectories else []
+        # if return_trajectories:
+        #     save_idx_times[-1] -= 1  # To save the last sample.
 
         for i in range(nb_ts):
             t1, t2, dt = times[i], times[i + 1], dts[i]
             if not use_training_velocity:
-                x = self.conditional_forward_step(x, t1, t2)
+                x = self._step_conditional_forward(x, t1, t2, i)
             else:
                 x = self._step_velocity(x, t1, dt, i, backward=False)
 
@@ -293,8 +308,10 @@ class Model(torch.nn.Module):
         """
         Returns the dimensions of particles based on data type.
         """
-        if self.data_type in toy_data_type:
+        if self.data_type in toy_continuous_data_type:
             return (self.model_params["dim_out"],)
+        elif self.data_type in discrete_data_type:
+            return (self.seq_length,)
         elif self.data_type in img_data_type:
             return (
                 self.model_params["image_channels"],
@@ -332,7 +349,7 @@ class Model(torch.nn.Module):
         if x_init is None:
             shape = (nb_samples,) + self.particles_dim()
             device = next(self.neural_network.parameters()).device
-            x = torch.randn(shape, device=device)
+            x = self.sample_prior_x(shape, device=device)
         else:
             x = x_init
 
@@ -350,7 +367,7 @@ class Model(torch.nn.Module):
     def get_neural_net(self, x: torch.Tensor) -> torch.Tensor:
         return self.backward(x, return_neural_net=True)
 
-    def backward_discrete_time(self) -> bool:
+    def sample_with_discrete_time(self) -> bool:
         """
         Indicates whether backward computation is made with discrete time.
 
@@ -390,7 +407,7 @@ class Model(torch.nn.Module):
 
         x_traj = self._initialize_trajectories(x, return_trajectories)
         save_idx_times = (
-            self._get_traj_idx()[:-1] if return_trajectories else []
+            self._get_traj_idx() if return_trajectories else []  # [:-1]
         )
 
         for i in reversed(range(self.nb_time_steps_eval)):
@@ -468,6 +485,15 @@ class Model(torch.nn.Module):
 
         return t, dt
 
+    def _step_conditional_forward(
+        self, x: torch.Tensor, t1: torch.Tensor, t2: torch.Tensor, i: int
+    ):
+        if not self.sample_with_discrete_time():
+            x = self.conditional_forward_step(x, t1, t2)
+        else:
+            x = self.conditional_forward_step(x, i)
+        return x
+
     def _step_velocity(
         self,
         x: torch.Tensor,
@@ -476,10 +502,12 @@ class Model(torch.nn.Module):
         i: int,
         backward: bool,
     ) -> torch.Tensor:
-        if not self.backward_discrete_time():
+        if not self.sample_with_discrete_time():
             return self.velocity_step(x, t, dt, backward=backward)
         else:
-            return self.velocity_step(x, i, backward=backward)
+            return self.velocity_step(
+                x, torch.full_like(t, i, dtype=torch.int), backward=backward
+            )
 
     def eval_nn(self, x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         return self.neural_network(x, t)
@@ -509,6 +537,7 @@ class Model(torch.nn.Module):
         x = self._augment_input(x)
 
         save_idx_times = self._get_traj_idx()
+        save_idx_times[0] += 1  # For t=0 the velocity may be singular
         for t_id in save_idx_times:
             t = self.times_eval[t_id].repeat((shape,) + (dim - 1) * (1,))
             v = self._compute_velocity(
@@ -549,7 +578,7 @@ class Model(torch.nn.Module):
                 velocity = self.eval_nn(x_v, t)
         return velocity
 
-    def get_traj_times(self, forward: bool = False) -> np.ndarray:
+    def get_traj_times(self) -> np.ndarray:
         """
         Get trajectory times for forward or backward computations.
 
@@ -560,11 +589,9 @@ class Model(torch.nn.Module):
         Returns:
             np.ndarray: Array trajectory times.
         """
-        times_to_use = self.times_eval[:-1] if forward else self.times_eval[1:]
+        return self.times_eval[self._get_traj_idx()]
 
-        return reduce_length_array(times_to_use.cpu().numpy())
-
-    def _get_traj_idx(self, forward: bool = False) -> List[int]:
+    def _get_traj_idx(self) -> List[int]:
         """
         Get trajectory indices for forward or backward computations.
 
@@ -577,8 +604,4 @@ class Model(torch.nn.Module):
         """
         if self.return_all_trajs:
             return list(range(self.nb_time_steps_eval))
-
-        start_idx = 0 if forward else 1
-        end_idx = self.times_eval.shape[0] - (1 if forward else 0)
-        traj_idx = reduce_length_array(np.arange(start_idx, end_idx))
-        return (traj_idx - 1) if forward else traj_idx
+        return equally_spaced_integers(self.times_eval.shape[0] - 1, 40)

@@ -153,7 +153,7 @@ class EMA(Callback):
         if (
             ckpt_path
             and checkpoint_callback is not None
-            and "NeMo" in type(checkpoint_callback).__name__
+            # and "NeMo" in type(checkpoint_callback).__name__
         ):
             ext = checkpoint_callback.FILE_EXTENSION
             if ckpt_path.endswith(f"-EMA{ext}"):

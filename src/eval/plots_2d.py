@@ -7,10 +7,15 @@ from .plot_utils import (
     save_scatter_motion,
     make_meshgrid,
     save_velocity_fields,
-    save_hexbin,
+    save_discrete_motion,
+    save_discrete_density,
 )
 from src.case import Case
-from src.utils import ensure_directory_exists, write_outputs
+from src.utils import ensure_directory_exists
+from src.data_manager.data_type import (
+    toy_discrete_data_type,
+    toy_continuous_data_type,
+)
 
 # import ot
 import pytorch_lightning as pl
@@ -29,36 +34,113 @@ def sample_2d(
     nb_samples: Optional[int] = 10000,
 ) -> None:
     """
-    Sample 2D data using a given network and save a scatter plot of the samples.
+    Sample 2D data using a given network and save a plot of the samples.
 
     Parameters:
     - net: The network used for sampling.
-    - output_dir: The directory where the scatter plot will be saved.
-    - name: The name of the scatter plot.
+    - output_dir: The directory where the plot will be saved.
+    - name: The name of the plot.
     - nb_samples: The number of samples to generate (default is 10000).
     """
 
     ensure_directory_exists(output_dir)
 
     x = net.sample(nb_samples)
+    data_type = net.params.data_type
 
-    # Check if net is augmented and unpack values accordingly
-    x, v = (x, None) if not net.is_augmented() else x
+    if data_type in toy_continuous_data_type:
+        # Check if net is augmented and unpack values accordingly
+        x, v = (x, None) if not net.is_augmented() else x
+        save_scatter(
+            x.cpu().numpy(),
+            output_dir,
+            color="blue",
+            name=name,
+            s=3.0,
+        )
+    elif data_type in toy_discrete_data_type:
+        nb_tokens = net.params.model_params["nb_tokens"]
+        save_discrete_density(
+            x.cpu().numpy(),
+            nb_tokens,
+            output_dir,
+            name=name,
+        )
+    else:
+        raise ValueError(f"Unkown data type: {data_type}")
 
-    save_scatter(
-        x.cpu().numpy(),
-        output_dir,
-        color="blue",
-        name=name,
-        s=3.0,
-    )
+
+# -----------------------------------------------------------------------------
+# Discrete outputs
+# -----------------------------------------------------------------------------
 
 
-def compute_outputs_2d(
+def compute_discrete_outputs_2d(
     net: pl.LightningModule, X: torch.Tensor, output_dir: str
 ) -> None:
     """
-    Compute 2D outputs and save them using the given network and input data.
+    Compute discrete 2D outputs and save them using the given network
+    and input data.
+
+    Parameters:
+    - net: The network used for computation.
+    - X: The input data.
+    - output_dir: The directory where the outputs will be saved.
+    """
+    ensure_directory_exists(output_dir)
+    original_font_size = plt.rcParams["font.size"]
+    plt.rcParams.update({"font.size": 18})
+
+    nb_tokens = net.params.model_params["nb_tokens"]
+
+    sampled_traj = net.sample(nb_samples=10000, return_trajectories=True)
+    titles = get_titles(net, forward=False)
+    save_discrete_density(
+        sampled_traj[-1].cpu(),
+        nb_tokens,
+        output_dir,
+        name="Final_density.png",
+    )
+    save_discrete_motion(
+        sampled_traj, output_dir, nb_tokens, name="Trajectories", titles=titles
+    )
+
+    sampled_traj = net.sample(nb_samples=10000)
+
+    x_forward_exact = net.forward_pass(
+        X[:5000], use_training_velocity=False, return_trajectories=True
+    )
+    titles = get_titles(net, forward=True)
+    save_discrete_motion(
+        x_forward_exact,
+        output_dir,
+        nb_tokens,
+        name="Exact forward motion",
+        titles=titles,
+    )
+
+    save_discrete_density(
+        X[:10000].cpu(),
+        nb_tokens,
+        output_dir,
+        name="True_density.png",
+    )
+
+    # Restore original font size
+    plt.rcParams.update({"font.size": original_font_size})
+
+
+# -----------------------------------------------------------------------------
+# Continuous outputs
+# -----------------------------------------------------------------------------
+
+
+def compute_continuous_outputs_2d(
+    net: pl.LightningModule, X: torch.Tensor, output_dir: str
+) -> None:
+    """
+    Compute continuous 2D outputs and save them using the given network
+    and input data.
 
     Parameters:
     - net: The network used for computation.
@@ -99,20 +181,6 @@ def compute_outputs_2d(
         extent=bounds,
         s=s,
     )
-
-    # # Compute and save forward trajectories
-    # x_forward_v = net.forward_pass(
-    #     X[:5000], use_training_velocity=True, return_trajectories=True
-    # )
-    # save_trajectories(
-    #     net,
-    #     x_forward_v,
-    #     output_dir,
-    #     bounds,
-    #     s,
-    #     name="Velocity forward",
-    #     forward=True,
-    # )
 
     x_forward_exact = net.forward_pass(
         X[:5000], use_training_velocity=False, return_trajectories=True
@@ -197,17 +265,7 @@ def save_trajectories(
     x_traj, v_traj = (x_traj, None) if not net.is_augmented() else x_traj
 
     # Get time values
-    t = net.get_traj_times(forward=forward)
-    time_range = (
-        reversed(range(t.shape[0])) if not forward else range(t.shape[0])
-    )
-
-    # Prepare titles for the plot
-    titles = (
-        None
-        if hasattr(net, "remove_titles") and net.remove_titles()
-        else ["T = " + str(round(t[i].item(), 3)) for i in time_range]
-    )
+    titles = get_titles(net, forward)
 
     # Save plots
     save_scatter_motion(
@@ -289,14 +347,6 @@ def save_trajectories_infos(
         s=s,
     )
 
-    # Compute and save OT cost if needed
-    if net.params.print_opt.get("ot_costs", False):
-        ot_cost = compute_ot_cost(
-            X[:nb_samples].cpu().detach().numpy(), final_x_traj
-        )
-        ot_str = f"OT cost{name_suffix} = {ot_cost}"
-        write_outputs(output_dir, ot_str, display_content=True)
-
 
 # -----------------------------------------------------------------------------
 # Velocity Functions
@@ -369,8 +419,7 @@ def save_velocities_2d(
     neural_net_output = net.get_neural_net(mesh_tensor).cpu().numpy()
 
     # Retrieve and format trajectory times for titles
-    trajectory_times = net.get_traj_times()
-    titles = create_titles(net, trajectory_times)
+    titles = get_titles(net, forward=False)
 
     # Save velocity fields for scores
     save_velocity_fields(
@@ -394,77 +443,24 @@ def save_velocities_2d(
 
 
 # -----------------------------------------------------------------------------
-# OT Functions
-# -----------------------------------------------------------------------------
-
-
-# def compute_ot_cost(
-#     x1: np.ndarray, x2: np.ndarray, num_iter: int = 1000000
-# ) -> float:
-#     """
-#     Compute the Optimal Transport (OT) cost between two distributions.
-
-#     Args:
-#         x1: The first distribution, represented as an array of samples.
-#         x2: The second distribution, represented as an array of samples.
-#         num_iter: Maximum number of iterations for EMD (Earth Mover's Distance) computation.
-
-#     Returns:
-#         The OT cost between the two distributions.
-#     """
-#     C = ot.dist(x1, x2)
-#     return ot.emd2([], [], C, numItermax=num_iter)
-
-
-# def save_ot_costs(
-#     net: pl.LightningModule,
-#     backward_schemes: List[str],
-#     X: torch.Tensor,
-#     output_dir: str,
-#     nb_samples: int = 10000,
-# ) -> None:
-#     """
-#     Save the OT costs between the model's samples and the given samples.
-
-#     Args:
-#         net: The network object.
-#         backward_schemes: List of backward schemes to use for sampling.
-#         X: The samples to compare against, usually the true samples.
-#         output_dir: The directory where to save the outputs.
-#         nb_samples: Number of samples to draw from the model.
-#         kde: Optional KDE model to draw samples from.
-#     """
-#     ensure_directory_exists(output_dir)
-
-#     # Store default backward scheme to revert to it later
-#     model = net.model
-#     default_backward_scheme = model.backward_scheme
-
-#     # Loop through backward schemes, sample, compute and save OT costs
-#     for scheme in backward_schemes:
-#         model.backward_scheme = scheme
-#         x_sample = net.sample(nb_samples)
-#         ot_cost = compute_ot_cost(
-#             X[:nb_samples].cpu().detach().numpy(),
-#             x_sample.cpu().detach().numpy(),
-#         )
-#         ot_str = f"OT cost {scheme} = {ot_cost}"
-#         write_outputs(output_dir, ot_str, display_content=True)
-
-#     # Revert to the default backward scheme
-#     model.backward_scheme = default_backward_scheme
-
-
-# -----------------------------------------------------------------------------
 # Helper Functions
 # -----------------------------------------------------------------------------
 
 
-def create_titles(net, time_points):
-    """Create titles for velocity fields based on the time points."""
-    if hasattr(net, "remove_titles") and net.remove_titles():
-        return None
-    return ["T = {:.3f}".format(t.item()) for t in reversed(time_points)]
+def get_titles(net, forward):
+    # Get time values
+    t = net.get_traj_times()
+    time_range = (
+        reversed(range(t.shape[0])) if not forward else range(t.shape[0])
+    )
+
+    # Prepare titles for the plot
+    titles = (
+        None
+        if hasattr(net, "remove_titles") and net.remove_titles()
+        else ["T = " + str(round(t[i].item(), 3)) for i in time_range]
+    )
+    return titles
 
 
 def get_bounds_and_s(data_type: str) -> tuple:

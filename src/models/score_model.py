@@ -1,10 +1,10 @@
 import torch
+from torch.nn import functional as F
 from typing import Optional, Union, List
 
 from src.models.model import Model
 from src.case import Case
-from src.models.adapt_dt import adapt_dt_pdf
-from torch.nn import functional as F
+from src.models.helpers.adapt_dt import adapt_dt_pdf
 
 try:
     from torch.func import vjp
@@ -318,7 +318,7 @@ class ScoreModel(Model):
             t = uniform * (exp_0 - exp_T) + exp_T
             return t
 
-    def sample_time(
+    def _sample_time(
         self, x_shape: tuple, device: torch.device
     ) -> torch.Tensor:
         """
@@ -345,7 +345,7 @@ class ScoreModel(Model):
         Returns:
         - torch.Tensor: Computed loss value.
         """
-        t = self.sample_time(x.shape, x.device)
+        t = self._sample_time(x.shape, x.device)
         noise = self._get_noise_like(x)
         x_n = self.mean_eval(t) * x + self.sigma_eval(t) * noise
         nn = self.eval_nn(x_n, t)

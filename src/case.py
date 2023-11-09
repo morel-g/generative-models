@@ -8,7 +8,7 @@ class Case:
 
     # Problem type 2D: These constants define different types of 2D datasets
     # or problems.
-    two_spirals = "2spirals"
+    two_spirals = "two_spirals"
     moons = "moons"
     gaussian = "gaussian"
     cross_gaussians = "cross gaussians"
@@ -20,8 +20,21 @@ class Case:
     checkerboard = "checkerboard"
     uniform = "uniform"
     circles = "circles"
-    n_dim_gaussians = "n_dim_gaussians"
     multimodal_swissroll = "multimodal_swissroll"
+    # Discrete toy datasets
+    two_spirals_discrete = "two_spirals_discrete"
+    moons_discrete = "moons_discrete"
+    gaussian_discrete = "gaussian_discrete"
+    cross_gaussians_discrete = "cross_gaussians_discrete"
+    swissroll_discrete = "swissroll_discrete"
+    joint_gaussian_discrete = "joint_gaussian_discrete"
+    eight_gaussians_discrete = "eight_gaussians_discrete"
+    conditionnal8gaussians_discrete = "conditionnal8gaussians_discrete"
+    pinwheel_discrete = "pinwheel_discrete"
+    checkerboard_discrete = "checkerboard_discrete"
+    uniform_discrete = "uniform_discrete"
+    circles_discrete = "circles_discrete"
+    multimodal_swissroll_discrete = "multimodal_swissroll_discrete"
 
     # Other dataset: These constants represent different datasets commonly
     # used in the machine learning domain.
@@ -31,12 +44,23 @@ class Case:
     cifar10_grayscale = "cifar10_grayscale"
     audio_diffusion_256 = "audio_diffusion_256"
     audio_diffusion_64 = "audio_diffusion_64"
+    wiki = "wiki"
+    lm1b_short = "lm1b_short"
+    lm1b = "lm1b"
+
+    # Tokenizer
+    gpt2 = "gpt2"
+
+    # Transition matrix
+    uniform = "uniform"
+    absorbing = "absorbing"
 
     # Architecture type: Constants representing different neural network
     # architectures.
     ncsnpp = "ncsnpp"
     u_net = "u_net"
     vector_field = "vector_field"
+    transformer = "transformer"
 
     # Functions: Activation or mathematical functions that can be utilized
     # in models.
@@ -50,6 +74,7 @@ class Case:
     denoise_model = "denoise_model"
     score_model = "score_model"
     score_model_critical_damped = "score_model_critical_damped"
+    d3pm = "d3pm"
 
     # Type of the interpolant for the stochastic interpolant model
     linear = "linear"
@@ -103,7 +128,6 @@ class Case:
     # Noise addition for the stochastic interpolant model
     linear_noise = "linear_noise"
     sqrt_noise = "sqrt_noise"
-    
     # EMA interval
     step = "step"
     epoch = "epoch"

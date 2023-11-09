@@ -9,11 +9,17 @@ from torchvision.transforms import Compose
 from src.data_manager.data_toy import inf_train_gen
 from src.case import Case
 from src.data_manager.data_type import (
-    toy_data_type,
+    toy_continuous_data_type,
+    toy_discrete_data_type,
     img_data_type,
     audio_data_type,
+    text_data_type,
 )
-from src.data_manager.audio_data_manager import load_audio_dataset
+from src.data_manager.audio_data_manager import prepare_audio_dataset
+from src.data_manager.text_data_manager import prepare_text_dataset
+from src.data_manager.discrete_data_toy_utils import (
+    continuous_to_discrete_2d,
+)
 
 
 class Dataset(TorchDataset):
@@ -98,6 +104,7 @@ def get_dataset(
     data_type: str,
     log_dir: str,
     n_samples: int = None,
+    **kwargs,
 ) -> TorchDataset:
     """
     Fetches the dataset based on the provided data type and other parameters.
@@ -106,20 +113,23 @@ def get_dataset(
     - data_type (str): Type of the data.
     - log_dir (str): Directory for logs.
     - n_samples (int, optional): Number of samples, required for 2D datasets.
-
+    - **kwargs: Additional keyword arguments.
     Returns:
     - TorchDataset: The prepared dataset.
     """
-    if data_type in toy_data_type:
+    if data_type in toy_continuous_data_type + toy_discrete_data_type:
         if n_samples in (0, None):
             raise RuntimeError(
                 "For 2d dataset the number of samples should be an integer > 0."
             )
-        return prepare_toy_dataset(data_type, n_samples, log_dir)
+
+        return prepare_toy_dataset(data_type, n_samples, log_dir, **kwargs)
     elif data_type in audio_data_type:
-        return load_audio_dataset(data_type)
+        return prepare_audio_dataset(data_type)
     elif data_type in img_data_type:
         return prepare_img_dataset(data_type)
+    elif data_type in text_data_type:
+        return prepare_text_dataset(data_type, **kwargs)
     else:
         raise RuntimeError(f"Uknown data_type {data_type}")
 
@@ -184,7 +194,10 @@ def prepare_img_dataset(
 
 
 def prepare_toy_data(
-    data_type: str, n_samples: int, path: str = "outputs"
+    data_type: str,
+    n_samples: int,
+    path: str = "outputs",
+    nb_tokens: int = None,
 ) -> list:
     """
     Prepares toy data based on the given type and number of samples.
@@ -192,7 +205,41 @@ def prepare_toy_data(
     Parameters:
     - data_type (str): Type of toy data.
     - n_samples (int): Number of samples to be generated.
-    - path (str, optional): Directory path for toy data outputs. Defaults to "outputs".
+    - path (str, optional): Directory path for toy data outputs.
+    Defaults to "outputs".
+    - nb_tokens (int, optional): Number of tokens used for discrete dataset.
+
+    Returns:
+    - list: Training and validation data.
+    """
+
+    discrete = data_type in toy_discrete_data_type
+    if discrete:
+        data_type = data_type.replace("_discrete", "")
+    X = inf_train_gen(data_type, batch_size=n_samples, path=path)
+    if discrete:
+        X = continuous_to_discrete_2d(X, nb_tokens)
+        X = torch.tensor(X, dtype=torch.int32)
+        # X = torch.zeros_like(X, dtype=torch.int32)
+    else:
+        X = torch.tensor(X, dtype=torch.float32)
+    x_y = list(train_test_split(X, test_size=0.20, random_state=42))
+
+    return x_y
+
+
+def prepare_discrete_toy_data(
+    data_type: str, n_samples: int, path: str = "outputs", Nx=100
+) -> list:
+    """
+    Prepares discrete toy data based on the given type and number of samples.
+
+    Parameters:
+    - data_type (str): Type of toy data.
+    - n_samples (int): Number of samples to be generated.
+    - path (str, optional): Directory path for toy data outputs.
+    Defaults to "outputs".
+    - Nx (int, optional)
 
     Returns:
     - list: Training and validation data.
@@ -205,7 +252,10 @@ def prepare_toy_data(
 
 
 def prepare_toy_dataset(
-    data_type: str, n_samples: int, log_dir: str
+    data_type: str,
+    n_samples: int,
+    log_dir: str,
+    **kwargs,
 ) -> (torch.utils.data.Dataset, torch.utils.data.Dataset):
     """
     Load/construct the dataset.
@@ -214,6 +264,7 @@ def prepare_toy_dataset(
     - data_type (str): Type of toy data to be prepared.
     - n_samples (int): Number of samples to be generated.
     - log_dir (str): Directory path for toy data outputs.
+    - **kwargs: Additional keyword arguments.
 
     Raises:
     - RuntimeError: If an unknown data_type is provided.
@@ -222,7 +273,9 @@ def prepare_toy_dataset(
     - Tuple[torch.utils.data.Dataset]: A tuple made of a training and a validation dataset.
     """
 
-    x_train, x_val = prepare_toy_data(data_type, n_samples, path=log_dir)
+    x_train, x_val = prepare_toy_data(
+        data_type, n_samples, path=log_dir, **kwargs
+    )
     x_train, x_val = Dataset(x_train), Dataset(x_val)
 
     return x_train, x_val

@@ -1,10 +1,10 @@
 import numpy as np
 import matplotlib
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.collections import LineCollection
+from matplotlib.collections import LineCollection, PatchCollection
 from matplotlib.ticker import FuncFormatter
 import matplotlib.pyplot as plt
-from pathlib import Path
+import matplotlib.patches as patches
 import numpy as np
 import imageio
 import os
@@ -12,6 +12,10 @@ from matplotlib.axes import Axes
 from typing import List, Union, Optional, Tuple
 
 from src.utils import ensure_directory_exists
+from src.data_manager.discrete_data_toy_utils import (
+    get_cell_center,
+    get_toy_discrete_params,
+)
 
 FIG_DIR = "figures/"
 
@@ -275,6 +279,130 @@ def save_scatter_motion(
         figures.append(figure_to_data(fig))
         plt.close()
     save_video(output_dir, figures, name)
+
+
+def save_discrete_motion(
+    x_traj: List[np.ndarray],
+    output_dir: str,
+    nb_tokens,
+    name: str = "discrete_motion",
+    titles: Optional[List[str]] = None,
+) -> None:
+    """
+    Save discrete trajectories as video.
+
+    Args:
+        x_traj: List of trajectory data points.
+        output_dir: Directory where the video should be saved.
+        name: Name of the output video file.
+        titles: Titles for each frame.
+    """
+    figures = []
+    for i in range(len(x_traj)):
+        x = x_traj[i]
+        fig, _ = plot_discrete_density(x, nb_tokens)
+        if titles is not None:
+            plt.title(titles[i])
+        figures.append(figure_to_data(fig))
+        plt.close(fig)
+    save_video(output_dir, figures, name)
+
+
+def save_discrete_density(
+    x: np.ndarray,
+    nb_tokens: int,
+    output_dir: str,
+    name: str = "discrete density",
+) -> None:
+    """
+    Saves a discrete plot of the given data points.
+
+    Parameters:
+    - x: Input data points of shape (n, 2) where n is the number of points.
+    - nb_tokens: The total number of tokens.
+    - output_dir: Directory to save the figure.
+    - name: Name of the saved figure.
+    """
+    # fig = plt.figure()
+    fig, _ = plot_discrete_density(x, nb_tokens)
+    save_figure(output_dir, fig, name)
+    plt.close()
+
+
+def plot_discrete_density(cells, N):
+    """
+    Plot the discrete density for given cells.
+
+    Args:
+        - cells (list of tuples): A list of (i, j) coordinates representing cells with
+        samples/density.
+        - N: The number of cells for both x and y axis.
+    """
+    params = get_toy_discrete_params()
+    x_min, x_max = params["min"], params["max"]
+    dx = (x_max - x_min) / N
+    dy = (x_max - x_min) / N
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+
+    rectangles = []
+
+    # Prepare list of rectangles
+    for i, j in cells:
+        x_center, y_center = get_cell_center(i, j, N)
+        rect = patches.Rectangle(
+            (x_center - dx / 2, y_center - dy / 2),
+            dx,
+            dy,
+        )
+        rectangles.append(rect)
+
+    # Create a PatchCollection from the list of rectangles
+    p = PatchCollection(
+        rectangles, edgecolor="r", facecolor="blue", alpha=0.5, linewidth=1
+    )
+
+    # Add the PatchCollection to the axis
+    ax.add_collection(p)
+
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(x_min, x_max)
+    return fig, ax
+
+
+# def plot_discrete_density(cells, N):
+#     """
+#     Plot the discrete density for given cells.
+
+#     Args:
+#         - cells (list of tuples): A list of (i, j) coordinates representing cells with
+#         samples/density.
+#         - N: The number of cells for both x and y axis.
+#     """
+#     params = get_toy_discrete_params()
+#     x_min, x_max = params["min"], params["max"]
+#     dx = (x_max - x_min) / N
+#     dy = (x_max - x_min) / N
+
+#     fig, ax = plt.subplots(figsize=(10, 10))
+
+#     # Plot each cell
+#     for i, j in cells:
+#         x_center, y_center = get_cell_center(i, j, N)
+#         rect = patches.Rectangle(
+#             (x_center - dx / 2, y_center - dy / 2),
+#             dx,
+#             dy,
+#             linewidth=1,
+#             edgecolor="r",
+#             facecolor="blue",
+#             alpha=0.5,
+#         )
+#         ax.add_patch(rect)
+
+#     ax.set_xlim(x_min, x_max)
+#     ax.set_ylim(x_min, x_max)
+#     return fig, ax
 
 
 def plot_function(

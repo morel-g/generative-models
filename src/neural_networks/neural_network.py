@@ -6,6 +6,7 @@ from src.neural_networks.ncsnpp.ncsnpp import NCSNpp
 from .vector_field import VectorField
 from src.neural_networks.u_net.u_net_2d_model import UNet2DModel
 from src.neural_networks.u_net.u_net import UNet
+from src.neural_networks.transformer_model import TransformerModel
 from src.case import Case
 from src.utils import time_dependent_var
 
@@ -19,6 +20,9 @@ class NeuralNetwork(torch.nn.Module):
             self.net = NCSNpp(**params_net)
         elif self.model_type == Case.u_net:
             self.net = UNet(**params_net)
+        elif self.model_type == Case.transformer:
+            params_net["batch_first"] = True
+            self.net = TransformerModel(**params_net)
         elif self.model_type == Case.vector_field:
             if add_time:
                 params_net["dim_in"] += 1
@@ -31,10 +35,7 @@ class NeuralNetwork(torch.nn.Module):
         return self(x, t, t2)
 
     def __call__(self, x, t=None, t2=None):
-        if self.model_type in (
-            Case.u_net,
-            Case.ncsnpp,
-        ):
+        if self.model_type in (Case.u_net, Case.ncsnpp, Case.transformer):
             return self.net(x, t.view(-1)) if t is not None else self.net(x)
         else:
             x_t = time_dependent_var(x, t) if t is not None else x

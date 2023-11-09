@@ -34,6 +34,7 @@ def create_optimizer(
         model.parameters(),
         lr=training_params["lr"],
         weight_decay=training_params["weight_decay"],
+        betas=training_params.get("betas", (0.9, 0.999)),
     )
 
 

@@ -1,6 +1,7 @@
 import os
 import torch
 import pytorch_lightning as pl
+from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
 from typing import Union, Tuple, Optional, Any, List, Dict
 
 # from .probability_distribution import ProbabilityDistribution
@@ -10,14 +11,16 @@ from src.data_manager.data_type import (
     toy_data_type,
     img_data_type,
     audio_data_type,
+    text_data_type,
 )
 from src.models.score_model import ScoreModel
 from src.models.score_model_critical_damped import ScoreModelCriticalDamped
 from src.models.stochastic_interpolant import StochasticInterpolant
+from src.models.d3pm import D3PM
 from src.eval.plots_2d import sample_2d
-from src.eval.plots import sample_img
+from src.eval.plots import sample_img, sample_text
 from src.training.opt_utils import create_optimizer, create_scheduler
-from torch.optim.swa_utils import AveragedModel
+from src.training.ema_handler import EMAHandler
 
 
 class DiffusionGenerator(pl.LightningModule):
@@ -38,12 +41,8 @@ class DiffusionGenerator(pl.LightningModule):
         super(DiffusionGenerator, self).__init__()
         self.save_hyperparameters()
         self.params = params
-        self.ema = params.training_params.get("ema", False)
-        self.ema_rate = params.training_params.get("ema_rate", 0.999)
-        self.ema_interval = params.training_params.get(
-            "ema_interval", Case.epoch
-        )
-
+        self.ema_dict = params.training_params.get("ema_dict", {"use_ema": False})
+        self.ema = self.ema_dict["use_ema"]
         if params.model_type == Case.score_model:
             self.base_model = ScoreModel(
                 params.data_type,
@@ -57,12 +56,8 @@ class DiffusionGenerator(pl.LightningModule):
                     "pde_coefs",
                     {"gamma": 1.0},
                 ),
-                decay_case=params.scheme_params.get(
-                    "decay_case", Case.vanilla_sigma
-                ),
-                img_model_case=params.scheme_params.get(
-                    "img_model_case", Case.u_net
-                ),
+                decay_case=params.scheme_params.get("decay_case", Case.vanilla_sigma),
+                img_model_case=params.scheme_params.get("img_model_case", Case.u_net),
             )
         elif params.model_type == Case.score_model_critical_damped:
             self.base_model = ScoreModelCriticalDamped(
@@ -72,12 +67,8 @@ class DiffusionGenerator(pl.LightningModule):
                 params.scheme_params["nb_time_steps_train"],
                 T_final=params.scheme_params["T_final"],
                 adapt_dt=params.scheme_params["adapt_dt"],
-                decay_case=params.scheme_params.get(
-                    "decay_case", Case.vanilla_sigma
-                ),
-                img_model_case=params.scheme_params.get(
-                    "img_model_case", Case.u_net
-                ),
+                decay_case=params.scheme_params.get("decay_case", Case.vanilla_sigma),
+                img_model_case=params.scheme_params.get("img_model_case", Case.u_net),
                 init_var_v=params.scheme_params.get("init_var_v", 0.04),
                 zeros_S0_vv=params.scheme_params.get("zeros_S0_vv", False),
             )
@@ -92,22 +83,32 @@ class DiffusionGenerator(pl.LightningModule):
                 adapt_dt=params.scheme_params["adapt_dt"],
                 decay_case=params.scheme_params.get("decay_case", Case.exp),
                 interpolant=params.scheme_params["interpolant"],
-                img_model_case=params.scheme_params.get(
-                    "img_model_case", Case.u_net
+                img_model_case=params.scheme_params.get("img_model_case", Case.u_net),
+                noise_addition=params.scheme_params.get("noise_addition", None),
+            )
+        elif params.model_type == Case.d3pm:
+            self.base_model = D3PM(
+                params.data_type,
+                params.model_params,
+                seq_length=params.scheme_params["seq_length"],
+                nb_time_steps_eval=params.scheme_params["nb_time_steps_eval"],
+                nb_time_steps_train=params.scheme_params["nb_time_steps_train"],
+                T_final=params.scheme_params["T_final"],
+                transition_case=params.scheme_params.get(
+                    "transition_case", Case.uniform
                 ),
-                noise_addition=params.scheme_params.get(
-                    "noise_addition", None
+                store_transition_matrices=params.scheme_params.get(
+                    "store_transition_matrices", False
                 ),
             )
         else:
             raise ValueError("Model type not recognized")
 
         if self.ema:
+            ema_config = {k: v for k, v in self.ema_dict.items() if k != "use_ema"}
+            self.ema_handler = EMAHandler(**ema_config)
             self.ema_model = AveragedModel(
-                self.base_model,
-                multi_avg_fn=torch.optim.swa_utils.get_ema_multi_avg_fn(
-                    self.ema_rate
-                ),
+                self.base_model, multi_avg_fn=self.ema_handler.ema_multi_avg_fn
             )
 
     def get_model(self):
@@ -133,12 +134,11 @@ class DiffusionGenerator(pl.LightningModule):
         Returns:
             loss: The computed loss.
         """
-        # if len(batch) == 2:
-        #     x, _ = batch
-        # else:
-        #     x = batch
+        if self.params.data_type in img_data_type and len(batch) == 2:
+            x, _ = batch
+        else:
+            x = batch
         model = self.get_model()
-        x = batch
         loss = model.loss(x)
 
         self.log("loss", loss, prog_bar=True, sync_dist=True)
@@ -158,12 +158,11 @@ class DiffusionGenerator(pl.LightningModule):
             batch: The input data batch.
             batch_idx: Index of the batch.
         """
-        # if len(batch) == 2:
-        #     x, _ = batch
-        # else:
-        #     x = batch
         model = self.get_model()
-        x = batch
+        if self.params.data_type in img_data_type and len(batch) == 2:
+            x, _ = batch
+        else:
+            x = batch
         loss = model.loss(x).cpu().item()
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
@@ -274,9 +273,7 @@ class DiffusionGenerator(pl.LightningModule):
 
     def configure_optimizers(
         self,
-    ) -> Union[
-        torch.optim.Optimizer, Tuple[List[torch.optim.Optimizer], List[Dict]]
-    ]:
+    ) -> Union[torch.optim.Optimizer, Tuple[List[torch.optim.Optimizer], List[Dict]]]:
         """
         Configure the optimizer and the learning rate scheduler for the
         PyTorch Lightning training loop.
@@ -285,9 +282,7 @@ class DiffusionGenerator(pl.LightningModule):
         - Either a single optimizer or a tuple containing a list of
         optimizers and a list of scheduler dictionaries.
         """
-        optimizer = create_optimizer(
-            self.base_model, self.params.training_params
-        )
+        optimizer = create_optimizer(self.base_model, self.params.training_params)
         scheduler = create_scheduler(
             optimizer,
             self.params.training_params,
@@ -299,68 +294,46 @@ class DiffusionGenerator(pl.LightningModule):
 
         return optimizer
 
-    # def on_validation_start(self):
-    #     if self.ema:
-    #         self.ema_model.to(self.device)
-
-    # def on_validation_end(self):
-    #     if self.ema:
-    #         self.ema_model.cpu()
-
     def on_train_start(self):
         if self.ema:
             self.ema_model.to(self.device)
 
     def on_train_batch_end(self, outputs, batch, batch_idx):
-        if self.ema and self.ema_interval == Case.step:
-            self.ema_model.update_parameters(self.base_model)
-
-    def on_train_epoch_end(self):
-        # Update EMA parameters
-        if self.ema and self.ema_interval == Case.epoch:
+        if self.ema:
             self.ema_model.update_parameters(self.base_model)
 
     def on_train_end(self):
-        # Update Batch Normalization statistics for the EMA model
-        # using some DataLoader (here assumed to be part of a DataModule)
-        torch.optim.swa_utils.update_bn(
-            self.trainer.datamodule.train_dataloader(), self.ema_model
-        )
-        # self.update_ema_bn(self.trainer.datamodule.train_dataloader())
+        if self.ema:
+            torch.optim.swa_utils.update_bn(
+                self.trainer.datamodule.train_dataloader(), self.ema_model
+            )
 
-    def prepare_for_inference(self, train_dataloader, device):
+    def prepare_for_inference(self, train_dataloader, device: str) -> None:
         """
-        This method updates BatchNorm statistics and prepares the model for inference.
-        Call this method after loading the model and before performing inference tasks.
+        Prepares the model for inference by updating BatchNorm statistics.
+
+        Parameters:
+        - train_dataloader: The data loader containing the training data used to update statistics.
+        - device (str): The device to which the model should be moved (e.g., 'cpu' or 'cuda').
         """
         self.eval()
         self.to(device)
         if self.ema:
-            # Update Batch Normalization statistics for the EMA model
             torch.optim.swa_utils.update_bn(train_dataloader, self.ema_model)
             self.ema_model.to(device)
 
-    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+    def save_validation_samples(self) -> None:
         """
-        Handles actions to take on saving a checkpoint.
-
-        Parameters:
-            checkpoint: The checkpoint data to save.
+        Saves validation samples generated by the model.
         """
-        super().on_save_checkpoint(checkpoint)
-        if self.ema:
-            print("Save ema parameters")
-            checkpoint["ema_state_dict"] = self.ema_model.state_dict()
-        checkpoint_dir = self.trainer.checkpoint_callback.dirpath
-        epoch = self.trainer.current_epoch
-        name = f"Samples_epoch_{epoch}"
-
-        # Generate a full path for saving the sample
-        sample_path = os.path.join(checkpoint_dir, "training_samples")
+        sample_name = f"Samples_epoch_{self.trainer.current_epoch}"
+        sample_path = os.path.join(
+            self.trainer.checkpoint_callback.dirpath, "training_samples"
+        )
 
         # Check the data type and call the appropriate sampling function
         if self.params.data_type in toy_data_type:
-            sample_2d(self, sample_path, name)
+            sample_2d(self, sample_path, sample_name)
         elif self.params.data_type in img_data_type:
             if self.params.data_type in audio_data_type:
                 nb_rows = 2
@@ -371,18 +344,48 @@ class DiffusionGenerator(pl.LightningModule):
             sample_img(
                 self,
                 sample_path,
-                name,
+                sample_name,
                 nb_rows=nb_rows,
                 nb_cols=nb_cols,
                 save_gifs=False,
             )
+        elif self.params.data_type in text_data_type:
+            sample_text(self, sample_path, sample_name, nb_samples=5)
 
-    def on_load_checkpoint(self, checkpoint):
-        # Call the parent's on_load_checkpoint
-        super().on_load_checkpoint(checkpoint)
+    def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """
+        Handles actions to take on saving a checkpoint.
+
+        Parameters:
+            checkpoint (Dict[str, Any]): The checkpoint data to save.
+        """
+        super().on_save_checkpoint(checkpoint)
         if self.ema:
-            print("Restore ema parameters")
-            # Restore the state of the EMA model
+            checkpoint["ema_step_counter"] = self.ema_handler.step
+            checkpoint["ema_state_dict"] = self.ema_model.state_dict()
+
+        self.save_validation_samples()
+
+    def on_load_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
+        """
+        Restores model state from a checkpoint.
+
+        Parameters:
+        - checkpoint (Dict[str, Any]): A dictionary containing the checkpoint data.
+
+        Raises:
+        - RuntimeError: If EMA weights are enabled but not found in the checkpoint.
+        """
+        super().on_load_checkpoint(checkpoint)
+        if (
+            self.ema
+            and "ema_state_dict" in checkpoint
+            and "ema_step_counter" in checkpoint
+        ):
+            self.ema_handler.step = checkpoint["ema_step_counter"]
             ema_state_dict = checkpoint.get("ema_state_dict")
-            if ema_state_dict:
-                self.ema_model.load_state_dict(ema_state_dict)
+            self.ema_model.load_state_dict(ema_state_dict)
+        elif self.ema:
+            raise RuntimeError(
+                "No ema_state_dict found in checkpoint. EMA weights can't be restored."
+            )

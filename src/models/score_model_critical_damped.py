@@ -4,7 +4,7 @@ import torch
 
 from src.models.model import Model
 from src.case import Case
-from src.models.adapt_dt import adapt_dt_pdf
+from src.models.helpers.adapt_dt import adapt_dt_pdf
 
 
 class ScoreModelCriticalDamped(Model):

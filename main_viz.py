@@ -10,15 +10,20 @@ from src.params import dict_to_str
 from src.case import Case
 from src.data_manager.data_module import DataModule
 from src.data_manager.data_parser import parse_viz
-from src.data_manager.data_type import toy_data_type, img_data_type
+from src.data_manager.data_type import (
+    toy_continuous_data_type,
+    img_data_type,
+    text_data_type,
+)
 from src.params import Params
 from src.eval.fid.fid_utils import compute_fid_v1, compute_fid_v3
 from src.eval.plots import (
     compute_imgs_outputs,
+    compute_text_outputs,
     save_loader_imgs,
     save_sample_imgs,
 )
-from src.eval.plots_2d import compute_outputs_2d
+from src.eval.plots_2d import compute_continuous_outputs_2d
 from src.save_load_obj import load_obj
 from src.training.diffusion_generator import DiffusionGenerator
 
@@ -241,12 +246,15 @@ if __name__ == "__main__":
 
     elif args.fid:
         compute_fid(net, params, data_module, args, viz_infos, device)
-    elif params.data_type in toy_data_type:
+    elif params.data_type in toy_continuous_data_type:
         x_val = data_module.val_data.x
-        compute_outputs_2d(net, x_val, output_dir)
+        compute_continuous_outputs_2d(net, x_val, output_dir)
     elif params.data_type in img_data_type:
         nb_rows, nb_cols = args.nb_imgs[0], args.nb_imgs[1]
         val_dataset = data_module.val_data
         compute_imgs_outputs(net, val_dataset, output_dir, nb_rows, nb_cols)
+    elif params.data_type in text_data_type:
+        val_dataset = data_module.val_data
+        compute_text_outputs(net, val_dataset, output_dir)
 
     save_viz_infos(viz_infos, os.path.join(output_dir, "viz_infos"))
