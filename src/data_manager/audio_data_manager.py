@@ -60,7 +60,7 @@ def scale_imgs(t: torch.Tensor) -> torch.Tensor:
     return (t * 2) - 1
 
 
-def load_audio_dataset(name):
+def prepare_audio_dataset(name):
     transform = transforms.Compose([transforms.ToTensor()])
 
     # Check if resizing is required
