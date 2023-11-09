@@ -5,7 +5,10 @@ import unittest
 import torch
 import numpy as np
 from scipy.integrate import quad
-from src.models.adapt_dt import exact_adapt_dt_constant_pde_coef, adapt_dt_pdf
+from src.models.helpers.adapt_dt import (
+    exact_adapt_dt_constant_pde_coef,
+    adapt_dt_pdf,
+)
 
 
 class TestVectorField(unittest.TestCase):
@@ -44,7 +47,7 @@ class TestVectorField(unittest.TestCase):
         func = lambda t: 1.0 / sigma_eval(t)
         nb_time_steps = 50
         T_final = 3.0
-        dt, times = adapt_dt_pdf(func, nb_time_steps, 0., T_final)
+        dt, times = adapt_dt_pdf(func, nb_time_steps, 0.0, T_final)
 
         first_int = quad(func, times[0], times[1])[0]
         for i in range(1, len(times) - 1):
