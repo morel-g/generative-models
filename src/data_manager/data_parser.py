@@ -43,12 +43,17 @@ def parse_main() -> argparse.Namespace:
         help="The config file used during for the training.",
     )
     general.add_argument(
-        "-gpu",
         "--gpu",
         type=int,
         default=None,
         metavar="",
         help="GPU id used.",
+    )
+    general.add_argument(
+        "--restore",
+        type=str,
+        metavar="",
+        help="Path to restore the simulation from.",
     )
 
     return parser.parse_args()
