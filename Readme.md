@@ -38,12 +38,26 @@ Examples are provided in the **`notebook/`** directory.
 
 ## Toy datasets
 
-### Sampling from the models:
+### Continuous datasets:
 
 | **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic interpolant** |
 |:--------------------------------:|:----------------------------:|:--------------------------:|
 | ![Diffusion Score trajectories](docs/assets/toy_traj_score.gif) | ![Critical Damped trajectories](docs/assets/toy_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/toy_traj_stochastic_interpolant.gif) |
 | ![Score samples](docs/assets/toy_score_sample.png) | ![CLD samples](docs/assets/toy_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/toy_stochastic_interpolant_sample.png) |
+
+### Discrete datasets:
+
+
+ <div align="center">
+
+| D3PM Uniform | D3PM Absorbing  |
+|:--------------------------------:|:----------------------------:|
+| <img src="docs/assets/toy_traj_d3pm_uniform.gif" alt="D3PM Uniform trajectories" width="175" /> | <img src="docs/assets/toy_traj_d3pm_absorbing.gif" alt="D3PM Absorbing trajectories" width="175" />|
+| <img src="docs/assets/toy_d3pm_uniform_sample.png" alt="D3PM Uniform samples" width="175" />| <img src="docs/assets/toy_d3pm_absorbing_sample.png" alt="D3PM Absorbing samples" width="175" /> |
+
+</div>
+
+
 
 ---
 
