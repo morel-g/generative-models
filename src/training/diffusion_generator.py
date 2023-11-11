@@ -1,8 +1,8 @@
 import os
 import torch
 import pytorch_lightning as pl
-from torch.optim.swa_utils import AveragedModel, get_ema_multi_avg_fn
-from typing import Union, Tuple, Optional, Any, List, Dict
+from torch.optim.swa_utils import AveragedModel
+from typing import Union, Tuple, Any, List, Dict
 
 # from .probability_distribution import ProbabilityDistribution
 from src.params import Params
@@ -385,6 +385,7 @@ class DiffusionGenerator(pl.LightningModule):
             self.ema_handler.step = checkpoint["ema_step_counter"]
             ema_state_dict = checkpoint.get("ema_state_dict")
             self.ema_model.load_state_dict(ema_state_dict)
+            print(f"EMA successfully loaded at step {self.ema_handler.step}")
         elif self.ema:
             raise RuntimeError(
                 "No ema_state_dict found in checkpoint. EMA weights can't be restored."
