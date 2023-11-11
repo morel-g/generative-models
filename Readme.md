@@ -1,4 +1,4 @@
-# Image generative models (work in progress)
+# A unified framework for generative diffusion models (work in progress)
 
 This repository provides implementations of several generative models applied to image data. These models are primed for understanding and experimenting with advanced image-based generative techniques.
 
@@ -6,6 +6,7 @@ The implemented models are sourced from the following research papers:
 - [Score based models](https://arxiv.org/abs/2011.13456) / [Diffusion models](https://arxiv.org/abs/2006.11239)
 - [Critically-Damped Langevin Diffusion](https://arxiv.org/abs/2112.07068)
 - [Stochastic interpolants](https://arxiv.org/abs/2303.08797)
+- [ Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006)
 
 ---
 
@@ -15,6 +16,7 @@ The implemented models are sourced from the following research papers:
 - [Toy datasets](#toy-datasets)
 - [Image datasets](#image-datasets)
 - [Audio datasets](#audio-datasets)
+- [Text datasets](#text-datasets)
 
 ---
 
@@ -104,3 +106,17 @@ https://github.com/morel-g/generative-models/assets/123385560/9662a7f2-19f5-4527
 
 ---
 
+---
+
+## Text datasets
+
+
+This section focuses on using the Discrete Denoising Diffusion Probabilistic Model (D3PM) architecture to process text datasets. Here the D3PM model is applied to a shortened version (~200k samples) of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset. 
+
+Below are selected visual representations of the model trajectories
+
+![Text trajectories 1](docs/assets/text_traj_1.gif)
+
+![Text trajectories 2](docs/assets/text_traj_2.gif)
+
+---
