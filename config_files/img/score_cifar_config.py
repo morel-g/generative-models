@@ -8,7 +8,7 @@ CONFIG["scheme_params"]["beta_case"] = Case.vanilla
 CONFIG["scheme_params"]["decay_case"] = Case.vanilla_sigma
 CONFIG["training_params"].update(
     {
-        "epochs": 150,
+        "epochs": 800,
         "batch_size": 128,
         "batch_size_eval": 256,
     }
