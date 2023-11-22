@@ -124,6 +124,7 @@ class Case:
     # Embeding type for the u_net architecture
     no_embeding = "no_embeding"
     fourier = "fourier"
+    positional = "positional"
 
     # Noise addition for the stochastic interpolant model
     linear_noise = "linear_noise"
