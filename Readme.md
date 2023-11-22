@@ -1,6 +1,6 @@
 # A unified framework for generative diffusion models (work in progress)
 
-This repository provides implementations of several generative models applied to image data. These models are primed for understanding and experimenting with advanced image-based generative techniques.
+This repository provides implementations of several generative models applied to image data. These models are primed for understanding and experimenting with advanced data generation techniques.
 
 The implemented models are sourced from the following research papers:
 - [Score based models](https://arxiv.org/abs/2011.13456) / [Diffusion models](https://arxiv.org/abs/2006.11239)
