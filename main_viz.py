@@ -196,10 +196,7 @@ def compute_fid(
 
 if __name__ == "__main__":
     args = parse_viz()
-    # For reproducibility
-    # np.random.seed(42)
-    # torch.manual_seed(42)
-    # random.seed(42)
+
     ckpt_path = args.ckpt_path
     gpu = args.gpu
     name = args.name
@@ -211,13 +208,14 @@ if __name__ == "__main__":
     params = load_obj(load_path + "/params.obj")
 
     data_type = params.data_type
-
+    data_module = DataModule(params)
     net = DiffusionGenerator.load_from_checkpoint(ckpt_path, params=params)
-    net.eval()
 
     viz_infos = configure_viz_infos(args, net, params)
 
-    data_module = DataModule(params)
+    if args.no_ema:
+        print("Ema model not used.")
+        net.ema = False
     net.prepare_for_inference(data_module.train_dataloader(), device)
 
     val_dataset = data_module.val_data

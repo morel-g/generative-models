@@ -126,6 +126,12 @@ def parse_viz() -> argparse.Namespace:
         help="Compute fid.",
     )
     general.add_argument(
+        "--no_ema",
+        action="store_true",
+        default=False,
+        help="Do not use ema model for viz.",
+    )
+    general.add_argument(
         "-fc",
         "--fid_choice",
         type=str,
