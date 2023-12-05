@@ -41,7 +41,12 @@ img_data_type = [
     Case.audio_diffusion_64,
 ]
 
-rl_data_type = [Case.hopper_medium_v2]
+rl_data_type = [
+    Case.hopper_medium_v2,
+    Case.maze2d_umaze_v1,
+    Case.maze2d_medium_v1,
+    Case.maze2d_large_v1,
+]
 
 text_data_type = [Case.wiki, Case.lm1b, Case.lm1b_short]
 
