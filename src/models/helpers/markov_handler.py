@@ -2,9 +2,7 @@ import torch
 from src.case import Case
 
 
-def get_time_scheduler(
-    transition_case: str, nb_time_steps: int
-) -> torch.Tensor:
+def get_time_scheduler(transition_case: str, nb_time_steps: int) -> torch.Tensor:
     """
     Computes the time scheduler based on training steps.
 
@@ -19,9 +17,7 @@ def get_time_scheduler(
     if transition_case == Case.uniform:
         steps = torch.arange(nb_time_steps + 1) / nb_time_steps
         alpha_bar = torch.cos((steps + 0.008) / 1.008 * torch.pi / 2)
-        betas = torch.min(
-            1 - alpha_bar[1:] / alpha_bar[:-1], torch.tensor(0.999)
-        )
+        betas = torch.min(1 - alpha_bar[1:] / alpha_bar[:-1], torch.tensor(0.999))
         return betas
     elif transition_case == Case.absorbing:
         return 1.0 / torch.linspace(nb_time_steps, 1.0, steps=nb_time_steps)
@@ -42,13 +38,9 @@ class MarkovHandler(torch.nn.Module):
         self.transition_case = transition_case
         self.nb_time_steps = nb_time_steps
         self.store_transition_matrices = store_transition_matrices
-        self.time_scheduler = get_time_scheduler(
-            transition_case, self.nb_time_steps
-        )
+        self.time_scheduler = get_time_scheduler(transition_case, self.nb_time_steps)
         if self.store_transition_matrices:
-            Qt, Qt_bar = self._construct_transition_matrices(
-                self.time_scheduler
-            )
+            Qt, Qt_bar = self._construct_transition_matrices(self.time_scheduler)
             self.register_buffer("Qt_bar", Qt_bar)
             self.register_buffer("Qt", Qt)
         else:
@@ -59,6 +51,7 @@ class MarkovHandler(torch.nn.Module):
 
             self.register_buffer("Qt_bar_coef", Qt_bar_coef)
             self.register_buffer("Qt_coef", Qt_coef)
+            print(f"Qt_bar_coef.shape {Qt_bar_coef.shape}")
 
     def _broadcast(self, t: torch.Tensor, n_dim: int) -> torch.Tensor:
         """
@@ -111,9 +104,7 @@ class MarkovHandler(torch.nn.Module):
 
         return torch.stack(Qt, dim=0), torch.stack(Qt_bar, dim=0)
 
-    def _get_uniform_transition_matrix(
-        self, beta: float, N: int
-    ) -> torch.Tensor:
+    def _get_uniform_transition_matrix(self, beta: float, N: int) -> torch.Tensor:
         """
         Computes the uniform transition matrix for q(x_t|x_{t-1}).
 
@@ -138,9 +129,7 @@ class MarkovHandler(torch.nn.Module):
         mat = mat * (1 - diag_indices) + diag_val * diag_indices
         return mat
 
-    def _get_absorbing_transition_matrix(
-        self, beta: float, N: int
-    ) -> torch.Tensor:
+    def _get_absorbing_transition_matrix(self, beta: float, N: int) -> torch.Tensor:
         """
         Computes the absorbing transition matrix with an abosorbing state at 0.
 
@@ -170,9 +159,7 @@ class MarkovHandler(torch.nn.Module):
         elif self.transition_case == Case.absorbing:
             construct_coef_step = self._construct_absorbing_coef_step
         else:
-            raise ValueError(
-                f"Unkown transition matrix {self.transition_case}"
-            )
+            raise ValueError(f"Unkown transition matrix {self.transition_case}")
 
         Qt_coef = []
         Qt_bar_coef = []
@@ -180,9 +167,7 @@ class MarkovHandler(torch.nn.Module):
         for i in range(time_scheduler.shape[0]):
             beta_i = time_scheduler[i]
             construct_coef_step(Qt_coef, Qt_bar_coef, beta_i)
-        Qt_coef, Qt_bar_coef = self._finalize_construct_coef(
-            Qt_coef, Qt_bar_coef
-        )
+        Qt_coef, Qt_bar_coef = self._finalize_construct_coef(Qt_coef, Qt_bar_coef)
         return Qt_coef, Qt_bar_coef
 
     def _construct_uniform_coef_step(self, Qt_coef, Qt_bar_coef, beta):
@@ -229,9 +214,7 @@ class MarkovHandler(torch.nn.Module):
 
         return Qt_coef, Qt_bar_coef
 
-    def extract_rows_Qt(
-        self, t_id: torch.Tensor, x_id: torch.Tensor
-    ) -> torch.Tensor:
+    def extract_rows_Qt(self, t_id: torch.Tensor, x_id: torch.Tensor) -> torch.Tensor:
         """
         Extracts specific rows from Qt using t_id and x_id.
 
@@ -408,9 +391,10 @@ class MarkovHandler(torch.nn.Module):
         - torch.Tensor: The extracted vector from the matrix.
         """
         t_id = t_id.squeeze()
+
         id_coef, a_coef = (
-            self.Qt_bar_coef[t_id][:, 0],
-            self.Qt_bar_coef[t_id][:, 1],
+            self.Qt_bar_coef[t_id][..., 0],
+            self.Qt_bar_coef[t_id][..., 1],
         )
         target_dim = x_id.dim() + 1
         id_coef = self._broadcast(id_coef, target_dim)

@@ -72,9 +72,7 @@ class D3PM(Model):
             self.register_buffer("Qt_bar", self.markov_handler.Qt_bar)
             self.register_buffer("Qt", self.markov_handler.Qt)
         else:
-            self.register_buffer(
-                "Qt_bar_coef", self.markov_handler.Qt_bar_coef
-            )
+            self.register_buffer("Qt_bar_coef", self.markov_handler.Qt_bar_coef)
             self.register_buffer("Qt_coef", self.markov_handler.Qt_coef)
 
     def sample_with_discrete_time(self) -> bool:
@@ -86,9 +84,7 @@ class D3PM(Model):
         """
         return True
 
-    def sample_prior_x(
-        self, shape: torch.Size, device: torch.device
-    ) -> torch.Tensor:
+    def sample_prior_x(self, shape: torch.Size, device: torch.device) -> torch.Tensor:
         """
         Samples prior values for x given a specified shape and device.
 
@@ -154,9 +150,7 @@ class D3PM(Model):
         t_id_broadcast = self._broadcast(t_id, factor_1.dim())
 
         out = torch.log(factor_1 + self.eps) + torch.log(factor_2 + self.eps)
-        return torch.where(
-            t_id_broadcast == 0, torch.log(x_start + self.eps), out
-        )
+        return torch.where(t_id_broadcast == 0, torch.log(x_start + self.eps), out)
 
     # p_logits
     def predict_given_xt(
@@ -219,16 +213,13 @@ class D3PM(Model):
         - torch.Tensor: Sampled tensor after adding noise.
         """
         x = torch.log(
-            self.markov_handler.extract_cols_Qt_bar(t_id, x_start_id)
-            + self.eps
+            self.markov_handler.extract_cols_Qt_bar(t_id, x_start_id) + self.eps
         )
         x = self._sample_from_categorical(x)
 
         return x
 
-    def _sample_time(
-        self, x_shape: tuple, device: torch.device
-    ) -> torch.Tensor:
+    def _sample_time(self, x_shape: tuple, device: torch.device) -> torch.Tensor:
         """
         Sample time values based on the shape of x.
 
@@ -241,9 +232,8 @@ class D3PM(Model):
         """
         dim = len(x_shape)
         t_shape = (x_shape[0],) + (dim - 1) * (1,)
-        t_id = torch.randint(
-            0, self.nb_time_steps_train, t_shape, device=device
-        )
+        t_id = torch.randint(0, self.nb_time_steps_train, t_shape, device=device)
+
         return self.times_train[t_id], t_id
 
     def loss(self, x: torch.Tensor) -> torch.Tensor:
@@ -260,9 +250,7 @@ class D3PM(Model):
         t, t_id = self._sample_time(x.shape, x.device)
         xt = self.sample_from_int(x0_id, t_id)
         # Log probability of eq (3) of the paper
-        log_xt_minus_1 = self.predict_given_xt_and_x0(
-            xt, x0_id, t_id, is_x0_int=True
-        )
+        log_xt_minus_1 = self.predict_given_xt_and_x0(xt, x0_id, t_id, is_x0_int=True)
         log_xt_minus_1_pred, x0_pred = self.predict_given_xt(xt, t_id)
         kl_loss_xt = self._compute_kl_loss(
             F.log_softmax(log_xt_minus_1_pred, dim=-1),
@@ -300,9 +288,7 @@ class D3PM(Model):
             x.long(), num_classes=self.nb_tokens
         ).float()
 
-        log_prob = torch.log(
-            self.markov_handler.Qt_x(t_id, x_one_hot) + self.eps
-        )
+        log_prob = torch.log(self.markov_handler.Qt_x(t_id, x_one_hot) + self.eps)
         return self._sample_from_categorical(log_prob)
 
     def velocity_step(self, x, t_id, backward=False):
@@ -311,9 +297,7 @@ class D3PM(Model):
             nonzero_mask = (
                 (t_id != 0)
                 .to(dtype=xt_minus_1.dtype)
-                .reshape(
-                    xt_minus_1.shape[0], *([1] * (len(xt_minus_1.shape) - 1))
-                )
+                .reshape(xt_minus_1.shape[0], *([1] * (len(xt_minus_1.shape) - 1)))
             )
 
             return self._sample_from_categorical(xt_minus_1, nonzero_mask)
