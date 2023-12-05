@@ -13,7 +13,7 @@ CONFIG["scheme_params"].update(
 )
 CONFIG["training_params"].update(
     {
-        "epochs": 400,
+        "epochs": 2000,
         "check_val_every_n_epochs": 50,
         "batch_size": 64,
         "batch_size_eval": 64,
