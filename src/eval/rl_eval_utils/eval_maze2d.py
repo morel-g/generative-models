@@ -6,9 +6,16 @@ import einops
 import gym
 import imageio
 import matplotlib.pyplot as plt
+import math
+import torch
 
-from src.eval.plot_utils import save_video, save_figure
 
+from src.eval.plot_utils import (
+    save_video,
+    save_images_as_grid,
+    figure_to_data,
+)
+from src.data_manager.rl_data_utils import RLDataUtils
 
 MAZE_BOUNDS = {
     "maze2d-umaze-v1": (0, 5, 0, 5),
@@ -50,6 +57,11 @@ def load_environment(name):
 # ------------------------------ helper functions -----------------------------#
 # -----------------------------------------------------------------------------#
 
+
+def create_maze2d_cond(nb_samples):
+    state_start = RLDataUtils.create_random_states(nb_samples, 0)
+    state_end = RLDataUtils.create_random_states(nb_samples, -1)
+    return torch.stack((state_start, state_end), dim=1)
 
 def atmost_2d(x):
     while x.ndim > 2:
@@ -101,7 +113,7 @@ class MazeRenderer:
         self._remove_margins = False
         self._extent = (0, 1, 1, 0)
 
-    def renders(self, observations, title=None, return_img=False):
+    def renders(self, observations, title=None, return_fig=False):
         plt.clf()
         fig = plt.gcf()
         fig.set_size_inches(5, 5)
@@ -149,7 +161,8 @@ class MazeRenderer:
 
         path_length = len(observations)
         colors = plt.cm.jet(np.linspace(0, 1, path_length))
-        plt.plot(observations[:, 1], observations[:, 0], c="black", zorder=10)
+
+        # plt.plot(observations[:, 1], observations[:, 0], c="black", zorder=10)
         plt.scatter(observations[:, 1], observations[:, 0], c=colors, zorder=20)
         plt.axis("off")
         plt.title(title)
@@ -175,7 +188,7 @@ class MazeRenderer:
             left=0.025, bottom=0.025, right=0.975, top=0.95, wspace=0, hspace=0
         )
 
-        if return_img:
+        if not return_fig:
             img = plot2img(fig)
             return img
         else:
@@ -233,16 +246,49 @@ class Maze2dRenderer(MazeRenderer):
             conditions /= scale
         return super().renders(observations, **kwargs)
 
-    def save_states_traj(self, traj, output_dir, name):
+    def save_state_trajectories(
+        self, state_traj, output_dir, name="maze_2d", titles=None
+    ):
+        if name.endswith(".gif"):
+            name = name[:-4]
+        # Set batch_dim first
+        new_dims = (1, 0) + tuple(range(2, state_traj.ndim))
+        state_traj = state_traj.transpose(*new_dims)
+
+        for i, xi in enumerate(state_traj):
+            self.save_states_trajectory(
+                xi, output_dir, name + f"_traj_{i}", titles=titles
+            )
+
+    def save_states_trajectory(self, x_traj, output_dir, name, titles=None):
+        if not name.endswith(".gif"):
+            name += ".gif"
         figures = []
-        for xi in traj:
-            figures.append(self.renders(xi))
+
+        for i, xi in enumerate(x_traj):
+            figures.append(
+                figure_to_data(self.renders(xi, title=titles[i], return_fig=True))
+            )
 
         save_video(output_dir, figures, name)
 
-    def save_state(self, state, output_dir, name):
-        fig = self.renders(state)
-        save_figure(output_dir, fig, name)
+    def save_state_samples(self, states, output_dir, name="maze2d_sample"):
+        if name.endswith(".png"):
+            name = name[:-4]
+        imgs = []
+        for i, state in enumerate(states):
+            imgs.append(self.renders(state, return_fig=False))
+
+        num_images = len(imgs)
+        nb_cols = math.ceil(math.sqrt(num_images))
+        nb_rows = math.ceil(num_images / nb_cols)
+        save_images_as_grid(
+            imgs,
+            output_dir,
+            nb_rows,
+            nb_cols,
+            name,
+        )
 
 
 # -----------------------------------------------------------------------------#
@@ -250,36 +296,36 @@ class Maze2dRenderer(MazeRenderer):
 # -----------------------------------------------------------------------------#
 
 
-def set_state(env, state):
-    qpos_dim = env.sim.data.qpos.size
-    qvel_dim = env.sim.data.qvel.size
-    if not state.size == qpos_dim + qvel_dim:
-        warnings.warn(
-            f"[ utils/rendering ] Expected state of size {qpos_dim + qvel_dim}, "
-            f"but got state of size {state.size}"
-        )
-        state = state[: qpos_dim + qvel_dim]
+# def set_state(env, state):
+#     qpos_dim = env.sim.data.qpos.size
+#     qvel_dim = env.sim.data.qvel.size
+#     if not state.size == qpos_dim + qvel_dim:
+#         warnings.warn(
+#             f"[ utils/rendering ] Expected state of size {qpos_dim + qvel_dim}, "
+#             f"but got state of size {state.size}"
+#         )
+#         state = state[: qpos_dim + qvel_dim]
 
-    env.set_state(state[:qpos_dim], state[qpos_dim:])
-
-
-def rollouts_from_state(env, state, actions_l):
-    rollouts = np.stack(
-        [rollout_from_state(env, state, actions) for actions in actions_l]
-    )
-    return rollouts
+#     env.set_state(state[:qpos_dim], state[qpos_dim:])
 
 
-def rollout_from_state(env, state, actions):
-    qpos_dim = env.sim.data.qpos.size
-    env.set_state(state[:qpos_dim], state[qpos_dim:])
-    observations = [env._get_obs()]
-    for act in actions:
-        obs, rew, term, _ = env.step(act)
-        observations.append(obs)
-        if term:
-            break
-    for i in range(len(observations), len(actions) + 1):
-        ## if terminated early, pad with zeros
-        observations.append(np.zeros(obs.size))
-    return np.stack(observations)
+# def rollouts_from_state(env, state, actions_l):
+#     rollouts = np.stack(
+#         [rollout_from_state(env, state, actions) for actions in actions_l]
+#     )
+#     return rollouts
+
+
+# def rollout_from_state(env, state, actions):
+#     qpos_dim = env.sim.data.qpos.size
+#     env.set_state(state[:qpos_dim], state[qpos_dim:])
+#     observations = [env._get_obs()]
+#     for act in actions:
+#         obs, rew, term, _ = env.step(act)
+#         observations.append(obs)
+#         if term:
+#             break
+#     for i in range(len(observations), len(actions) + 1):
+#         ## if terminated early, pad with zeros
+#         observations.append(np.zeros(obs.size))
+#     return np.stack(observations)

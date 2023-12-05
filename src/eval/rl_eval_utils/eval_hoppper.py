@@ -8,26 +8,26 @@ from src.utils import ensure_directory_exists
 
 import traceback
 
-missing_packages = []
+# missing_packages = []
 
-try:
-    import gym
-except ImportError:
-    missing_packages.append("gym")
+# try:
+#     import gym
+# except ImportError:
+#     missing_packages.append("gym")
 
-try:
-    import mujoco_py as mjc
-except ImportError:
-    missing_packages.append("mujoco_py")
+# try:
+#     import mujoco_py as mjc
+# except ImportError:
+#     missing_packages.append("mujoco_py")
 
-if missing_packages:
-    warning_message = "Warning: The following packages could not be imported: {}. RL features may not work.".format(
-        ", ".join(missing_packages)
-    )
-    warnings.warn(warning_message, ImportWarning)
+# if missing_packages:
+#     warning_message = "Warning: The following packages could not be imported: {}. RL features may not work.".format(
+#         ", ".join(missing_packages)
+#     )
+#     warnings.warn(warning_message, ImportWarning)
 
 
-def save_samples_with_render(
+def save_hopper_with_render(
     renderer,
     observations,
     output_dir,
@@ -128,6 +128,9 @@ class MuJoCoRenderer:
     """
 
     def __init__(self, env):
+        import mujoco_py as mjc
+        import gym
+
         if type(env) is str:
             env = env_map(env)
             self.env = gym.make(env)
@@ -243,3 +246,24 @@ class MuJoCoRenderer:
 
     def __call__(self, *args, **kwargs):
         return self.renders(*args, **kwargs)
+
+    def save_state_samples(
+        self, state, output_dir, name="hopper_samples", titles=None, speed_factor=3
+    ):
+        if not name.endswith(".gif"):
+            name += ".gif"
+        save_hopper_with_render(self, state, output_dir, name, titles, speed_factor)
+
+    def save_state_trajectories(
+        self, state_traj, output_dir, name="hopper", titles=None, speed_factor=3
+    ):
+        if name.endswith(".gif"):
+            name = name[:-4]
+        # Set batch_dim first
+        new_dims = (1, 0) + tuple(range(2, state_traj.ndim))
+        state_traj = state_traj.transpose(*new_dims)
+
+        for i, xi in enumerate(state_traj):
+            save_hopper_with_render(
+                self, xi, output_dir, name + f"_traj_{i}.gif", titles, speed_factor
+            )
