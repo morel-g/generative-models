@@ -9,17 +9,6 @@ from src.neural_networks.ncsnpp.layerspp import GaussianFourierProjection
 import math
 
 
-# helper Module to convert tensor of input indices into corresponding tensor of token embeddings
-class TokenEmbedding(nn.Module):
-    def __init__(self, vocab_size: int, emb_size):
-        super(TokenEmbedding, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, emb_size)
-        self.emb_size = emb_size
-
-    def forward(self, tokens: Tensor):
-        return self.embedding(tokens.long()) * math.sqrt(self.emb_size)
-
-
 class TimeEmbedBlock(nn.Module):
     def __init__(
         self, emb_dim, activation_fn=nn.GELU(), add_log=True, batch_first=True
@@ -33,38 +22,7 @@ class TimeEmbedBlock(nn.Module):
         self.batch_first = batch_first
         self.eps = 1e-4
 
-        self.fourier_emb = GaussianFourierProjection(
-            embedding_size=emb_dim // 2
-        )
-
-    # def get_positional_time_embedding(self, t, max_time=1000.0):
-    #     """
-    #     Build sinusoidal embeddings.
-
-    #     This matches the implementation in tensor2tensor, but differs slightly
-    #     from the description in Section 3.5 of "Attention Is All You Need".
-
-    #     Args:
-    #         t: torch.Tensor: generate embedding vectors at these timesteps
-    #         max_time: float: largest time input
-
-    #     Returns:
-    #         embedding vectors with shape `(len(timesteps), embedding_dim)`
-    #     """
-    #     t = t * 1000.0 / max_time
-
-    #     half_dim = self.emb_dim // 2
-    #     emb = np.log(10000) / (half_dim - 1)
-    #     emb = torch.exp(torch.arange(half_dim, dtype=t.dtype) * (-emb)).to(
-    #         t.device
-    #     )
-    #     emb = t * emb.unsqueeze(0)
-    #     emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
-
-    #     if self.emb_dim % 2 == 1:  # zero pad
-    #         emb = torch.nn.functional.pad(emb, (0, 1), mode="constant")
-
-    #     return emb
+        self.fourier_emb = GaussianFourierProjection(embedding_size=emb_dim // 2)
 
     def forward(self, t):
         if self.add_log:
@@ -103,8 +61,7 @@ class PositionalEncoding(nn.Module):
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
         div_term = torch.exp(
-            torch.arange(0, d_model, 2).float()
-            * (-math.log(10000.0) / d_model)
+            torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model)
         )
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
@@ -161,9 +118,7 @@ class TransformerModel(nn.Module):
         self.model_type = "Transformer"
         self.src_mask = None
         self.batch_first = batch_first
-        self.pos_encoder = PositionalEncoding(
-            emb_dim, dropout, batch_first=batch_first
-        )
+        self.pos_encoder = PositionalEncoding(emb_dim, dropout, batch_first=batch_first)
         self.time_embed = TimeEmbedBlock(emb_dim, batch_first=batch_first)
 
         self.input_emb = nn.Embedding(nb_tokens, emb_dim)
@@ -192,9 +147,7 @@ class TransformerModel(nn.Module):
             device = x.device
             if self.src_mask is None or self.src_mask.size(0) != len(x):
                 seq_len = x.shape[0] if not self.batch_first else x.shape[1]
-                mask = self._generate_square_subsequent_mask(seq_len).to(
-                    device
-                )
+                mask = self._generate_square_subsequent_mask(seq_len).to(device)
                 self.src_mask = mask
         else:
             self.src_mask = None
@@ -203,9 +156,7 @@ class TransformerModel(nn.Module):
         x = x + self.time_embed(t)
         x = self.pos_encoder(x)
         # output = self.encoder(x, mask=self.src_mask)
-        output = self.transformer_encoder(
-            x, src_key_padding_mask=self.src_mask
-        )
+        output = self.transformer_encoder(x, src_key_padding_mask=self.src_mask)
         output = self.decoder(output)
         # output = F.softmax(output, dim=-1)
 
