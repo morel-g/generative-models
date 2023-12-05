@@ -142,9 +142,7 @@ def save_images_as_grid_video(
     save_video(output_dir, figs, name, fig_dir=fig_dir)
 
 
-def arrange_images_in_grid(
-    imgs: List[np.ndarray], nb_rows: int, nb_cols: int
-) -> plt.Figure:
+def arrange_images_in_grid(imgs, nb_rows: int, nb_cols: int) -> plt.Figure:
     """
     Create a figure from a list of images arranged in a grid.
 
@@ -160,13 +158,20 @@ def arrange_images_in_grid(
     fig_height = 4 * nb_rows
 
     fig, axes = plt.subplots(nb_rows, nb_cols, figsize=(fig_width, fig_height))
-
+    # plt.subplots_adjust(wspace=0.1, hspace=0.1)
     for ax, img in zip(axes.flatten(), imgs):
-        img = np.moveaxis(img, [0, 1, 2], [2, 0, 1])
+        ax.axis("off")
+        if (
+            img.ndim == 3
+            and img.shape[0] < img.shape[1]
+            and img.shape[0] < img.shape[2]
+        ):
+            img = np.moveaxis(img, [0, 1, 2], [2, 0, 1])
         if img.shape[-1] == 1:
             ax.imshow(img.squeeze(), cmap="gray")
         else:
             ax.imshow(img)
+    plt.tight_layout()
     return fig
 
 

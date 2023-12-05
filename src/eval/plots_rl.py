@@ -5,8 +5,8 @@ import gym
 from torch.utils.data import DataLoader
 
 from src.utils import ensure_directory_exists
-from src.eval.rl_eval_utils.eval_hoppper import MuJoCoRenderer, save_samples_with_render
-from src.eval.rl_eval_utils.eval_maze2d import Maze2dRenderer
+from src.eval.rl_eval_utils.eval_hoppper import MuJoCoRenderer
+from src.eval.rl_eval_utils.eval_maze2d import Maze2dRenderer, create_maze2d_cond
 from src.eval.plot_utils import get_titles
 from src.data_manager.rl_data_utils import RLDataUtils
 
@@ -30,71 +30,98 @@ def compute_rl_outputs(
     Returns:
     - None
     """
-    fig_dir = os.path.join(output_dir, FIG_DIR)
+    render = get_render()
+    fig_dir = output_dir  # os.path.join(output_dir, FIG_DIR)
+    ensure_directory_exists(fig_dir)
     val_dataloader = DataLoader(val_dataset, batch_size=4)
 
     for x in val_dataloader:
         x = RLDataUtils.denormalize(x)
-        save_rl_samples(
-            net.params.data_type,
-            x.cpu().numpy(),
-            fig_dir,
-            name="True_samples.gif",
-        )
+        render.save_state_samples(x.cpu().numpy(), fig_dir, name="True_samples")
         break
 
-    save_rl_traj(net, fig_dir, nb_samples=3)
+    nb_samples = 4
 
+    if "hopper" in RLDataUtils.env_name:
+        net.set_trajectory_length(4)
+        x_cond = None
+    elif "maze2d" in RLDataUtils.env_name:
+        x_cond = create_maze2d_cond(nb_samples)
 
-def save_rl_traj(
-    net: pl.LightningModule, output_dir: str, name: str = "Hopper", nb_samples: int = 5
-):
-    net.set_trajectory_length(4)
-    x_traj = net.sample(nb_samples=nb_samples, return_trajectories=True).cpu().numpy()
-    save_rl_samples(
-        net.params.data_type,
-        x_traj[-1],
-        output_dir,
-        name=name + "_samples.gif",
+    x_traj = (
+        net.sample(nb_samples=nb_samples, return_trajectories=True, x_cond=x_cond)
+        .cpu()
+        .numpy()
     )
-    # Transpose the trajectories to have batch dim first
-    new_dims = (1, 0) + tuple(range(2, x_traj.ndim))
-    x_traj = x_traj.transpose(*new_dims)
+
+    # save_hopper_traj(net, fig_dir, nb_samples=3)
     titles = get_titles(net, forward=False)
-    for i, xi in enumerate(x_traj):
-        save_rl_samples(
-            net.params.data_type,
-            xi,
-            output_dir,
-            name=name + f"_traj_{i}.gif",
-            titles=titles,
-        )
+    render.save_state_samples(x_traj[-1], fig_dir)
+    render.save_state_trajectories(x_traj, fig_dir, titles=titles)
 
 
-def sample_rl(net: pl.LightningModule, output_dir: str, name: str, nb_samples: int = 5):
-    x = net.sample(nb_samples).cpu().numpy()
-    save_rl_samples(
-        net.params.data_type,
-        x,
-        output_dir=output_dir,
-        name=name,
-    )
-
-
-def save_rl_samples(
-    env_name,
-    observations,
-    output_dir,
-    name="rl_samples.gif",
-    titles=None,
-    speed_factor=3,
-):
-    ensure_directory_exists(output_dir)
-    env = gym.make(env_name)
+def get_render():
+    env = RLDataUtils.env
+    env_name = RLDataUtils.env_name
     if "maze2d" in env_name:
         render = Maze2dRenderer(env_name)
     else:
         render = MuJoCoRenderer(env)
-    save_samples_with_render(
-        render, observations, output_dir, name, titles, speed_factor
-    )
+    return render
+
+
+# def save_hopper_traj(
+#     net: pl.LightningModule, output_dir: str, name: str = "Hopper", nb_samples: int = 5
+# ):
+#     if name != "":
+#         name += "_"
+#     net.set_trajectory_length(4)
+#     x_traj = net.sample(nb_samples=nb_samples, return_trajectories=True).cpu().numpy()
+#     save_rl_samples(
+#         net.params.data_type,
+#         x_traj[-1],
+#         output_dir,
+#         name=name + "_samples.gif",
+#     )
+#     # Transpose the trajectories to have batch dim first
+#     new_dims = (1, 0) + tuple(range(2, x_traj.ndim))
+#     x_traj = x_traj.transpose(*new_dims)
+#     titles = get_titles(net, forward=False)
+#     for i, xi in enumerate(x_traj):
+#         save_rl_samples(
+#             net.params.data_type,
+#             xi,
+#             output_dir,
+#             name=name + f"_traj_{i}.gif",
+#             titles=titles,
+#         )
+
+
+def sample_rl(net: pl.LightningModule, output_dir: str, name: str, nb_samples: int = 5):
+    ensure_directory_exists(output_dir)
+    if "hopper" in RLDataUtils.env_name:
+        x_cond = None
+    elif "maze2d" in RLDataUtils.env_name:
+        x_cond = create_maze2d_cond(nb_samples)
+    x = net.sample(nb_samples, x_cond=x_cond).cpu().numpy()
+    render = get_render()
+    render.save_state_samples(x, output_dir, name=name)
+
+
+# def save_rl_samples(
+#     env_name,
+#     observations,
+#     output_dir,
+#     name="rl_samples.gif",
+#     titles=None,
+#     speed_factor=3,
+# ):
+#     ensure_directory_exists(output_dir)
+#     env = gym.make(env_name)
+#     if "maze2d" in env_name:
+#         render = Maze2dRenderer(env_name)
+#     else:
+#         render = MuJoCoRenderer(env)
+#     save_samples_with_render(
+#         render, observations, output_dir, name, titles, speed_factor
+#     )
