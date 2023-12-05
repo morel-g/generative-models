@@ -8,12 +8,13 @@ CONFIG["scheme_params"].update(
     {
         "nb_time_steps_train": 1000,
         "nb_time_steps_eval": 1000,
+        "conditioning_case": Case.conditioning_rl_first_last,
     }
 )
 CONFIG["training_params"].update(
     {
-        "epochs": 200,
-        "check_val_every_n_epochs": 10,
+        "epochs": 400,
+        "check_val_every_n_epochs": 50,
         "batch_size": 64,
         "batch_size_eval": 64,
         "lr": 2e-4,
@@ -29,7 +30,8 @@ CONFIG["training_params"].update(
 )
 CONFIG["model_params"] = {
     "transition_dim": 6,
+    "horizon": 256,
     "dim": 32,
-    "dim_mults": (1, 2, 4, 8),
+    "dim_mults": (1, 4, 8),
     "attention": False,
 }
