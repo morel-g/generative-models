@@ -16,6 +16,7 @@ from src.data_manager.data_type import (
     toy_discrete_data_type,
     toy_continuous_data_type,
 )
+from src.eval.plot_utils import get_titles
 
 # import ot
 import pytorch_lightning as pl
@@ -164,13 +165,9 @@ def compute_continuous_outputs_2d(
         Case.score_model,
         Case.score_model_critical_damped,
     ):
-        compute_velocity_outputs(
-            net, X, output_dir, bounds, s, nb_samples=nb_samples
-        )
+        compute_velocity_outputs(net, X, output_dir, bounds, s, nb_samples=nb_samples)
     else:
-        compute_general_outputs(
-            net, X, output_dir, bounds, s, nb_samples=nb_samples
-        )
+        compute_general_outputs(net, X, output_dir, bounds, s, nb_samples=nb_samples)
 
     # Save scatter plots
     save_scatter(
@@ -447,24 +444,6 @@ def save_velocities_2d(
 # -----------------------------------------------------------------------------
 
 
-def get_titles(net, forward):
-    # Get time values
-    t = net.get_traj_times()
-    time_range = (
-        reversed(range(t.shape[0])) if not forward else range(t.shape[0])
-    )
-
-    # Prepare titles for the plot
-    titles = (
-        None
-        if hasattr(net, "remove_titles") and net.remove_titles()
-        else ["T = " + str(round(t[i].item(), 3)) for i in time_range]
-    )
-    return titles
-
-
 def get_bounds_and_s(data_type: str) -> tuple:
     """Return the appropriate bounds and scaling factor for a given data type."""
-    return (
-        (4.5, None) if data_type != Case.multimodal_swissroll else (1.0, 3.0)
-    )
+    return (4.5, None) if data_type != Case.multimodal_swissroll else (1.0, 3.0)

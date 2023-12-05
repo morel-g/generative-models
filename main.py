@@ -1,14 +1,17 @@
 import torch
 import importlib
+import sys
 from typing import Dict, Any
 
 from src.params import Params
 from src.case import Case
-from src.data_manager.data_type import img_data_type, text_data_type
-from src.training.training_module import run_sim
-from src.data_manager.data_parser import parse_main
 from src.precision import torch_float_precision
-from src.data_manager.text_data_manager import get_nb_tokens
+from src.params_parser import parse_main
+from src.data_manager.data_type import img_data_type, text_data_type, rl_data_type
+from src.global_data_type import GlobalDataType
+from src.training.training_module import run_sim
+from src.data_manager.text_data_utils import TextDataUtils
+from src.data_manager.rl_data_utils import RLDataUtils
 
 # Constants
 MNIST_DIM = 28
@@ -77,13 +80,11 @@ def update_params_with_defaults(params: Dict[str, Any]) -> None:
     - None
     """
     if params["data_type"] in img_data_type:
-        params["model_params"].update(
-            set_img_default_params(params["data_type"])
-        )
+        params["model_params"].update(set_img_default_params(params["data_type"]))
     elif params["data_type"] in text_data_type:
         params["model_params"].update(
             {
-                "nb_tokens": get_nb_tokens(
+                "nb_tokens": TextDataUtils.get_nb_tokens(
                     params["scheme_params"]["tokenizer_name"]
                 )
             }
@@ -92,7 +93,7 @@ def update_params_with_defaults(params: Dict[str, Any]) -> None:
 
 def get_params(args: Any) -> Dict[str, Any]:
     """
-    Get parameters from the provided arguments.
+    Get parameters from the provided arguments and dynamically import modules.
 
     Args:
     - args: command line arguments
@@ -100,26 +101,32 @@ def get_params(args: Any) -> Dict[str, Any]:
     Returns:
     - dict: dictionary of parameters
     """
-    config_module = importlib.import_module(args.config_file.replace("/", "."))
-    params = getattr(config_module, "CONFIG")
+    try:
+        config_module = importlib.import_module(args.config_file.replace("/", "."))
+        params = getattr(config_module, "CONFIG")
+    except ImportError:
+        # Handle import error
+        print(f"Error importing configuration module: {args.config_file}")
+        sys.exit(1)
+    except AttributeError:
+        # Handle attribute error
+        print(f"CONFIG not found in {args.config_file}")
+        sys.exit(1)
 
     if args.gpu is not None:
-        params["device"] = (
-            [args.gpu] if isinstance(args.gpu, int) else list(args.gpu)
-        )
+        params["device"] = [args.gpu] if isinstance(args.gpu, int) else list(args.gpu)
     if args.restore:
         params["checkpoint_dict"].update(
             {"restore_training": True, "training_ckpt_path": args.restore}
         )
 
     update_params_with_defaults(params)
-
-    return params
+    return Params(**params)
 
 
 if __name__ == "__main__":
     torch.set_default_dtype(torch_float_precision)
     args = parse_main()
     params = get_params(args)
-    params = Params(**params)
+
     run_sim(params)

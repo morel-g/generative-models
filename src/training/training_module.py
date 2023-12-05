@@ -8,7 +8,9 @@ from typing import Optional, Tuple
 from src.data_manager.data_module import DataModule
 from src.training.diffusion_generator import DiffusionGenerator
 from src.utils import get_logger
-from src.eval.plots import compute_imgs_outputs, compute_text_outputs
+from src.eval.plots_img import compute_imgs_outputs
+from src.eval.plots_text import compute_text_outputs
+from src.eval.plots_rl import compute_rl_outputs
 from src.eval.plots_2d import (
     compute_continuous_outputs_2d,
     compute_discrete_outputs_2d,
@@ -18,9 +20,9 @@ from src.data_manager.data_type import (
     toy_discrete_data_type,
     img_data_type,
     text_data_type,
+    rl_data_type,
 )
 from src.save_load_obj import save_obj, load_obj
-from src.training.ema import EMA
 from src.params import Params
 
 
@@ -80,7 +82,7 @@ def setup_callbacks(params: Params, log_dir: str) -> list:
 
     callbacks = [checkpoint_callback]
     # if params.training_params.get("ema", False):
-    #     if "ema_rate" not in params.training_params:
+    #     if "ema_rate" not in pa   rams.training_params:
     #         raise RuntimeError("ema_rate not specified in training params.")
     #     ema = EMA(params.training_params["ema_rate"])
     #     callbacks.append(ema)
@@ -157,9 +159,7 @@ def train_model(
         devices=device,
         callbacks=callbacks,
         logger=logger,
-        check_val_every_n_epoch=params.training_params[
-            "check_val_every_n_epochs"
-        ],
+        check_val_every_n_epoch=params.training_params["check_val_every_n_epochs"],
         enable_progress_bar=params.print_opt.get("enable_progress_bar", True),
         gradient_clip_val=params.training_params.get("gradient_clip_val", 0.0),
         reload_dataloaders_every_n_epochs=0,
@@ -181,9 +181,7 @@ def train_model(
 
     # Load the best model checkpoint
     if trainer.checkpoint_callback.best_model_path:
-        print(
-            "Loading checkpoint " + trainer.checkpoint_callback.best_model_path
-        )
+        print("Loading checkpoint " + trainer.checkpoint_callback.best_model_path)
         net = DiffusionGenerator.load_from_checkpoint(
             trainer.checkpoint_callback.best_model_path, params=params
         )
@@ -192,12 +190,10 @@ def train_model(
 
     # Set the model device
     net_device = (
-        torch.device("cuda")
-        if params.accelerator == "gpu"
-        else torch.device("cpu")
+        torch.device("cuda") if params.accelerator == "gpu" else torch.device("cpu")
     )
     net.prepare_for_inference(data_module.train_dataloader(), net_device)
-    
+
     return net
 
 
@@ -218,6 +214,7 @@ def run_sim(params: Params) -> Tuple[DiffusionGenerator, TensorBoardLogger]:
 
     # Evaluate the model
     net.eval()
+    val_dataset = data_module.val_data
     with torch.no_grad():
         if params.data_type in toy_continuous_data_type:
             x_val = data_module.train_data.x
@@ -226,13 +223,11 @@ def run_sim(params: Params) -> Tuple[DiffusionGenerator, TensorBoardLogger]:
             x_val = data_module.train_data.x
             compute_discrete_outputs_2d(net, x_val, logger.log_dir)
         elif params.data_type in img_data_type:
-            val_dataset = data_module.val_data
-            compute_imgs_outputs(
-                net, val_dataset, logger.log_dir, nb_rows=5, nb_cols=5
-            )
+            compute_imgs_outputs(net, val_dataset, logger.log_dir, nb_rows=5, nb_cols=5)
         elif params.data_type in text_data_type:
-            val_dataset = data_module.val_data
             compute_text_outputs(net, val_dataset, logger.log_dir)
+        elif params.data_type in rl_data_type:
+            compute_rl_outputs(net, val_dataset, logger.log_dir)
         else:
             raise RuntimeError(f"Uknown data_type {params.data_type}")
 

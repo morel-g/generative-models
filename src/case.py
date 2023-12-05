@@ -47,6 +47,10 @@ class Case:
     wiki = "wiki"
     lm1b_short = "lm1b_short"
     lm1b = "lm1b"
+    hopper_medium_v2 = "hopper-medium-v2"
+    maze2d_umaze_v1 = "maze2d-umaze-v1"
+    maze2d_medium_v1 = "maze2d-medium-v1"
+    maze2d_large_v1 = "maze2d-large-v1"
 
     # Tokenizer
     gpt2 = "gpt2"
@@ -59,6 +63,7 @@ class Case:
     # architectures.
     ncsnpp = "ncsnpp"
     u_net = "u_net"
+    u_net_1d = "u_net_1d"
     vector_field = "vector_field"
     transformer = "transformer"
 

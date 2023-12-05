@@ -1,12 +1,13 @@
 import torch
 import numpy as np
+from typing import Optional, Tuple, Union, Any, List
 
 from src.case import Case
 from src.data_manager.data_type import (
     toy_continuous_data_type,
-    toy_discrete_data_type,
     img_data_type,
     discrete_data_type,
+    rl_data_type,
 )
 from src.neural_networks.neural_network import NeuralNetwork
 from src.models.helpers.model_utils import (
@@ -14,7 +15,7 @@ from src.models.helpers.model_utils import (
     trajectories_to_array,
     equally_spaced_integers,
 )
-from typing import Optional, Tuple, Union, Any, List
+from src.data_manager.rl_data_utils import RLDataUtils
 
 
 class Model(torch.nn.Module):
@@ -61,6 +62,7 @@ class Model(torch.nn.Module):
         self.T_init = T_init
         self.adapt_dt = adapt_dt
         self.backward_scheme = Case.euler_explicit
+        self.trajectory_length = 40
         self.set_nb_time_steps(nb_time_steps_eval, eval=True)
         if nb_time_steps_train is not None:
             self.set_nb_time_steps(nb_time_steps_train, eval=False)
@@ -74,6 +76,8 @@ class Model(torch.nn.Module):
                 model_case = Case.transformer
             elif data_type in img_data_type:
                 model_case = img_model_case
+            elif data_type in rl_data_type:
+                model_case = Case.u_net_1d
             else:
                 raise NotImplementedError(f"Uknown data type {data_type}")
 
@@ -117,9 +121,7 @@ class Model(torch.nn.Module):
         times[1:] = torch.cumsum(dt, dim=0)
         return dt, times
 
-    def set_nb_time_steps(
-        self, nb_time_steps: int, eval: bool = False
-    ) -> None:
+    def set_nb_time_steps(self, nb_time_steps: int, eval: bool = False) -> None:
         """
         Sets the number of time steps for the model, either for training or evaluation.
 
@@ -195,36 +197,26 @@ class Model(torch.nn.Module):
 
     def velocity_eval(self, x, t):
         """Must be implemented in subclass."""
-        raise NotImplementedError(
-            "This method should be overridden by subclass."
-        )
+        raise NotImplementedError("This method should be overridden by subclass.")
 
     def loss(self, x):
         """Must be implemented in subclass."""
-        raise NotImplementedError(
-            "This method should be overridden by subclass."
-        )
+        raise NotImplementedError("This method should be overridden by subclass.")
 
     def conditional_forward_step(self, x, t1, t2):
         """Must be implemented in subclass."""
-        raise NotImplementedError(
-            "This method should be overridden by subclass."
-        )
+        raise NotImplementedError("This method should be overridden by subclass.")
 
     def sample_prior_v(self, x):
         """Must be implemented in subclass."""
-        raise NotImplementedError(
-            "This method should be overridden by subclass."
-        )
+        raise NotImplementedError("This method should be overridden by subclass.")
 
     def sample_prior_x(self, shape, device):
         return torch.randn(shape, device=device)
 
     def velocity_step(self, x, t_id, backward=False):
         """Must be implemented in subclass."""
-        raise NotImplementedError(
-            "This method should be overridden by subclass."
-        )
+        raise NotImplementedError("This method should be overridden by subclass.")
 
     def is_augmented(self):
         return False
@@ -244,9 +236,7 @@ class Model(torch.nn.Module):
         if model_type == Case.u_net:
             if is_augmented and not "channel_out" in model_params:
                 model_params["channels_out"] = model_params["image_channels"]
-                model_params["image_channels"] = (
-                    2 * model_params["image_channels"]
-                )
+                model_params["image_channels"] = 2 * model_params["image_channels"]
         elif model_type == Case.vector_field:
             if "dim" in model_params:
                 if is_augmented:
@@ -258,7 +248,7 @@ class Model(torch.nn.Module):
         elif model_type == Case.ncsnpp:
             if is_augmented:
                 model_params["v_input"] = True
-        elif model_type == Case.transformer:
+        elif model_type in [Case.transformer, Case.u_net_1d]:
             pass
         else:
             raise RuntimeError("Model type not implemented")
@@ -318,6 +308,13 @@ class Model(torch.nn.Module):
                 self.model_params["dim"],
                 self.model_params["dim"],
             )
+        elif self.data_type in rl_data_type:
+            return (
+                self.model_params["horizon"],
+                RLDataUtils.get_total_dim(),
+            )
+        else:
+            raise ValueError(f"Unknown data type {self.data_type}")
 
     @torch.no_grad()
     def sample(
@@ -406,9 +403,7 @@ class Model(torch.nn.Module):
         x = self._augment_input(x)
 
         x_traj = self._initialize_trajectories(x, return_trajectories)
-        save_idx_times = (
-            self._get_traj_idx() if return_trajectories else []  # [:-1]
-        )
+        save_idx_times = self._get_traj_idx() if return_trajectories else []  # [:-1]
 
         for i in reversed(range(self.nb_time_steps_eval)):
             t, dt = self._get_time_info(
@@ -435,9 +430,7 @@ class Model(torch.nn.Module):
 
         return x
 
-    def _initialize_trajectories(
-        self, x: torch.Tensor, return_trajectories: bool
-    ):
+    def _initialize_trajectories(self, x: torch.Tensor, return_trajectories: bool):
         if return_trajectories:
             x_traj = [] if not self.is_augmented() else ([], [])
             append_trajectories(x_traj, x, self.is_augmented())
@@ -540,9 +533,7 @@ class Model(torch.nn.Module):
         save_idx_times[0] += 1  # For t=0 the velocity may be singular
         for t_id in save_idx_times:
             t = self.times_eval[t_id].repeat((shape,) + (dim - 1) * (1,))
-            v = self._compute_velocity(
-                x, t, return_neural_net=return_neural_net
-            )
+            v = self._compute_velocity(x, t, return_neural_net=return_neural_net)
 
             velocities.append(v.cpu())
         velocities.reverse()
@@ -604,4 +595,6 @@ class Model(torch.nn.Module):
         """
         if self.return_all_trajs:
             return list(range(self.nb_time_steps_eval))
-        return equally_spaced_integers(self.times_eval.shape[0] - 1, 40)
+        return equally_spaced_integers(
+            self.times_eval.shape[0] - 1, self.trajectory_length
+        )

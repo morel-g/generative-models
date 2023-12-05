@@ -41,6 +41,8 @@ img_data_type = [
     Case.audio_diffusion_64,
 ]
 
+rl_data_type = [Case.hopper_medium_v2]
+
 text_data_type = [Case.wiki, Case.lm1b, Case.lm1b_short]
 
 toy_data_type = toy_continuous_data_type + toy_discrete_data_type

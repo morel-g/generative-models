@@ -10,14 +10,34 @@ import imageio
 import os
 from matplotlib.axes import Axes
 from typing import List, Union, Optional, Tuple
+from PIL import ImageFont
 
 from src.utils import ensure_directory_exists
-from src.data_manager.discrete_data_toy_utils import (
-    get_cell_center,
-    get_toy_discrete_params,
-)
+from src.data_manager.toy_data_utils import ToyDiscreteDataUtils
 
 FIG_DIR = "figures/"
+FONT_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "../../fonts/NotoSerif-VariableFont_wdth,wght.ttf",
+)
+
+
+def get_font(size: int = 12) -> str:
+    return ImageFont.truetype(FONT_PATH, size=size)
+
+
+def get_titles(net, forward):
+    # Get time values
+    t = net.get_traj_times()
+    time_range = reversed(range(t.shape[0])) if not forward else range(t.shape[0])
+
+    # Prepare titles for the plot
+    titles = (
+        None
+        if hasattr(net, "remove_titles") and net.remove_titles()
+        else ["T = " + str(round(t[i].item(), 3)) for i in time_range]
+    )
+    return titles
 
 
 def figure_to_data(fig: plt.Figure) -> np.ndarray:
@@ -39,9 +59,7 @@ def figure_to_data(fig: plt.Figure) -> np.ndarray:
     return np.transpose(X, (2, 0, 1))
 
 
-def save_figure(
-    dir_path: str, fig: plt.Figure, name: str, fig_dir: str = FIG_DIR
-):
+def save_figure(dir_path: str, fig: plt.Figure, name: str, fig_dir: str = FIG_DIR):
     """
     Save a figure to a file.
 
@@ -51,9 +69,7 @@ def save_figure(
         name (str): The name of the file.
         fig_dir (str, optional): The directory for storing figures. Defaults to FIG_DIR.
     """
-    name = (
-        name if os.path.splitext(name)[-1].lower() == ".png" else name + ".png"
-    )
+    name = name if os.path.splitext(name)[-1].lower() == ".png" else name + ".png"
     ensure_directory_exists(os.path.join(dir_path, fig_dir))
     full_path = os.path.join(dir_path, fig_dir, name)
 
@@ -80,9 +96,7 @@ def save_video(
         fig_dir (str, optional): The directory for storing figures. Defaults to FIG_DIR.
         fps (int, optional): Frames per second. Calculated based on the number of frames if not provided.
     """
-    name = (
-        name if os.path.splitext(name)[-1].lower() == ".gif" else name + ".gif"
-    )
+    name = name if os.path.splitext(name)[-1].lower() == ".gif" else name + ".gif"
     ensure_directory_exists(os.path.join(dir_path, fig_dir))
     full_path = os.path.join(dir_path, fig_dir, name)
 
@@ -154,15 +168,6 @@ def arrange_images_in_grid(
         else:
             ax.imshow(img)
     return fig
-    # fig = plt.figure(figsize=(fig_width, fig_height))
-    # for i, img in enumerate(imgs):
-    #     fig.add_subplot(nb_rows, nb_cols, i + 1)
-    #     img = np.swapaxes(np.swapaxes(img, 0, -1), 0, 1)
-    #     if img.shape[2] == 1:
-    #         plt.imshow(img, cmap="gray")
-    #     else:
-    #         plt.imshow(img)
-    # return fig
 
 
 def save_images_as_grid(
@@ -185,29 +190,6 @@ def save_images_as_grid(
     fig = arrange_images_in_grid(imgs, nb_rows, nb_cols)
     save_figure(output_dir, fig, name)
     plt.close(fig)
-
-
-def save_hexbin(
-    x: np.ndarray,
-    output_dir: str,
-    name: str = "hexbin",
-    extent: Optional[List[float]] = None,
-    gridsize: int = 100,
-) -> None:
-    """
-    Saves a hexbin plot of the given data points.
-
-    Parameters:
-    - x: Input data points of shape (n, 2) where n is the number of points.
-    - output_dir: Directory to save the figure.
-    - name: Name of the saved figure.
-    - extent: Bounding box in data coordinates to use for the extent of the plot.
-    - gridsize: Size of the grid for the hexbin plot.
-    """
-    fig = plt.figure()
-    plt.hexbin(x[:, 0], x[:, 1], extent=extent, gridsize=gridsize)
-    save_figure(output_dir, fig, name)
-    plt.close()
 
 
 def save_scatter(
@@ -338,7 +320,7 @@ def plot_discrete_density(cells, N):
         samples/density.
         - N: The number of cells for both x and y axis.
     """
-    params = get_toy_discrete_params()
+    params = ToyDiscreteDataUtils.get_toy_discrete_params()
     x_min, x_max = params["min"], params["max"]
     dx = (x_max - x_min) / N
     dy = (x_max - x_min) / N
@@ -349,7 +331,7 @@ def plot_discrete_density(cells, N):
 
     # Prepare list of rectangles
     for i, j in cells:
-        x_center, y_center = get_cell_center(i, j, N)
+        x_center, y_center = ToyDiscreteDataUtils.get_cell_center(i, j, N)
         rect = patches.Rectangle(
             (x_center - dx / 2, y_center - dy / 2),
             dx,
@@ -368,41 +350,6 @@ def plot_discrete_density(cells, N):
     ax.set_xlim(x_min, x_max)
     ax.set_ylim(x_min, x_max)
     return fig, ax
-
-
-# def plot_discrete_density(cells, N):
-#     """
-#     Plot the discrete density for given cells.
-
-#     Args:
-#         - cells (list of tuples): A list of (i, j) coordinates representing cells with
-#         samples/density.
-#         - N: The number of cells for both x and y axis.
-#     """
-#     params = get_toy_discrete_params()
-#     x_min, x_max = params["min"], params["max"]
-#     dx = (x_max - x_min) / N
-#     dy = (x_max - x_min) / N
-
-#     fig, ax = plt.subplots(figsize=(10, 10))
-
-#     # Plot each cell
-#     for i, j in cells:
-#         x_center, y_center = get_cell_center(i, j, N)
-#         rect = patches.Rectangle(
-#             (x_center - dx / 2, y_center - dy / 2),
-#             dx,
-#             dy,
-#             linewidth=1,
-#             edgecolor="r",
-#             facecolor="blue",
-#             alpha=0.5,
-#         )
-#         ax.add_patch(rect)
-
-#     ax.set_xlim(x_min, x_max)
-#     ax.set_ylim(x_min, x_max)
-#     return fig, ax
 
 
 def plot_function(
@@ -565,9 +512,7 @@ def plot_velocity_field(
 
     # If normalization is requested, adjust the velocities
     if normalize:
-        denom = (
-            V_norm + 1e-5
-        )  # Adding a small constant to avoid division by zero
+        denom = V_norm + 1e-5  # Adding a small constant to avoid division by zero
         Vx /= denom
         Vy /= denom
 
@@ -577,10 +522,8 @@ def plot_velocity_field(
     else:
         vmin, vmax = colorbar_range
         levels = np.linspace(vmin, vmax + (vmax - vmin) / 20.0 + 1e-5, 7)
-        cmap = matplotlib.cm.get_cmap("YlGn")
-        cf = plt.contourf(
-            xx, yy, V_norm, cmap=cmap, levels=levels, extend="both"
-        )
+        cmap = matplotlib.colormaps["YlGn"]  # matplotlib.cm.get_cmap("YlGn")
+        cf = plt.contourf(xx, yy, V_norm, cmap=cmap, levels=levels, extend="both")
 
     plt.colorbar(cf, format=FuncFormatter(lambda x, pos: "{:.2f}".format(x)))
 
@@ -649,6 +592,4 @@ def plot_points(X: np.ndarray) -> None:
     Parameters:
     - X: Points to be plotted.
     """
-    plt.scatter(
-        X[:, 0], X[:, 1], c="red", edgecolors="k", s=10, linewidths=0.5
-    )
+    plt.scatter(X[:, 0], X[:, 1], c="red", edgecolors="k", s=10, linewidths=0.5)

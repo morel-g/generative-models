@@ -12,15 +12,19 @@ from src.data_manager.data_type import (
     img_data_type,
     audio_data_type,
     text_data_type,
+    rl_data_type,
 )
 from src.models.score_model import ScoreModel
 from src.models.score_model_critical_damped import ScoreModelCriticalDamped
 from src.models.stochastic_interpolant import StochasticInterpolant
 from src.models.d3pm import D3PM
 from src.eval.plots_2d import sample_2d
-from src.eval.plots import sample_img, sample_text
+from src.eval.plots_img import sample_img
+from src.eval.plots_text import sample_text
+from src.eval.plots_rl import sample_rl
 from src.training.opt_utils import create_optimizer, create_scheduler
 from src.training.ema_handler import EMAHandler
+from src.data_manager.rl_data_utils import RLDataUtils
 
 
 class DiffusionGenerator(pl.LightningModule):
@@ -198,6 +202,8 @@ class DiffusionGenerator(pl.LightningModule):
                 x = x, v
             else:
                 x = (x + 1.0) / 2.0
+        elif self.params.data_type in rl_data_type:
+            x = RLDataUtils.denormalize(x)
 
         return x
 
@@ -218,6 +224,10 @@ class DiffusionGenerator(pl.LightningModule):
     def set_backward_scheme(self, scheme: str) -> None:
         model = self.get_model()
         model.backward_scheme = scheme
+
+    def set_trajectory_length(self, trajectory_length: int) -> None:
+        model = self.get_model()
+        model.trajectory_length = trajectory_length
 
     def set_nb_time_steps(self, nb_time_steps: int, eval: bool = False):
         model = self.get_model()
@@ -351,6 +361,8 @@ class DiffusionGenerator(pl.LightningModule):
             )
         elif self.params.data_type in text_data_type:
             sample_text(self, sample_path, sample_name, nb_samples=5)
+        elif self.params.data_type in rl_data_type:
+            sample_rl(self, sample_path, sample_name + ".gif", nb_samples=3)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         """

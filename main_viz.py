@@ -9,20 +9,22 @@ from tqdm import tqdm
 from src.params import dict_to_str
 from src.case import Case
 from src.data_manager.data_module import DataModule
-from src.data_manager.data_parser import parse_viz
+from src.params_parser import parse_viz
 from src.data_manager.data_type import (
     toy_continuous_data_type,
     img_data_type,
     text_data_type,
+    rl_data_type,
 )
 from src.params import Params
 from src.eval.fid.fid_utils import compute_fid_v1, compute_fid_v3
-from src.eval.plots import (
+from src.eval.plots_img import (
     compute_imgs_outputs,
-    compute_text_outputs,
     save_loader_imgs,
     save_sample_imgs,
 )
+from src.eval.plots_text import compute_text_outputs
+from src.eval.plots_rl import compute_rl_outputs
 from src.eval.plots_2d import compute_continuous_outputs_2d
 from src.save_load_obj import load_obj
 from src.training.diffusion_generator import DiffusionGenerator
@@ -56,9 +58,7 @@ def save_images(
         persistent_workers=True,
         pin_memory=data_module.pin_memory,
     )
-    save_loader_imgs(
-        train_loader, output_dir, nb_samples=nb_samples, name="img_real"
-    )
+    save_loader_imgs(train_loader, output_dir, nb_samples=nb_samples, name="img_real")
     save_sample_imgs(net, batch_size, nb_samples, output_dir, name="img_fake")
 
 
@@ -81,9 +81,7 @@ def get_infos_index(directory: str) -> int:
         i += 1
 
 
-def save_viz_infos(
-    viz_dict: Dict[str, Union[str, int, float]], directory: str
-) -> None:
+def save_viz_infos(viz_dict: Dict[str, Union[str, int, float]], directory: str) -> None:
     """
     Save visualization information to a text file in the given directory.
 
@@ -137,9 +135,7 @@ def configure_viz_infos(
     if viz_infos["nb_time_validation"]:
         net.nb_time_validation = viz_infos["nb_time_validation"]
     if viz_infos["batch_size_eval"]:
-        params.training_params["batch_size_eval"] = viz_infos[
-            "batch_size_eval"
-        ]
+        params.training_params["batch_size_eval"] = viz_infos["batch_size_eval"]
     if viz_infos["Backward scheme"]:
         net.set_backward_scheme(viz_infos["Backward scheme"])
 
@@ -188,9 +184,7 @@ def compute_fid(
     else:
         fid_batch_size = args.batch_size_eval or 500
         # save_images(net, data_module, output_dir, batch_size, nb_samples)
-        fid = compute_fid_v3(
-            net, data_module, device, batch_size=fid_batch_size
-        )
+        fid = compute_fid_v3(net, data_module, device, batch_size=fid_batch_size)
     print("FID = ", fid)
     viz_infos["FID infos"] = {
         "FID": fid,
@@ -218,7 +212,7 @@ if __name__ == "__main__":
 
     data_type = params.data_type
 
-    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, params=params)    
+    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, params=params)
     net.eval()
 
     viz_infos = configure_viz_infos(args, net, params)
@@ -226,6 +220,7 @@ if __name__ == "__main__":
     data_module = DataModule(params)
     net.prepare_for_inference(data_module.train_dataloader(), device)
 
+    val_dataset = data_module.val_data
     if args.loss:
         val_loader = data_module.val_dataloader()
         loss = 0.0
@@ -233,7 +228,7 @@ if __name__ == "__main__":
 
         for x in tqdm(val_loader, desc="Computing the validation loss"):
             x = x[0] if isinstance(x, list) else x
-            
+
             val_loss = model.loss(x.to(device)).cpu().item()
             loss += val_loss
 
@@ -251,10 +246,10 @@ if __name__ == "__main__":
         compute_continuous_outputs_2d(net, x_val, output_dir)
     elif params.data_type in img_data_type:
         nb_rows, nb_cols = args.nb_imgs[0], args.nb_imgs[1]
-        val_dataset = data_module.val_data
         compute_imgs_outputs(net, val_dataset, output_dir, nb_rows, nb_cols)
     elif params.data_type in text_data_type:
-        val_dataset = data_module.val_data
         compute_text_outputs(net, val_dataset, output_dir)
+    elif params.data_type in rl_data_type:
+        compute_rl_outputs(net, val_dataset, output_dir)
 
     save_viz_infos(viz_infos, os.path.join(output_dir, "viz_infos"))
