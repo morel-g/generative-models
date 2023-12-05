@@ -8,14 +8,14 @@ from datasets import load_dataset
 from transformers import AutoTokenizer
 from torch.nn.utils.rnn import pad_sequence
 
-try:
-    import nltk
-    from nltk.tokenize import sent_tokenize
-except ImportError:
-    warnings.warn(
-        "Warning: punkt package could not be imported. Text features may not work.",
-        ImportWarning,
-    )
+# try:
+#     import nltk
+#     from nltk.tokenize import sent_tokenize
+# except ImportError:
+#     warnings.warn(
+#         "Warning: punkt package could not be imported. Text features may not work.",
+#         ImportWarning,
+#     )
 
 from src.case import Case
 
@@ -40,6 +40,7 @@ class TextDataUtils:
         Returns:
         - List[str]: A list of filtered sentences.
         """
+        from nltk.tokenize import sent_tokenize
 
         sentences = sent_tokenize(text)
         # Tokenize in batches
@@ -63,6 +64,8 @@ class TextDataUtils:
     @staticmethod
     def get_id_from_data(data: List[str], seq_length: int, tokenizer) -> torch.Tensor:
         if not TextDataUtils.is_nltk_downloaded:
+            import nltk
+
             nltk.download("punkt")
             TextDataUtils.is_nltk_downloaded = True
 
@@ -131,10 +134,10 @@ class TextDataUtils:
     def get_lm1b_data(seq_length, tokenizer, short=False):
         if short:
             dataset_stream_train = load_dataset("lm1b", split="train", streaming=True)
-            data_train = list(dataset_stream_train.take(int(4e5)))
+            data_train = list(dataset_stream_train.take(int(1e6)))
 
             dataset_stream_test = load_dataset("lm1b", split="test", streaming=True)
-            data_test = list(dataset_stream_test.take(int(4e4)))
+            data_test = list(dataset_stream_test.take(int(1e5)))
         else:
             data_train = load_dataset("lm1b", split="train")
             data_test = load_dataset("lm1b", split="test")
@@ -166,6 +169,7 @@ class TextDataUtils:
         Returns:
         - Tuple[torch.Tensor, torch.Tensor]: Tokenized training and testing data.
         """
+
         os.environ["TOKENIZERS_PARALLELISM"] = "false"
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 

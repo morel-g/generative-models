@@ -77,7 +77,8 @@ class DataModule(pl.LightningDataModule):
                 "tokenizer_name", Case.gpt2
             )
         if self.params.data_type in rl_data_type:
-            kwargs["horizon"] = self.params.model_params["horizon"]
+            if "horizon" in self.params.model_params:
+                kwargs["horizon"] = self.params.model_params["horizon"]
 
         if data_type in toy_continuous_data_type + toy_discrete_data_type:
             return ToyDataUtils.prepare_toy_dataset(
@@ -90,7 +91,10 @@ class DataModule(pl.LightningDataModule):
         elif data_type in text_data_type:
             return TextDataUtils.prepare_text_dataset(data_type, **kwargs)
         elif data_type in rl_data_type:
-            return RLDataUtils.prepare_rl_dataset(data_type, **kwargs)
+            dataset = RLDataUtils.prepare_rl_dataset(data_type, **kwargs)
+            if not "horizon" in self.params.model_params:
+                self.params.model_params["horizon"] = RLDataUtils.horizon
+            return dataset
         else:
             raise RuntimeError(f"Uknown data_type {data_type}")
 
@@ -151,6 +155,7 @@ class DataModule(pl.LightningDataModule):
             persistent_workers=True,
             pin_memory=self.pin_memory,
             collate_fn=lambda batch: self.collate_fn(data, batch),
+            drop_last=True,
         )
 
     def test_dataloader(self) -> DataLoader:

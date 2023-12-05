@@ -7,50 +7,56 @@ from contextlib import (
 import warnings
 import numpy as np
 import torch
+import random
 from torch.utils.data import Dataset, random_split
 
 from src.case import Case
 from src.data_manager.dataset import Dataset
 
 
-missing_packages = []
+# missing_packages = []
 
-try:
-    import gym
-except ImportError:
-    missing_packages.append("gym")
+# try:
+#     import gym
+# except ImportError:
+#     missing_packages.append("gym")
 
-try:
+# try:
 
-    @contextmanager
-    def suppress_output():
-        """
-        A context manager that redirects stdout and stderr to devnull
-        https://stackoverflow.com/a/52442331
-        """
-        with open(os.devnull, "w") as fnull:
-            with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
-                yield (err, out)
 
-    with suppress_output():
-        ## d4rl prints out a variety of warnings
-        import d4rl
-except ImportError:
-    missing_packages.append("d4rl")
+@contextmanager
+def suppress_output():
+    """
+    A context manager that redirects stdout and stderr to devnull
+    https://stackoverflow.com/a/52442331
+    """
+    with open(os.devnull, "w") as fnull:
+        with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
+            yield (err, out)
 
-if missing_packages:
-    warning_message = "Warning: The following packages could not be imported: {}. RL features may not work.".format(
-        ", ".join(missing_packages)
-    )
-    warnings.warn(warning_message, ImportWarning)
+
+#     with suppress_output():
+#         # d4rl prints out a variety of warnings
+#         import d4rl
+
+# except ImportError:
+#     missing_packages.append("d4rl")
+
+# if missing_packages:
+#     warning_message = "Warning: The following packages could not be imported: {}. RL features may not work.".format(
+#         ", ".join(missing_packages)
+#     )
+#     warnings.warn(warning_message, ImportWarning)
 
 
 class RLDataUtils:
     mean_states = None
     std_states = None
     env_name = None
+    env = None
     state_dim = None
     action_dim = None
+    horizon = None
 
     @staticmethod
     def normalize(x):
@@ -76,20 +82,29 @@ class RLDataUtils:
 
     @staticmethod
     def get_env(env_name):
-        RLDataUtils.env_name = env_name
+        import gym
+
         env = gym.make(env_name)
+        RLDataUtils.env_name = env_name
+        RLDataUtils.env = env
         RLDataUtils.state_dim = env.observation_space.shape[0]
         RLDataUtils.action_dim = env.action_space.shape[0]
 
         return env
 
     @staticmethod
-    def prepare_rl_dataset(name=Case.hopper_medium_v2, horizon=100, jump=1):
+    def prepare_rl_dataset(name=Case.hopper_medium_v2, horizon=100, jump=0):
+        with suppress_output():
+            # d4rl prints out a variety of warnings
+            import d4rl
         env = RLDataUtils.get_env(name)
         data = env.get_dataset()
 
         dataset = RLDataUtils.create_trajectories(data, horizon, jump)
         traj_dataset = torch.tensor(RLDataUtils.cat_states_actions(dataset))
+        RLDataUtils.horizon = traj_dataset.shape[1]
+        # traj_dataset = traj_dataset[:256]
+
         train_size = int(0.9 * len(traj_dataset))
         test_size = len(traj_dataset) - train_size
 
@@ -99,12 +114,10 @@ class RLDataUtils:
         test_indices = indices[train_size : train_size + test_size]
         train_dataset = traj_dataset[train_indices]
         test_dataset = traj_dataset[test_indices]
-        # train_dataset, test_dataset = random_split(
-        #     traj_dataset, [train_size, test_size], generator=generator
-        # )
 
         RLDataUtils.mean_states = train_dataset.mean(dim=0)
         RLDataUtils.std_states = train_dataset.std(dim=0)
+
         train_dataset = RLDataUtils.normalize(train_dataset)
         test_dataset = RLDataUtils.normalize(test_dataset)
 
@@ -116,7 +129,7 @@ class RLDataUtils:
         if "hopper" in env_name:
             return RLDataUtils.create_hopper_trajecories(data, horizon, jump)
         elif "maze2d" in env_name:
-            return RLDataUtils.create_maze2d_trajectories(data)
+            return RLDataUtils.create_maze2d_trajectories(data, horizon)
         else:
             raise ValueError(f"Can't create trajectories for env {env_name}")
 
@@ -163,7 +176,7 @@ class RLDataUtils:
         return dataset
 
     @staticmethod
-    def create_maze2d_trajectories(data):
+    def create_maze2d_trajectories(data, horizon):
         data["end_flags"] = [
             t or ti for t, ti in zip(data["terminals"], data["timeouts"])
         ]
@@ -193,6 +206,11 @@ class RLDataUtils:
         states_dataset, actions_dataset, rewards_dataset = group_simulations(
             end_flags, states, actions, rewards
         )
+
+        states_dataset = [d[: min(horizon, len(d)), ...] for d in states_dataset]
+        actions_dataset = [d[: min(horizon, len(d)), ...] for d in actions_dataset]
+        rewards_dataset = [d[: min(horizon, len(d)), ...] for d in rewards_dataset]
+
         dataset = {
             "states": states_dataset,
             "actions": actions_dataset,
@@ -243,7 +261,7 @@ class RLDataUtils:
     def cat_states_actions(dataset):
         env_name = RLDataUtils.env_name
         if "maze2d" in env_name:
-            padded_states, padded_actions = RLDataUtils.pad_two_states_actions(
+            padded_states, padded_actions = RLDataUtils.pad_states_actions(
                 dataset["states"], dataset["actions"]
             )
             padded_states = np.stack(padded_states, axis=0)
@@ -272,3 +290,37 @@ class RLDataUtils:
     @staticmethod
     def get_total_dim():
         return RLDataUtils.state_dim + RLDataUtils.action_dim
+
+    @staticmethod
+    def create_state_mask(nb_samples, nb_start_frame=1, nb_end_frame=0):
+        state_dim = RLDataUtils.state_dim
+        shape = (
+            nb_samples,
+            RLDataUtils.horizon,
+            RLDataUtils.state_dim + RLDataUtils.action_dim,
+        )
+        mask = torch.zeros(shape, dtype=torch.bool)
+        mask[:, :nb_start_frame, :state_dim] = True
+        if nb_end_frame != 0:
+            mask[:, -nb_end_frame:, :state_dim] = True
+        return mask
+
+    @staticmethod
+    def create_random_state(id):
+        x = torch.tensor(RLDataUtils.env.reset(), dtype=torch.float)
+        # torch.tensor(
+        #     random.choice(RLDataUtils.env.empty_and_goal_locations), dtype=torch.float
+        # )
+        # torch.nn.functional.pad(x, (0, RLDataUtils.state_dim - x.shape[0]))
+        return (
+            x - RLDataUtils.get_states(RLDataUtils.mean_states[id])
+        ) / RLDataUtils.get_states(RLDataUtils.std_states[id])
+
+    @staticmethod
+    def create_random_states(nb_samples, id):
+        cond_list = []
+        for _ in range(nb_samples):
+            state = RLDataUtils.create_random_state(id)
+            cond_list.append(state)
+        x_cond = torch.stack(cond_list, dim=0)
+        return x_cond
