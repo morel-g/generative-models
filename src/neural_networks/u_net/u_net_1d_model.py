@@ -16,7 +16,7 @@ from src.neural_networks.u_net.u_net_1d_utils import (
 
 
 class ResidualTemporalBlock(nn.Module):
-    def __init__(self, inp_channels, out_channels, embed_dim, horizon, kernel_size=5):
+    def __init__(self, inp_channels, out_channels, embed_dim, kernel_size=5):
         super().__init__()
 
         self.blocks = nn.ModuleList(
@@ -53,7 +53,6 @@ class ResidualTemporalBlock(nn.Module):
 class UNet1DModel(nn.Module):
     def __init__(
         self,
-        horizon,
         transition_dim,
         dim=32,
         dim_mults=(1, 2, 4, 8),
@@ -83,12 +82,8 @@ class UNet1DModel(nn.Module):
             self.downs.append(
                 nn.ModuleList(
                     [
-                        ResidualTemporalBlock(
-                            dim_in, dim_out, embed_dim=time_dim, horizon=horizon
-                        ),
-                        ResidualTemporalBlock(
-                            dim_out, dim_out, embed_dim=time_dim, horizon=horizon
-                        ),
+                        ResidualTemporalBlock(dim_in, dim_out, embed_dim=time_dim),
+                        ResidualTemporalBlock(dim_out, dim_out, embed_dim=time_dim),
                         Residual(PreNorm(dim_out, LinearAttention(dim_out)))
                         if attention
                         else nn.Identity(),
@@ -97,21 +92,17 @@ class UNet1DModel(nn.Module):
                 )
             )
 
-            if not is_last:
-                horizon = horizon // 2
+            # if not is_last:
+            #     horizon = horizon // 2
 
         mid_dim = dims[-1]
-        self.mid_block1 = ResidualTemporalBlock(
-            mid_dim, mid_dim, embed_dim=time_dim, horizon=horizon
-        )
+        self.mid_block1 = ResidualTemporalBlock(mid_dim, mid_dim, embed_dim=time_dim)
         self.mid_attn = (
             Residual(PreNorm(mid_dim, LinearAttention(mid_dim)))
             if attention
             else nn.Identity()
         )
-        self.mid_block2 = ResidualTemporalBlock(
-            mid_dim, mid_dim, embed_dim=time_dim, horizon=horizon
-        )
+        self.mid_block2 = ResidualTemporalBlock(mid_dim, mid_dim, embed_dim=time_dim)
 
         for ind, (dim_in, dim_out) in enumerate(reversed(in_out[1:])):
             is_last = ind >= (num_resolutions - 1)
@@ -119,12 +110,8 @@ class UNet1DModel(nn.Module):
             self.ups.append(
                 nn.ModuleList(
                     [
-                        ResidualTemporalBlock(
-                            dim_out * 2, dim_in, embed_dim=time_dim, horizon=horizon
-                        ),
-                        ResidualTemporalBlock(
-                            dim_in, dim_in, embed_dim=time_dim, horizon=horizon
-                        ),
+                        ResidualTemporalBlock(dim_out * 2, dim_in, embed_dim=time_dim),
+                        ResidualTemporalBlock(dim_in, dim_in, embed_dim=time_dim),
                         Residual(PreNorm(dim_in, LinearAttention(dim_in)))
                         if attention
                         else nn.Identity(),
@@ -132,9 +119,6 @@ class UNet1DModel(nn.Module):
                     ]
                 )
             )
-
-            if not is_last:
-                horizon = horizon * 2
 
         self.final_conv = nn.Sequential(
             Conv1dBlock(dim, dim, kernel_size=5),

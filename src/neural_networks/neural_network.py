@@ -22,6 +22,7 @@ class NeuralNetwork(torch.nn.Module):
         elif self.model_type == Case.u_net:
             self.net = UNet(**params_net)
         elif self.model_type == Case.u_net_1d:
+            params_net.pop("horizon", None)
             self.net = UNet1DModel(**params_net)
         elif self.model_type == Case.transformer:
             params_net["batch_first"] = True
