@@ -22,5 +22,5 @@ CONFIG["scheme_params"].update(
     }
 )
 CONFIG["training_params"]["epochs"] = 100
-CONFIG["training_params"]["check_val_every_n_epochs"] = 20
+CONFIG["training_params"]["check_val_every_n_epochs"] = 1
 CONFIG["n_samples"] = 100000
