@@ -5,7 +5,7 @@ import torchaudio
 import numpy as np
 from PIL import Image
 
-from src.data_manager.audio_data_manager import get_mel
+from src.data_manager.audio_data_utils import AudioDataUtils
 
 """
 def tensor_to_image(tensor):
@@ -49,10 +49,10 @@ def array_to_image(arr):
 
 
 def imgs_to_audio(imgs, data_type, output_dir, name):
-    mel = get_mel(data_type)
+    mel = AudioDataUtils.get_mel(data_type)
 
     for idx, img in enumerate(imgs):
         reconstruct_audio = mel.image_to_audio(array_to_image(img))
         audio_tensor = torch.tensor(reconstruct_audio).unsqueeze(0)
-        path = os.path.join(output_dir, name + f"_audio_file_{idx}.wav")
+        path = os.path.join(output_dir, "figures", name + f"_audio_file_{idx}.wav")
         torchaudio.save(path, audio_tensor, sample_rate=22050)

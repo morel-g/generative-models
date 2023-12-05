@@ -3,22 +3,9 @@ import textwrap
 from PIL import Image, ImageDraw, ImageFont
 import os
 from src.utils import ensure_directory_exists
+from src.eval.plot_utils import get_font
 
 FIG_DIR = "figures/"
-
-
-def get_font_path() -> str:
-    """
-    Get the file path to the font.
-
-    Returns:
-    - str: The file path to the font.
-    """
-    font_path = os.path.join(
-        os.path.dirname(__file__),
-        "../../fonts/NotoSerif-VariableFont_wdth,wght.ttf",
-    )
-    return font_path
 
 
 def save_strings_to_png(
@@ -52,8 +39,7 @@ def save_strings_to_png(
     ensure_directory_exists(os.path.join(output_dir, fig_dir))
     if not name.endswith(".png"):
         name += ".png"
-    font_path = get_font_path()
-    font = ImageFont.truetype(font_path, size=12)
+    font = get_font(size=12)
 
     # Dummy image for text size calculation
     dummy_img = Image.new("RGB", (1, 1), bg_color)
@@ -66,9 +52,7 @@ def save_strings_to_png(
     for i, string in enumerate(strings, start=1):
         # Calculate space required for "Sample X:"
         sample_header = f"Sample {i}:"
-        header_width, header_height = dummy_draw.textsize(
-            sample_header, font=font
-        )
+        header_width, header_height = dummy_draw.textsize(sample_header, font=font)
         text_width = max(text_width, header_width + padding * 2)
         blocks.append((sample_header, header_height + spacing))
 
@@ -109,9 +93,7 @@ def save_strings_to_png(
             # Adjust y-coordinate for Sample header
             y += height - spacing  # Adjusted height for the sample header
             # Draw line below sample header
-            draw.line(
-                [(padding, y), (text_width - padding, y)], fill=text_color
-            )
+            draw.line([(padding, y), (text_width - padding, y)], fill=text_color)
             y += spacing
         else:
             y += height
@@ -153,21 +135,17 @@ def save_text_animation(
     ensure_directory_exists(os.path.join(output_dir, fig_dir))
     if not name.endswith(".gif"):
         name += ".gif"
-    font_path = get_font_path()
-    font = ImageFont.truetype(font_path, size=font_size)
 
-    wrapped_strings = [
-        textwrap.fill(text, width=max_line_length) for text in strings
-    ]
+    font = get_font(size=12)
+
+    wrapped_strings = [textwrap.fill(text, width=max_line_length) for text in strings]
     if titles is not None:
         wrapped_titles = [
             textwrap.fill(title, width=max_line_length) for title in titles
         ]
         max_title_size = max(
             [
-                ImageDraw.Draw(Image.new("RGB", (1, 1))).textsize(
-                    title, font=font
-                )
+                ImageDraw.Draw(Image.new("RGB", (1, 1))).textsize(title, font=font)
                 for title in wrapped_titles
             ],
             default=(0, 0),
@@ -179,16 +157,12 @@ def save_text_animation(
     # Calculate image width and height based on the largest string
     max_text_size = max(
         [
-            ImageDraw.Draw(Image.new("RGB", (1, 1))).multiline_textsize(
-                text, font=font
-            )
+            ImageDraw.Draw(Image.new("RGB", (1, 1))).multiline_textsize(text, font=font)
             for text in wrapped_strings
         ],
         default=(0, 0),
     )
-    image_width = (
-        max(max_text_size[0], max_title_size[0]) + 10
-    )  # Adding 10 for padding
+    image_width = max(max_text_size[0], max_title_size[0]) + 10  # Adding 10 for padding
     image_height = (
         max_text_size[1] + max_title_size[1] + 15
     )  # Adding 15 for padding between title and text
@@ -200,9 +174,7 @@ def save_text_animation(
             max_title_size[1] + 10
         )  # 10 pixels padding below the title
 
-        for i, (text, title) in enumerate(
-            zip(wrapped_strings, wrapped_titles)
-        ):
+        for i, (text, title) in enumerate(zip(wrapped_strings, wrapped_titles)):
             image = Image.new("RGB", image_size, bg_color)
             draw = ImageDraw.Draw(image)
 
@@ -211,46 +183,18 @@ def save_text_animation(
                 title_size = draw.textsize(title, font=font)
                 title_position = ((image_size[0] - title_size[0]) / 2, 5)
                 draw.text(title_position, title, font=font, fill=text_color)
-                text_y_position += (
-                    5  # Optional: additional padding below the title
-                )
+                text_y_position += 5  # Optional: additional padding below the title
 
             text_size = draw.multiline_textsize(text, font=font)
             text_position = (
                 (image_size[0] - text_size[0]) / 2,
                 text_y_position,
             )
-            draw.multiline_text(
-                text_position, text, font=font, fill=text_color
-            )
+            draw.multiline_text(text_position, text, font=font, fill=text_color)
 
             image_file = os.path.join(output_dir, f"frame_{i:02d}.png")
             image.save(image_file)
             image_files.append(image_file)
-        # try:
-        #     for i, (text, title) in enumerate(
-        #         zip(wrapped_strings, wrapped_titles)
-        #     ):
-        #         image = Image.new("RGB", image_size, bg_color)
-        #         draw = ImageDraw.Draw(image)
-
-        #         if title is not None:
-        #             title_size = draw.textsize(title, font=font)
-        #             title_position = ((image_size[0] - title_size[0]) / 2, 5)
-        #             draw.text(title_position, title, font=font, fill=text_color)
-
-        #         text_size = draw.multiline_textsize(text, font=font)
-        #         text_position = (
-        #             (image_size[0] - text_size[0]) / 2,
-        #             image_size[1] - text_size[1] - 5,
-        #         )
-        #         draw.multiline_text(
-        #             text_position, text, font=font, fill=text_color
-        #         )
-
-        #         image_file = os.path.join(output_dir, f"frame_{i:02d}.png")
-        #         image.save(image_file)
-        #         image_files.append(image_file)
 
         # Create GIF
         images = [imageio.imread(image_file) for image_file in image_files]
@@ -262,90 +206,3 @@ def save_text_animation(
         for image_file in image_files:
             if os.path.exists(image_file):
                 os.remove(image_file)
-
-
-# def save_text_animation(
-#     strings: list[str],
-#     output_dir: str,
-#     name: str = "animation.gif",
-#     fig_dir: str = FIG_DIR,
-#     text_color: str = "black",
-#     bg_color: str = "white",
-#     duration: float = 500.0,
-#     font_size: int = 12,
-#     max_line_length: int = 150,
-# ) -> None:
-#     """
-#     Create and save a GIF animation from a list of strings.
-
-#     Parameters:
-#     - strings (list[str]): List of strings for the animation.
-#     - output_dir (str): Directory to save the GIF in.
-#     - name (str): Name of the output GIF file. Defaults to "animation.gif".
-#     - text_color (str): Text color. Defaults to "black".
-#     - bg_color (str): Background color. Defaults to "white".
-#     - duration (float): Duration of each frame in the animation (in seconds). Defaults to 0.5.
-#     - font_size (int): Font size for the text. Defaults to 12.
-#     - fig_dir (str): Subdirectory for figures. Defaults to the global FIG_DIR.
-#     - max_line_length (int): Maximum number of characters in one line. Defaults to 150.
-
-#     Returns:
-#     - None
-#     """
-#     ensure_directory_exists(os.path.join(output_dir, fig_dir))
-#     if not name.endswith(".gif"):
-#         name += ".gif"
-#     font_path = get_font_path()
-#     font = ImageFont.truetype(font_path, size=font_size)
-
-#     wrapped_strings = []
-#     for text in strings:
-#         wrapped_text = textwrap.fill(text, width=max_line_length)
-#         wrapped_strings.append(wrapped_text)
-
-#     # Calculate image width and height based on the largest string
-#     max_text_size = max(
-#         [
-#             ImageDraw.Draw(Image.new("RGB", (1, 1))).multiline_textsize(
-#                 text, font=font
-#             )
-#             for text in wrapped_strings
-#         ],
-#         key=lambda x: x[0],
-#     )
-#     image_size = (
-#         max_text_size[0] + 10,
-#         max_text_size[1] + 10,
-#     )  # Adding 10 for padding
-
-#     image_files = []
-#     try:
-#         # Create images from strings
-#         for i, text in enumerate(wrapped_strings):
-#             image = Image.new("RGB", image_size, bg_color)
-#             draw = ImageDraw.Draw(image)
-#             text_size = draw.multiline_textsize(text, font=font)
-#             text_position = (
-#                 (image_size[0] - text_size[0]) / 2,
-#                 (image_size[1] - text_size[1]) / 2,
-#             )
-#             draw.multiline_text(
-#                 text_position, text, font=font, fill=text_color
-#             )
-
-#             image_file = os.path.join(
-#                 output_dir, fig_dir, f"frame_{i:02d}.png"
-#             )
-#             image.save(image_file)
-#             image_files.append(image_file)
-
-#         # Create GIF
-#         images = [imageio.imread(image_file) for image_file in image_files]
-#         file_path = os.path.join(output_dir, fig_dir, name)
-#         imageio.mimsave(file_path, images, duration=duration, loop=0)
-
-#     finally:
-#         # Clean up the temporary image files
-#         for image_file in image_files:
-#             if os.path.exists(image_file):
-#                 os.remove(image_file)
