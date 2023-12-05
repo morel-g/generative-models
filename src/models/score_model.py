@@ -6,11 +6,6 @@ from src.models.model import Model
 from src.case import Case
 from src.models.helpers.adapt_dt import adapt_dt_pdf
 
-try:
-    from torch.func import vjp
-except ImportError:
-    from functorch import vjp
-
 
 class ScoreModel(Model):
     """
@@ -30,6 +25,7 @@ class ScoreModel(Model):
         pde_coefs: dict = {"gamma": 1.0},
         decay_case: str = Case.vanilla_sigma,
         img_model_case: str = Case.u_net,
+        conditioning_case: Optional[str] = None,
     ) -> None:
         """
         Initializes an instance of the ScoreModel class.
@@ -66,6 +62,7 @@ class ScoreModel(Model):
             T_init=T_init,
             adapt_dt=adapt_dt,
             img_model_case=img_model_case,
+            conditioning_case=conditioning_case,
         )
 
         self.backward_scheme = Case.euler_explicit
@@ -97,9 +94,9 @@ class ScoreModel(Model):
         elif self.beta_case == Case.vanilla:
             b_min: float = 0.1
             b_max: float = 20.0
-            t_new = b_min * t / (self.T_final * 2.0) + 0.5 * (
-                b_max - b_min
-            ) * (t**2) / (2.0 * self.T_final**2)
+            t_new = b_min * t / (self.T_final * 2.0) + 0.5 * (b_max - b_min) * (
+                t**2
+            ) / (2.0 * self.T_final**2)
         else:
             raise RuntimeError("Unknown beta_case.")
         return t_new
@@ -123,9 +120,9 @@ class ScoreModel(Model):
         elif self.beta_case == Case.vanilla:
             b_min: float = 0.1
             b_max: float = 20.0
-            return b_min * dt / (2.0 * self.T_final) + 0.5 * (
-                b_max - b_min
-            ) * (t2**2 - t1**2) / (2.0 * self.T_final**2)
+            return b_min * dt / (2.0 * self.T_final) + 0.5 * (b_max - b_min) * (
+                t2**2 - t1**2
+            ) / (2.0 * self.T_final**2)
         else:
             raise RuntimeError("beta_case not implemented.")
 
@@ -176,9 +173,7 @@ class ScoreModel(Model):
             t_new = t_new - t0_new
         return torch.exp(-t_new)
 
-    def set_nb_time_steps(
-        self, nb_time_steps: int, eval: bool = False
-    ) -> None:
+    def set_nb_time_steps(self, nb_time_steps: int, eval: bool = False) -> None:
         """
         Set the number of time steps.
 
@@ -203,9 +198,7 @@ class ScoreModel(Model):
                     x0=None if self.beta_case != Case.vanilla else Tf / 2.0,
                 )
             else:
-                super(ScoreModel, self).set_nb_time_steps(
-                    nb_time_steps, eval=eval
-                )
+                super(ScoreModel, self).set_nb_time_steps(nb_time_steps, eval=eval)
         else:
             self.nb_time_steps_train = nb_time_steps
             self.dt_train, self.times_train = self.compute_uniform_times(
@@ -285,9 +278,7 @@ class ScoreModel(Model):
         - torch.Tensor: Tensor containing sampled times.
         """
         times = times.to(device)
-        t_id = torch.randint(
-            0, self.nb_time_steps_train, t_shape, device=device
-        ).long()
+        t_id = torch.randint(0, self.nb_time_steps_train, t_shape, device=device).long()
         return times[t_id]
 
     def sample_uniform(
@@ -308,8 +299,7 @@ class ScoreModel(Model):
         """
         if not apply_log:
             return (
-                torch.rand(t_shape, device=device)
-                * (self.T_final - self.T_init)
+                torch.rand(t_shape, device=device) * (self.T_final - self.T_init)
                 + self.T_init
             )
         else:
@@ -318,9 +308,7 @@ class ScoreModel(Model):
             t = uniform * (exp_0 - exp_T) + exp_T
             return t
 
-    def _sample_time(
-        self, x_shape: tuple, device: torch.device
-    ) -> torch.Tensor:
+    def _sample_time(self, x_shape: tuple, device: torch.device) -> torch.Tensor:
         """
         Sample time values based on the shape of x.
 
@@ -348,6 +336,7 @@ class ScoreModel(Model):
         t = self._sample_time(x.shape, x.device)
         noise = self._get_noise_like(x)
         x_n = self.mean_eval(t) * x + self.sigma_eval(t) * noise
+        x_n = self._apply_conditioning(x_n, x, noise=noise)
         nn = self.eval_nn(x_n, t)
 
         loss = F.mse_loss
@@ -411,8 +400,6 @@ class ScoreModel(Model):
             else:
                 x = x - int_coef * (x + score)
         else:
-            raise RuntimeError(
-                "Unknown backward scheme: ", self.backward_scheme
-            )
+            raise RuntimeError("Unknown backward scheme: ", self.backward_scheme)
 
         return x
