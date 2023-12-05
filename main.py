@@ -8,6 +8,7 @@ from src.case import Case
 from src.precision import torch_float_precision
 from src.params_parser import parse_main
 from src.data_manager.data_type import img_data_type, text_data_type, rl_data_type
+from src.global_data_type import GlobalDataType
 from src.training.training_module import run_sim
 from src.data_manager.text_data_utils import TextDataUtils
 from src.data_manager.rl_data_utils import RLDataUtils
@@ -104,7 +105,6 @@ def get_params(args: Any) -> Dict[str, Any]:
         config_module = importlib.import_module(args.config_file.replace("/", "."))
         params = getattr(config_module, "CONFIG")
     except ImportError:
-        # Handle import error
         print(f"Error importing configuration module: {args.config_file}")
         sys.exit(1)
     except AttributeError:
