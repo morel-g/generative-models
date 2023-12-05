@@ -8,7 +8,7 @@ CONFIG["scheme_params"].update(
     {
         "nb_time_steps_train": 1000,
         "nb_time_steps_eval": 1000,
-        "seq_length": 50,
+        "seq_length": 30,
         "tokenizer_name": Case.gpt2,
         "transition_case": Case.uniform,
     }
@@ -31,9 +31,9 @@ CONFIG["training_params"].update(
     }
 )
 CONFIG["model_params"] = {
-    "emb_dim": 256,
+    "emb_dim": 512,
     "nb_heads": 8,
-    "hidden_dim": 512,
+    "hidden_dim": 1024,
     "nb_layers": 4,
     "dropout": 0.1,
 }
