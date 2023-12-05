@@ -34,6 +34,7 @@ class Model(torch.nn.Module):
         adapt_dt: bool = False,
         img_model_case: str = Case.u_net,
         use_neural_net: bool = True,
+        conditioning_case: Optional[str] = None,
     ) -> None:
         """
         Initializes the Model class.
@@ -48,6 +49,8 @@ class Model(torch.nn.Module):
         - adapt_dt (bool): Whether to adapt the time step or not.
         - img_model_case (Case): Specifies the case of the image model.
         - use_neural_net (bool): Whether to use a neural network for the model.
+        - conditioning_case (Optional[str]): Which conditioning to use if any.
+        Default to None.
 
 
         Returns:
@@ -78,6 +81,7 @@ class Model(torch.nn.Module):
                 model_case = img_model_case
             elif data_type in rl_data_type:
                 model_case = Case.u_net_1d
+                self.model_params["horizon"] = RLDataUtils.horizon
             else:
                 raise NotImplementedError(f"Uknown data type {data_type}")
 
@@ -86,6 +90,11 @@ class Model(torch.nn.Module):
         else:
             self.neural_network = None
         self.return_all_trajs = False
+        self.conditioning_case = conditioning_case
+        if self.conditioning_case is not None and data_type not in rl_data_type:
+            raise RuntimeError(
+                "Conditioning only implemented for RL data for the moment."
+            )
 
     def register_buffers(self):
         self.register_buffer("dt_train", None)
@@ -323,6 +332,7 @@ class Model(torch.nn.Module):
         return_trajectories: bool = False,
         return_velocities: bool = False,
         x_init: Optional[torch.Tensor] = None,
+        x_cond: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Samples from the model.
@@ -334,6 +344,7 @@ class Model(torch.nn.Module):
             return_velocities (bool): Whether to return velocities.
             x_init (Optional[torch.Tensor]): Initial input for sampling.
               Either `nb_samples` or `x_init` should be provided.
+            cond (Optional[torch.Tensor]): Conditional data, if any.
 
         Returns:
             torch.Tensor: Sampled outputs.
@@ -354,6 +365,7 @@ class Model(torch.nn.Module):
             x,
             return_trajectories=return_trajectories,
             return_velocities=return_velocities,
+            x_cond=x_cond,
         )
 
     @torch.no_grad()
@@ -380,6 +392,7 @@ class Model(torch.nn.Module):
         return_trajectories: bool = False,
         return_velocities: bool = False,
         return_neural_net: bool = False,
+        x_cond: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Performs backward computation for the model.
@@ -389,6 +402,7 @@ class Model(torch.nn.Module):
             return_trajectories (bool): Whether to return trajectories.
             return_velocities (bool): Whether to return velocities.
             return_neural_net (bool): Whether to return neural network outputs.
+            cond (Optional[torch.Tensor]): Conditional data, if any.
 
         Returns:
             torch.Tensor: Computed outputs. Varies based on flags.
@@ -401,6 +415,7 @@ class Model(torch.nn.Module):
         shape, dim = x.shape[0], x.dim()
 
         x = self._augment_input(x)
+        self._apply_conditioning(x, x_cond)
 
         x_traj = self._initialize_trajectories(x, return_trajectories)
         save_idx_times = self._get_traj_idx() if return_trajectories else []  # [:-1]
@@ -410,6 +425,7 @@ class Model(torch.nn.Module):
                 i + 1, shape, dim, is_eval=True, backward_dt=True
             )
             x = self._step_velocity(x, t, dt, i, backward=True)
+            self._apply_conditioning(x, x_cond)
             if return_trajectories and i in save_idx_times:
                 append_trajectories(x_traj, x, self.is_augmented())
 
@@ -427,6 +443,39 @@ class Model(torch.nn.Module):
         if self.is_augmented():
             v = self.sample_prior_v(x)
             return x, v
+
+        return x
+
+    def _apply_conditioning(
+        self,
+        x: torch.Tensor,
+        x_cond: torch.Tensor,
+        noise: torch.Tensor = None,
+    ) -> torch.Tensor:
+        """
+        Applies conditional data to the input tensor based on a mask.
+
+        This method modifies elements of `x` where the `mask` is True, setting
+        those elements to values from `cond`.
+
+        Parameters:
+        - x (torch.Tensor): The input tensor to which conditions are applied.
+        - cond (torch.Tensor): The conditional data that will be applied to `x`.
+        - noise (torch.Tensor): Noise if any. The noise is remove where the
+        conditioning is applied
+
+        Returns:
+        - torch.Tensor: The modified input tensor after applying conditions.
+        """
+        mask = None
+        if self.conditioning_case == Case.conditioning_rl_first_last:
+            mask = RLDataUtils.create_state_mask(x.shape[0], 1, 1)
+        if mask is not None:
+            if x_cond.shape == x.shape:
+                x_cond = x_cond[mask]
+            if noise is not None:
+                noise[mask] = torch.zeros(mask.sum(), device=noise.device)
+            x[mask] = x_cond.view(-1).to(x.device)
 
         return x
 

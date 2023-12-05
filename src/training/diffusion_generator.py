@@ -2,7 +2,7 @@ import os
 import torch
 import pytorch_lightning as pl
 from torch.optim.swa_utils import AveragedModel
-from typing import Union, Tuple, Any, List, Dict
+from typing import Union, Tuple, Any, List, Dict, Optional
 
 # from .probability_distribution import ProbabilityDistribution
 from src.params import Params
@@ -62,6 +62,7 @@ class DiffusionGenerator(pl.LightningModule):
                 ),
                 decay_case=params.scheme_params.get("decay_case", Case.vanilla_sigma),
                 img_model_case=params.scheme_params.get("img_model_case", Case.u_net),
+                conditioning_case=params.scheme_params.get("conditioning_case",None),
             )
         elif params.model_type == Case.score_model_critical_damped:
             self.base_model = ScoreModelCriticalDamped(
@@ -176,6 +177,7 @@ class DiffusionGenerator(pl.LightningModule):
         nb_samples: int,
         return_trajectories: bool = False,
         return_velocities: bool = False,
+        x_cond: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Sample data points using the model.
@@ -184,6 +186,7 @@ class DiffusionGenerator(pl.LightningModule):
             nb_samples: Number of samples to generate.
             return_trajectories: Whether to return trajectories.
             return_velocities: Whether to return velocities.
+            x_cond (Optional[torch.Tensor]): Conditional data, if any.            
 
         Returns:
             x: The sampled data points.
@@ -193,6 +196,7 @@ class DiffusionGenerator(pl.LightningModule):
             nb_samples,
             return_trajectories,
             return_velocities=return_velocities,
+            x_cond=x_cond,
         )
 
         if self.params.data_type in img_data_type:
@@ -362,7 +366,7 @@ class DiffusionGenerator(pl.LightningModule):
         elif self.params.data_type in text_data_type:
             sample_text(self, sample_path, sample_name, nb_samples=5)
         elif self.params.data_type in rl_data_type:
-            sample_rl(self, sample_path, sample_name + ".gif", nb_samples=3)
+            sample_rl(self, sample_path, sample_name, nb_samples=4)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         """
