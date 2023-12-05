@@ -1,4 +1,13 @@
-from torch.optim.swa_utils import get_ema_multi_avg_fn
+import warnings
+
+try:
+    from torch.optim.swa_utils import get_ema_multi_avg_fn
+
+except ImportError:
+    warnings.warn(
+        "Warning: get_ema_multi_avg_fn function could not be imported. EMA features may not work.",
+        ImportWarning,
+    )
 
 
 class EMAHandler:
