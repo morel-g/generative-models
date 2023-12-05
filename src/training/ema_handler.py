@@ -31,6 +31,7 @@ class EMAHandler:
         - inv_gamma (float): The inverse gamma value used for calculating the decay during warmup.
         - power (float): The power to which the decay calculation is raised.
         """
+
         self.decay = decay
         self.min_decay = min_decay
         self.update_after_step = update_after_step
