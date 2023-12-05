@@ -8,15 +8,6 @@ from typing import Optional
 SAVE_STR_NAME = "outputs.txt"
 
 
-def t_from_id(id, dt, case=None):
-    # return torch.tensor(1.0) * id
-    if case == Case.denoise_model:
-        # From the initial code: the noise evaluation start at t=0.
-        return dt * id
-
-    return dt * (id + 1)
-
-
 def ensure_directory_exists(dir_path: str) -> None:
     """
     Ensure that a given directory exists; create it if it does not.
@@ -40,35 +31,8 @@ def write_to_file(file_path: str, content_to_write: str) -> None:
     return None
 
 
-def write_outputs(
-    output_directory: str,
-    content_to_write: str,
-    display_content: Optional[bool] = False,
-    output_filename: Optional[str] = SAVE_STR_NAME,
-) -> None:
-    """
-    Write a string to a file and optionally display it in the console.
-
-    Parameters:
-    - output_directory: The directory to save the output file.
-    - content_to_write: The content to write to the file.
-    - display_content: Flag to control display of content in the console.
-    - output_filename: The filename for the output file.
-    """
-    # Display content in console if flag is set
-    if display_content:
-        print(content_to_write)
-
-    ensure_directory_exists(output_directory)
-    # Construct the complete file path
-    file_path = os.path.join(output_directory, output_filename)
-    write_to_file(file_path, content_to_write)
-
-
 def get_logger(logger_path, model_name=""):
-    logger = TensorBoardLogger(
-        logger_path, name=model_name, default_hp_metric=False
-    )
+    logger = TensorBoardLogger(logger_path, name=model_name, default_hp_metric=False)
     log_dir = logger.log_dir
 
     isExist = os.path.exists(log_dir)
