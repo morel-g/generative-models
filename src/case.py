@@ -120,6 +120,9 @@ class Case:
     step_lr = "step_lr"
     cosine_with_warmup = "cosine_with_warmup"
 
+    # Conditioning case
+    conditioning_rl_first_last = "conditioning_rl_first_last"
+
     # FID version: Constants related to different versions of
     # FID (Frechet Inception Distance) metric.
     fid_v1 = "fid_v1"
