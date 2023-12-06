@@ -7,6 +7,7 @@ The implemented models are sourced from the following research papers:
 - [Critically-Damped Langevin Diffusion](https://arxiv.org/abs/2112.07068)
 - [Stochastic interpolants](https://arxiv.org/abs/2303.08797)
 - [ Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006)
+- [Planning with Diffusion for Flexible Behavior Synthesis](https://arxiv.org/abs/2205.09991)
 
 ---
 
@@ -40,6 +41,8 @@ Examples are provided in the **`notebook/`** directory.
 
 ## Toy datasets
 
+Experiments of toy datasets for easy and fast experimentation of general diffusion models are given in this section. Both continuous and discrete datasets are considered.
+
 ### Continuous datasets:
 
 | **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic interpolant** |
@@ -64,6 +67,8 @@ Examples are provided in the **`notebook/`** directory.
 ---
 
 ## Image datasets
+
+In this section diffusion models are applied to images data. Experiments are made for the three continuous models: Diffusion / Score Based model, Critical-damped Langevin and stochastic interpolant.
 
 ### Sampling from the models for the Fashion MNIST dataset:
 
@@ -118,5 +123,18 @@ Below are selected visual representations of the model trajectories
 ![Text trajectories 1](docs/assets/text_traj_1.gif)
 
 ![Text trajectories 2](docs/assets/text_traj_2.gif)
+
+---
+
+## Reinforcement learning datasets
+
+In this section, we look at some applications of diffusion models for reinforcement learning. For comprehensive insights refer to the [original paper](https://arxiv.org/abs/2205.09991).
+
+The primary objective here is to enable the model to proficiently navigate through a maze. Here is an example on a simple 2d maze
+
+
+ <div align="center">
+ <img src="docs/assets/maze2d_traj_0.gif" alt="Maze trajectory 0" width="200"  style="margin-right: 20px;"/>  <img src="docs/assets/maze2d_0.png" alt="Maze sample 0" width="200" /> 
+ </div>
 
 ---
