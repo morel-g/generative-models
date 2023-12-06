@@ -18,6 +18,7 @@ The implemented models are sourced from the following research papers:
 - [Image datasets](#image-datasets)
 - [Audio datasets](#audio-datasets)
 - [Text datasets](#text-datasets)
+- [Reinforcement learning datasets](#reinforcement-learning-datasets)
 
 ---
 
