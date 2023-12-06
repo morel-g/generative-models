@@ -13,8 +13,8 @@ CONFIG["scheme_params"].update(
 )
 CONFIG["training_params"].update(
     {
-        "epochs": 400,
-        "check_val_every_n_epochs": 50,
+        "epochs": 2000,
+        "check_val_every_n_epochs": 100,
         "batch_size": 64,
         "batch_size_eval": 64,
         "lr": 2e-4,
@@ -30,7 +30,7 @@ CONFIG["training_params"].update(
 )
 CONFIG["model_params"] = {
     "transition_dim": 6,
-    "horizon": 256,
+    "horizon": 240,
     "dim": 32,
     "dim_mults": (1, 4, 8),
     "attention": False,
