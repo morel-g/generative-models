@@ -1,7 +1,8 @@
-# A unified framework for generative diffusion models (work in progress)
+# Unified framework for generative diffusion models (work in progress)
 
 This repository provides implementations of several generative models applied to a broad spectrum of data types, including images, text, audio signals, and reinforcement learning scenarios. These models are primed for understanding and experimenting with advanced data generation techniques.
 
+## Implemented models
 The implemented models are sourced from the following research papers:
 - [Score based models](https://arxiv.org/abs/2011.13456) / [Diffusion models](https://arxiv.org/abs/2006.11239)
 - [Critically-Damped Langevin Diffusion](https://arxiv.org/abs/2112.07068)
@@ -42,7 +43,7 @@ Examples are provided in the **`notebook/`** directory.
 
 ## Toy datasets
 
-Experiments of toy datasets for easy and fast experimentation of general diffusion models are given in this section. Both continuous and discrete datasets are considered.
+Experiments with continuous and discrete toy datasets for general diffusion models.
 
 ### Continuous datasets:
 
@@ -69,7 +70,7 @@ Experiments of toy datasets for easy and fast experimentation of general diffusi
 
 ## Image datasets
 
-In this section diffusion models are applied to images data. Experiments are made for the three continuous models: Diffusion / Score Based model, Critical-damped Langevin and stochastic interpolant.
+Applying diffusion models to image data with experiments on Fashion MNIST and CIFAR datasets. Three continuous models are considered: diffusion / score Based model, critical-damped Langevin and stochastic interpolant.
 
 ### Sampling from the models for the Fashion MNIST dataset:
 
@@ -95,7 +96,8 @@ In this section diffusion models are applied to images data. Experiments are mad
 
 ## Audio datasets
 
-For audio data, the raw audio signals are first converted into mel spectrograms. These spectrograms are then treated as images, and the generative models are applied to them. The models are trained on music samples from the [**audio-diffusion-256**](https://huggingface.co/datasets/teticio/audio-diffusion-256) dataset see also the original [audio-diffusion](https://github.com/teticio/audio-diffusion) repository.
+Continuous generative models applied to mel spectrograms of audio signals, trained on music samples from the [**audio-diffusion-256**](https://huggingface.co/datasets/teticio/audio-diffusion-256) dataset see also the original [audio-diffusion](https://github.com/teticio/audio-diffusion) repository.
+
 
 <div align="center">
 <img src="docs/assets/sample_mel_spectrogram.png" alt="Mel spectrograms" width="434" height="250">
@@ -116,8 +118,7 @@ https://github.com/morel-g/generative-models/assets/123385560/9662a7f2-19f5-4527
 
 ## Text datasets
 
-
-This section focuses on using the Discrete Denoising Diffusion Probabilistic Model (D3PM) architecture to process text datasets. Here the D3PM model is applied to a shortened version (~200k samples) of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset. 
+Experimenting with the [Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006) architecture to process text datasets. Here the D3PM model is applied to a shortened version (~200k samples) of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset. 
 
 Below are selected visual representations of the model trajectories
 
@@ -129,9 +130,9 @@ Below are selected visual representations of the model trajectories
 
 ## Reinforcement learning datasets
 
-In this section, we look at some applications of diffusion models for reinforcement learning. For comprehensive insights refer to the [original paper](https://arxiv.org/abs/2205.09991).
+Diffusion models for reinforcement learning, demonstrated on a 2d maze. For comprehensive insights refer to the [original paper](https://arxiv.org/abs/2205.09991).
 
-The primary objective here is to enable the model to proficiently navigate through a maze. Here is an example on a simple 2d maze
+Here is an example on a simple 2d maze
 
 
  <div align="center">
