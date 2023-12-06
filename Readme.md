@@ -32,7 +32,7 @@ python main.py --config_file "config_files/toy/score_toy_config"
 It is also possible to generate the outputs from a checkpoint using the `main_viz` file
 
 ```bash
-python main_viz.py -c path/to/checkpoint/last.ckpt -ts 1000 -gpu 0 
+python main_viz.py -c path/to/checkpoint/last.ckpt -gpu 0 
 ```
 
 Examples are provided in the **`notebook/`** directory. 
