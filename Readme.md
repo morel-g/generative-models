@@ -84,7 +84,6 @@ Applying diffusion models to image data with experiments on Fashion MNIST and CI
 
 ### Sampling from the models for the CIFAR dataset:
 
-
 **Note**: The models have not been trained extensively in order to save computational time. However, training them for longer durations should improve the results. See the configuration files from the original papers if needed.
 
 | **Diffusion / Score Based Model** | **Critical-damped Langevin** |  **Stochastic interpolant** |
@@ -132,11 +131,15 @@ Below are selected visual representations of the model trajectories
 
 Diffusion models for reinforcement learning, demonstrated on a 2d maze. For comprehensive insights refer to the [original paper](https://arxiv.org/abs/2205.09991).
 
-Here is an example on a simple 2d maze
+Here are some examples on simple 2d mazes
 
 
  <div align="center">
- <img src="docs/assets/maze2d_traj_0.gif" alt="Maze trajectory 0" width="200"  style="margin-right: 20px;"/>  <img src="docs/assets/maze2d_0.png" alt="Maze sample 0" width="200" /> 
+ <img src="docs/assets/maze2d_umaze_traj_1.gif" alt="UMaze trajectory 1" width="200"  style="margin-right: 20px;"/>   <img src="docs/assets/maze2d_large_traj_1.gif" alt="Large maze trajectory 0" width="200"  />
+ </div>
+
+<div align="center">
+ <img src="docs/assets/maze2d_umaze_1.png" alt="UMaze sample 1" width="200" style="margin-right: 20px;" />   <img src="docs/assets/maze2d_large_1.png" alt="Large maze sample 1" width="200" /> 
  </div>
 
 ---
