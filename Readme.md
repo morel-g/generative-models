@@ -117,7 +117,7 @@ https://github.com/morel-g/generative-models/assets/123385560/9662a7f2-19f5-4527
 
 ## Text datasets
 
-Experimenting with the [Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006) architecture to process text datasets. Here the D3PM model is applied to a shortened version (~200k samples) of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset. 
+Experimenting with the [Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006) architecture to process text datasets. Here the D3PM model is applied to a shortened version of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset. 
 
 Below are selected visual representations of the model trajectories
 
