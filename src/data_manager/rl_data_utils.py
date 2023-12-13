@@ -14,16 +14,6 @@ from src.case import Case
 from src.data_manager.dataset import Dataset
 
 
-# missing_packages = []
-
-# try:
-#     import gym
-# except ImportError:
-#     missing_packages.append("gym")
-
-# try:
-
-
 @contextmanager
 def suppress_output():
     """
@@ -33,20 +23,6 @@ def suppress_output():
     with open(os.devnull, "w") as fnull:
         with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
             yield (err, out)
-
-
-#     with suppress_output():
-#         # d4rl prints out a variety of warnings
-#         import d4rl
-
-# except ImportError:
-#     missing_packages.append("d4rl")
-
-# if missing_packages:
-#     warning_message = "Warning: The following packages could not be imported: {}. RL features may not work.".format(
-#         ", ".join(missing_packages)
-#     )
-#     warnings.warn(warning_message, ImportWarning)
 
 
 class RLDataUtils:

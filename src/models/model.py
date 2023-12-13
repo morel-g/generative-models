@@ -415,7 +415,7 @@ class Model(torch.nn.Module):
         shape, dim = x.shape[0], x.dim()
 
         x = self._augment_input(x)
-        self._apply_conditioning(x, x_cond)
+        x = self._apply_conditioning(x, x_cond)
 
         x_traj = self._initialize_trajectories(x, return_trajectories)
         save_idx_times = self._get_traj_idx() if return_trajectories else []  # [:-1]
@@ -425,7 +425,8 @@ class Model(torch.nn.Module):
                 i + 1, shape, dim, is_eval=True, backward_dt=True
             )
             x = self._step_velocity(x, t, dt, i, backward=True)
-            self._apply_conditioning(x, x_cond)
+            x = self._apply_conditioning(x, x_cond)
+
             if return_trajectories and i in save_idx_times:
                 append_trajectories(x_traj, x, self.is_augmented())
 
@@ -445,6 +446,21 @@ class Model(torch.nn.Module):
             return x, v
 
         return x
+
+    # def _apply_conditioning_2(self, x: torch.Tensor, x_cond: torch.Tensor, t):
+    #     # mask = None
+    #     # if self.conditioning_case == Case.conditioning_rl_first_last:
+    #     mask = RLDataUtils.create_state_mask(x.shape[0], 1, 1)
+    #     if mask is not None:
+    #         x_cond = x_cond.to(x.device)
+    #         if x_cond.shape == x.shape:
+    #             x_cond = x_cond[mask]
+
+    #         noise = self._get_noise_like(x_cond)
+    #         x_cond_noise = self.mean_eval(t) * x_cond + self.sigma_eval(t) * noise
+    #         x[mask] = x_cond_noise.view(-1).to(x.device)
+
+    #     return x
 
     def _apply_conditioning(
         self,

@@ -3,19 +3,40 @@ from torch.utils.data import Dataset, random_split
 from torchvision import transforms
 from datasets import load_dataset
 from diffusers import Mel
-
+from typing import Tuple
 from src.case import Case
 
 
 class AudioDiffusionDataset(Dataset):
-    def __init__(self, huggingface_dataset, transform=None):
+    """
+    A dataset class for audio diffusion datasets.
+    """
+
+    def __init__(self, huggingface_dataset: Dataset, transform=None):
+        """
+        Initializes the AudioDiffusionDataset with a dataset and an optional transform.
+
+        Parameters:
+            huggingface_dataset (Dataset): The dataset to use.
+            transform (Optional[Callable]): The transform to apply on the data.
+        """
         self.huggingface_dataset = huggingface_dataset
         self.transform = transform
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Returns the size of the dataset."""
         return len(self.huggingface_dataset)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
+        """
+        Retrieves an item from the dataset at the specified index.
+
+        Parameters:
+            idx (int): The index of the item to retrieve.
+
+        Returns:
+            Tuple[torch.Tensor, str]: A tuple containing the image tensor and the audio file path.
+        """
         image = self.huggingface_dataset[idx]["image"]
         audio_path = self.huggingface_dataset[idx]["audio_file"]
 
@@ -26,8 +47,26 @@ class AudioDiffusionDataset(Dataset):
 
 
 class AudioDataUtils:
+    """
+    A utility class for audio data operations.
+    """
+
     @staticmethod
-    def prepare_audio_dataset(name):
+    def prepare_audio_dataset(
+        name: str,
+    ) -> Tuple[AudioDiffusionDataset, AudioDiffusionDataset]:
+        """
+        Prepares the audio dataset for training and testing.
+
+        Parameters:
+            name (str): The name of the dataset.
+
+        Returns:
+            Tuple[AudioDiffusionDataset, AudioDiffusionDataset]: A tuple containing the training and testing datasets.
+
+        Raises:
+            RuntimeError: If the dataset name is unknown.
+        """
         transform = transforms.Compose([transforms.ToTensor()])
 
         # Check if resizing is required
@@ -54,7 +93,19 @@ class AudioDataUtils:
         return audio_train_dataset, audio_test_dataset
 
     @staticmethod
-    def get_mel(data_type):
+    def get_mel(data_type: str):
+        """
+        Gets the mel spectrogram configuration for the specified data type.
+
+        Parameters:
+            data_type (str): The type of audio data.
+
+        Returns:
+            Mel: An instance of the Mel class with configured parameters.
+
+        Raises:
+            RuntimeError: If the data type is unknown.
+        """
         if data_type == Case.audio_diffusion_256:
             x_res, y_res = 256, 256
             hop_length = 512

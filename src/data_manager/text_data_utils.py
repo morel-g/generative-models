@@ -1,26 +1,15 @@
 import re
 import os
-import warnings
 import torch
 from tqdm import tqdm
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from datasets import load_dataset
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, PreTrainedTokenizer
 from torch.nn.utils.rnn import pad_sequence
-
-# try:
-#     import nltk
-#     from nltk.tokenize import sent_tokenize
-# except ImportError:
-#     warnings.warn(
-#         "Warning: punkt package could not be imported. Text features may not work.",
-#         ImportWarning,
-#     )
 
 from src.case import Case
 
 
-#     return tokenized_output["input_ids"].reshape(-1, seq_length)
 class TextDataUtils:
     is_nltk_downloaded = False
 
@@ -62,7 +51,25 @@ class TextDataUtils:
         return filtered_tokenized_ids
 
     @staticmethod
-    def get_id_from_data(data: List[str], seq_length: int, tokenizer) -> torch.Tensor:
+    def get_id_from_data(
+        data: List[str], seq_length: int, tokenizer: PreTrainedTokenizer
+    ) -> torch.Tensor:
+        """
+        Processes a list of text data into padded tokenized IDs.
+
+        If NLTK is not already downloaded, it will be downloaded during the first call of this method.
+
+        Parameters:
+            data (List[str]): A list of text strings to be tokenized.
+            seq_length (int): The sequence length to be considered for tokenization.
+            tokenizer (PreTrainedTokenizer): The tokenizer to be used for tokenization.
+
+        Returns:
+            torch.Tensor: A tensor of padded tokenized sentence IDs.
+
+        Note:
+            The tokenizer's pad_token is set to its eos_token.
+        """
         if not TextDataUtils.is_nltk_downloaded:
             import nltk
 
@@ -131,7 +138,20 @@ class TextDataUtils:
         return train_tensor, test_tensor
 
     @staticmethod
-    def get_lm1b_data(seq_length, tokenizer, short=False):
+    def get_lm1b_data(
+        seq_length: int, tokenizer: AutoTokenizer, short: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Loads and processes the LM1B dataset for training and testing.
+
+        Parameters:
+            seq_length (int): The sequence length for tokenization.
+            tokenizer (AutoTokenizer): The tokenizer for processing the text data.
+            short (bool, optional): Flag to load a smaller subset of the dataset. Defaults to False.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: Tuple of tensors representing the tokenized training and testing data.
+        """
         if short:
             dataset_stream_train = load_dataset("lm1b", split="train", streaming=True)
             data_train = list(dataset_stream_train.take(int(1e6)))
@@ -187,7 +207,17 @@ class TextDataUtils:
         return train_data, test_data
 
     @staticmethod
-    def decode_tokens(x, tokenizer_name):
+    def decode_tokens(x: torch.Tensor, tokenizer_name: str) -> Union[str, List[str]]:
+        """
+        Decodes tokens from a tensor using a specified tokenizer.
+
+        Parameters:
+            x (torch.Tensor): A tensor of token IDs.
+            tokenizer_name (str): The name of the tokenizer for decoding.
+
+        Returns:
+            Union[str, List[str]]: Decoded text or a list of decoded texts.
+        """
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
         if x.dim() == 2:
             decoded_x = []
@@ -199,13 +229,31 @@ class TextDataUtils:
             return tokenizer.decode(x, skip_special_tokens=True)
 
     @staticmethod
-    def decode_list_tokens(list, tokenizer_name):
-        list_decoded = []
-        for xi in list:
-            list_decoded.append(TextDataUtils.decode_tokens(xi, tokenizer_name))
-        return list_decoded
+    def decode_list_tokens(
+        tokens_list: List[torch.Tensor], tokenizer_name: str
+    ) -> List[Union[str, List[str]]]:
+        """
+        Decodes a list of token tensors using a specified tokenizer.
+
+        Parameters:
+            tokens_list (List[torch.Tensor]): A list of tensors containing token IDs.
+            tokenizer_name (str): The name of the tokenizer for decoding.
+
+        Returns:
+            List[Union[str, List[str]]]: A list of decoded texts or lists of decoded texts.
+        """
+        return [TextDataUtils.decode_tokens(xi, tokenizer_name) for xi in tokens_list]
 
     @staticmethod
-    def get_nb_tokens(tokenizer_name):
+    def get_nb_tokens(tokenizer_name: str) -> int:
+        """
+        Retrieves the number of tokens in the tokenizer's vocabulary.
+
+        Parameters:
+            tokenizer_name (str): The name of the tokenizer.
+
+        Returns:
+            int: The size of the tokenizer's vocabulary.
+        """
         tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
         return tokenizer.vocab_size
