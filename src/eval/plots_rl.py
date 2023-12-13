@@ -40,7 +40,7 @@ def compute_rl_outputs(
         render.save_state_samples(x.cpu().numpy(), fig_dir, name="True_samples")
         break
 
-    nb_samples = 4
+    nb_samples = 6
 
     if "hopper" in RLDataUtils.env_name:
         net.set_trajectory_length(4)
@@ -103,6 +103,7 @@ def sample_rl(net: pl.LightningModule, output_dir: str, name: str, nb_samples: i
         x_cond = None
     elif "maze2d" in RLDataUtils.env_name:
         x_cond = create_maze2d_cond(nb_samples)
+
     x = net.sample(nb_samples, x_cond=x_cond).cpu().numpy()
     render = get_render()
     render.save_state_samples(x, output_dir, name=name)
