@@ -1,4 +1,4 @@
-# Unified framework for generative diffusion models (work in progress)
+# Unified implementation for various generative diffusion models (work in progress)
 
 This repository provides implementations of several generative models applied to a broad spectrum of data types, including images, text, audio signals, and reinforcement learning scenarios. These models are primed for understanding and experimenting with advanced data generation techniques.
 
@@ -6,7 +6,7 @@ This repository provides implementations of several generative models applied to
 The implemented models are sourced from the following research papers:
 - [Score based models](https://arxiv.org/abs/2011.13456) / [Diffusion models](https://arxiv.org/abs/2006.11239)
 - [Critically-Damped Langevin Diffusion](https://arxiv.org/abs/2112.07068)
-- [Stochastic interpolants](https://arxiv.org/abs/2303.08797)
+- [Stochastic interpolants](https://arxiv.org/abs/2303.08797) / [Flow matching](https://arxiv.org/pdf/2210.02747.pdf)
 - [ Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006)
 - [Planning with Diffusion for Flexible Behavior Synthesis](https://arxiv.org/abs/2205.09991)
 
@@ -47,7 +47,7 @@ Experiments with continuous and discrete toy datasets for general diffusion mode
 
 ### Continuous datasets:
 
-| **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic interpolant** |
+| **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic interpolants / Flow matching** |
 |:--------------------------------:|:----------------------------:|:--------------------------:|
 | ![Diffusion Score trajectories](docs/assets/toy_traj_score.gif) | ![Critical Damped trajectories](docs/assets/toy_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/toy_traj_stochastic_interpolant.gif) |
 | ![Score samples](docs/assets/toy_score_sample.png) | ![CLD samples](docs/assets/toy_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/toy_stochastic_interpolant_sample.png) |
@@ -70,12 +70,12 @@ Experiments with continuous and discrete toy datasets for general diffusion mode
 
 ## Image datasets
 
-Applying diffusion models to image data with experiments on Fashion MNIST and CIFAR datasets. Three continuous models are considered: diffusion / score Based model, critical-damped Langevin and stochastic interpolant.
+Applying diffusion models to image data with experiments on Fashion MNIST and CIFAR datasets. Three continuous models are considered: diffusion / score based model, critical-damped Langevin and stochastic interpolants / flow matching.
 
 ### Sampling from the models for the Fashion MNIST dataset:
 
 
-| **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic interpolant** |
+| **Diffusion / Score Based Model** | **Critical-damped Langevin** | **Stochastic interpolants / Flow matching** |
 |:--------------------------------:|:----------------------------:|:--------------------------:|
 | ![Diffusion trajectories](docs/assets/fm_traj_score.gif) | ![CLD trajectories](docs/assets/fm_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/fm_traj_stochastic_interpolant.gif) |
 | ![Diffusion samples](docs/assets/fm_score_sample.png) | ![CLD samples](docs/assets/fm_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/fm_stochastic_interpolant_sample.png) |
@@ -86,7 +86,7 @@ Applying diffusion models to image data with experiments on Fashion MNIST and CI
 
 **Note**: The models have not been trained extensively in order to save computational time. However, training them for longer durations should improve the results. See the configuration files from the original papers if needed.
 
-| **Diffusion / Score Based Model** | **Critical-damped Langevin** |  **Stochastic interpolant** |
+| **Diffusion / Score Based Model** | **Critical-damped Langevin** |  **Stochastic interpolants / Flow matching** |
 |:--------------------------------:|:--------------------------:|:--------------------------:|
 | ![Diffusion trajectories](docs/assets/cifar_traj_score.gif) |  ![CLD trajectories](docs/assets/cifar_traj_cld.gif) | ![Stochastic interpolant trajectories](docs/assets/cifar_traj_stochastic_interpolant.gif) |
 | ![Diffusion samples](docs/assets/cifar_score_sample.png) | ![CLD samples](docs/assets/cifar_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/cifar_stochastic_interpolant_sample.png) |
@@ -95,7 +95,7 @@ Applying diffusion models to image data with experiments on Fashion MNIST and CI
 
 ## Audio datasets
 
-Continuous generative models applied to mel spectrograms of audio signals, trained on music samples from the [**audio-diffusion-256**](https://huggingface.co/datasets/teticio/audio-diffusion-256) dataset see also the original [audio-diffusion](https://github.com/teticio/audio-diffusion) repository.
+In this section continuous generative models are applied to mel spectrograms of audio signals, trained on music samples from the [**audio-diffusion-256**](https://huggingface.co/datasets/teticio/audio-diffusion-256) dataset see also the original [audio-diffusion](https://github.com/teticio/audio-diffusion) repository.
 
 
 <div align="center">
@@ -117,9 +117,9 @@ https://github.com/morel-g/generative-models/assets/123385560/9662a7f2-19f5-4527
 
 ## Text datasets
 
-Experimenting with the [Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006) architecture to process text datasets. Here the D3PM model is applied to a shortened version of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset. 
+[Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006) architecture introduces advanced generative models for discrete data, enhancing image and text generation by employing diverse Markov transition matrices.
 
-Below are selected visual representations of the model trajectories
+Here the D3PM model is applied to a shortened version of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset with uniform transition matrix. Below are selected visual representations of the model trajectories
 
 ![Text trajectories 1](docs/assets/text_traj_1.gif)
 
@@ -129,9 +129,9 @@ Below are selected visual representations of the model trajectories
 
 ## Reinforcement learning datasets
 
-Diffusion models for reinforcement learning, demonstrated on a 2d maze. For comprehensive insights refer to the [original paper](https://arxiv.org/abs/2205.09991).
+[Diffusion models for reinforcement learning](https://arxiv.org/abs/2205.09991) is a trajectory-level diffusion probabilistic model that enables effective, flexible trajectory optimization by generating globally coherent plans through iterative denoising, demonstrating significant advantages in long-horizon decision-making and adaptability in various control settings.
 
-Here are some examples on simple 2d mazes
+The trajectories of the model are shown here on some 2d mazes
 
 
  <div align="center">
