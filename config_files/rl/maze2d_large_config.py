@@ -23,7 +23,7 @@ CONFIG["training_params"].update(
         "weight_decay": 0.0,
         "ema_dict": {
             "use_ema": True,
-            "decay": 0.995,
+            "decay": 0.9999,
             "use_ema_warmup": True,
             "power": 2.0 / 3.0,
         },
