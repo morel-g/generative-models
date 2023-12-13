@@ -8,7 +8,6 @@ from src.case import Case
 from src.precision import torch_float_precision
 from src.params_parser import parse_main
 from src.data_manager.data_type import img_data_type, text_data_type, rl_data_type
-from src.global_data_type import GlobalDataType
 from src.training.training_module import run_sim
 from src.data_manager.text_data_utils import TextDataUtils
 from src.data_manager.rl_data_utils import RLDataUtils
