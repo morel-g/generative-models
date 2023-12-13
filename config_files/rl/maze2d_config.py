@@ -8,20 +8,22 @@ CONFIG["scheme_params"].update(
     {
         "nb_time_steps_train": 1000,
         "nb_time_steps_eval": 1000,
+        "beta_case": Case.vanilla,
+        "decay_case": Case.vanilla_sigma,
         "conditioning_case": Case.conditioning_rl_first_last,
     }
 )
 CONFIG["training_params"].update(
     {
-        "epochs": 2000,
-        "check_val_every_n_epochs": 100,
+        "epochs": 800,
+        "check_val_every_n_epochs": 50,
         "batch_size": 64,
         "batch_size_eval": 64,
         "lr": 2e-4,
         "weight_decay": 0.0,
         "ema_dict": {
             "use_ema": True,
-            "decay": 0.995,
+            "decay": 0.9999,
             "use_ema_warmup": True,
             "power": 2.0 / 3.0,
         },
@@ -31,7 +33,7 @@ CONFIG["training_params"].update(
 CONFIG["model_params"] = {
     "transition_dim": 6,
     "horizon": 240,
-    "dim": 32,
-    "dim_mults": (1, 4, 8),
+    "dim": 240,
+    "dim_mults": (1, 2, 2),
     "attention": False,
 }
