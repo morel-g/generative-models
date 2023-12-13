@@ -150,7 +150,7 @@ def train_model(
     device = params.device if params.accelerator == "gpu" else "auto"
 
     # Print and save params
-    params.write(logger.log_dir + "/params.txt", print=True)
+    params.write(logger.log_dir + "/params.txt", should_print=True)
 
     # Initialize trainer and start training
     trainer = pl.Trainer(
@@ -180,11 +180,11 @@ def train_model(
         data_module.setup()
 
     # Load the best model checkpoint
-    if trainer.checkpoint_callback.best_model_path:
-        print("Loading checkpoint " + trainer.checkpoint_callback.best_model_path)
-        net = DiffusionGenerator.load_from_checkpoint(
-            trainer.checkpoint_callback.best_model_path, params=params
-        )
+    # if trainer.checkpoint_callback.best_model_path:
+    #     print("Loading checkpoint " + trainer.checkpoint_callback.best_model_path)
+    #     net = DiffusionGenerator.load_from_checkpoint(
+    #         trainer.checkpoint_callback.best_model_path, params=params
+    #     )
 
     print("Execution time =", datetime.now() - startTime)
 

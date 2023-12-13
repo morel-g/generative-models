@@ -1,12 +1,13 @@
 import os
 import errno
 import sys
+from typing import Any, Optional, IO
 
 
 def dict_to_str(d, indent=0, s="-"):
     """
-    Returns a string representation of a dictionary, where nested dictionaries are indented and
-    lists are printed without newline characters inside them.
+    Returns a string representation of a dictionary, where nested dictionaries
+    are indented and lists are printed without newline characters inside them.
 
     Args:
         d (dict): The dictionary to convert to a string.
@@ -37,48 +38,60 @@ def dict_to_str(d, indent=0, s="-"):
 
 
 class Params:
-    def __init__(self, **kwargs):
-        """General params object to store parameters."""
-        # for key, value in INIT_DICT.items():
-        #     self.__setattr__(key, value)
+    def __init__(self, **kwargs: Any):
+        """
+        Initializes a Params object to store various parameters.
+
+        This constructor initializes a default logger_path and sets additional parameters
+        provided as keyword arguments.
+
+        Args:
+        kwargs: A variable number of keyword arguments.
+        """
         self.logger_path = "outputs/tensorboard_logs"
         for key, value in kwargs.items():
             self.__setattr__(key, value)
 
-    def to_string(self):
-        """Print parameters.
+    def to_string(self) -> str:
+        """
+        Constructs a string representation of the parameters.
 
         Returns:
-            A string of the parameters to be printed.
+        str: A formatted string listing all parameters.
         """
-        s = ""
-        s += "-" * 50 + "  \n"
-        s += " Params values" + "  \n"
-        s += "-" * 50 + " "
-        s += dict_to_str(vars(self))
-        s += "  \n  "
-        s += "-" * 50 + "  \n  "
-        s += "-" * 50 + "  \n  "
+        params_str = "-" * 50 + "  \n"
+        params_str += " Params values" + "  \n"
+        params_str += "-" * 50 + " "
+        params_str += dict_to_str(vars(self))
+        params_str += "  \n  "
+        params_str += "-" * 50 + "  \n  "
+        params_str += "-" * 50 + "  \n  "
 
-        return s
+        return params_str
 
-    def print(self, f=sys.stdout):
-        """Print the parameters.
+    def print(self, f: Optional[IO] = sys.stdout) -> None:
+        """
+        Prints the parameters to the specified file or standard output.
 
         Args:
-            f: Where to print params. Defaults to sys.stdout.
+        f (Optional[IO]): The file or output stream to print the parameters to.
+                          Defaults to sys.stdout.
         """
         print(self.to_string(), file=f)
 
-    def write(self, name, print=True):
-        if not os.path.exists(os.path.dirname(name)):
-            try:
-                os.makedirs(os.path.dirname(name))
-            except OSError as exc:  # Guard against race condition
-                if exc.errno != errno.EEXIST:
-                    raise
-        f = open(name, "w")
-        self.print(f)
-        if print:
-            self.print(None)
-        f.close()
+    def write(self, name: str, should_print: bool = True) -> None:
+        """
+        Writes the parameters to a specified file and optionally prints them.
+
+        If the directory for the file doesn't exist, it attempts to create it.
+
+        Args:
+        name (str): The file path to write the parameters to.
+        should_print (bool): Flag to indicate if the parameters should also be printed.
+                             Defaults to True.
+        """
+        os.makedirs(os.path.dirname(name), exist_ok=True)
+        with open(name, "w") as f:
+            self.print(f)
+        if should_print:
+            self.print()

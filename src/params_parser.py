@@ -3,10 +3,33 @@ from src.case import Case
 
 
 class CustomHelpFormatter(argparse.HelpFormatter):
-    def __init__(self, prog):
+    """
+    Custom formatter for argparse help text, extending the default HelpFormatter.
+
+    This formatter adjusts the help text's formatting, specifically the position and
+    width of help messages, and the format of command-line option descriptions.
+
+    Args:
+    prog (str): The name of the program (typically sys.argv[0]).
+    """
+
+    def __init__(self, prog: str):
         super().__init__(prog, max_help_position=40, width=80)
 
-    def _format_action_invocation(self, action):
+    def _format_action_invocation(self, action: argparse.Action) -> str:
+        """
+        Formats the action invocation part of the help message.
+
+        If the action has no option strings (like positional arguments) or if its nargs
+        is 0, it uses the default formatting. Otherwise, it customizes the format of
+        option strings.
+
+        Args:
+        action (argparse.Action): The action to format.
+
+        Returns:
+        str: The formatted action invocation string.
+        """
         if not action.option_strings or action.nargs == 0:
             return super()._format_action_invocation(action)
         default = self._get_default_metavar_for_optional(action)
@@ -15,7 +38,18 @@ class CustomHelpFormatter(argparse.HelpFormatter):
 
 
 def init_parser(description: str) -> argparse.ArgumentParser:
-    """Initializes a parser with the given description and custom formatter."""
+    """
+    Initializes and returns an argparse.ArgumentParser with a custom help formatter.
+
+    This function creates a parser with a specified description and a custom help
+    formatter, which adjusts the help text's formatting.
+
+    Args:
+    description (str): A description of the program for which the parser is being created.
+
+    Returns:
+    argparse.ArgumentParser: The initialized argument parser.
+    """
     return argparse.ArgumentParser(
         formatter_class=CustomHelpFormatter,
         description=description,
@@ -166,7 +200,7 @@ def parse_viz() -> argparse.Namespace:
         "--nb_imgs",
         nargs="+",
         type=int,
-        default=[3, 3],
+        default=[5, 5],
         metavar="",
         help="Number of rows on columns for images display.",
     )
