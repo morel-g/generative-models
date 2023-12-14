@@ -174,18 +174,21 @@ class DiffusionGenerator(pl.LightningModule):
     @torch.no_grad()
     def sample(
         self,
-        nb_samples: int,
+        nb_samples: Optional[int] = None,
         return_trajectories: bool = False,
         return_velocities: bool = False,
+        x_init: Optional[torch.Tensor] = None,
         x_cond: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
         Sample data points using the model.
 
         Parameters:
-            nb_samples: Number of samples to generate.
+            nb_samples (Optional[int]): Number of samples to generate.
             return_trajectories: Whether to return trajectories.
             return_velocities: Whether to return velocities.
+            x_init (Optional[torch.Tensor]): Initial input for sampling.
+              Either `nb_samples` or `x_init` should be provided.
             x_cond (Optional[torch.Tensor]): Conditional data, if any.
 
         Returns:
@@ -196,6 +199,7 @@ class DiffusionGenerator(pl.LightningModule):
             nb_samples,
             return_trajectories,
             return_velocities=return_velocities,
+            x_init=x_init,
             x_cond=x_cond,
         )
 
@@ -260,6 +264,10 @@ class DiffusionGenerator(pl.LightningModule):
     def get_traj_times(self) -> torch.Tensor:
         model = self.get_model()
         return model.get_traj_times()
+
+    def get_samples_prior(self, nb_samples):
+        model = self.get_model()
+        return model.get_samples_prior(nb_samples)
 
     def forward_pass(
         self,

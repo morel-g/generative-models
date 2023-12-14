@@ -223,6 +223,11 @@ class Model(torch.nn.Module):
     def sample_prior_x(self, shape, device):
         return torch.randn(shape, device=device)
 
+    def get_samples_prior(self, nb_samples):
+        shape = (nb_samples,) + self.particles_dim()
+        device = next(self.neural_network.parameters()).device
+        return self.sample_prior_x(shape, device=device)
+
     def velocity_step(self, x, t_id, backward=False):
         """Must be implemented in subclass."""
         raise NotImplementedError("This method should be overridden by subclass.")
@@ -344,7 +349,7 @@ class Model(torch.nn.Module):
             return_velocities (bool): Whether to return velocities.
             x_init (Optional[torch.Tensor]): Initial input for sampling.
               Either `nb_samples` or `x_init` should be provided.
-            cond (Optional[torch.Tensor]): Conditional data, if any.
+            x_cond (Optional[torch.Tensor]): Conditional data, if any.
 
         Returns:
             torch.Tensor: Sampled outputs.
@@ -355,9 +360,7 @@ class Model(torch.nn.Module):
             )
 
         if x_init is None:
-            shape = (nb_samples,) + self.particles_dim()
-            device = next(self.neural_network.parameters()).device
-            x = self.sample_prior_x(shape, device=device)
+            x = self.get_samples_prior(nb_samples)
         else:
             x = x_init
 

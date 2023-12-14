@@ -152,12 +152,24 @@ def parse_viz() -> argparse.Namespace:
         help="Compute fid.",
     )
     general.add_argument(
-        "--generate_samples",
+        "--save_samples",
         action="store_true",
         default=False,
-        help="Generate and save samples from the model.",
+        help="Save samples from the model.",
     )
-
+    general.add_argument(
+        "--nb_batch_saved",
+        type=int,
+        default=1,
+        metavar="",
+        help="Number of batch saved. Only used when save_samples is True.",
+    )
+    general.add_argument(
+        "--save_noise",
+        action="store_true",
+        default=False,
+        help="Save original noise from the prior.  Only used when save_samples is True.",
+    )
     general.add_argument(
         "--no_ema",
         action="store_true",
