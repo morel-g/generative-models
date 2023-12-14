@@ -130,13 +130,6 @@ def parse_viz() -> argparse.Namespace:
         help="Batch size used for evaluation.",
     )
     general.add_argument(
-        "-tv",
-        type=int,
-        default=None,
-        metavar="",
-        help="Number of time where the validation loss is computed with different values for the time variables. Used only when loss is set to True",
-    )
-    general.add_argument(
         "-scheme",
         "--scheme",
         type=str,
@@ -164,6 +157,7 @@ def parse_viz() -> argparse.Namespace:
         default=False,
         help="Generate and save samples from the model.",
     )
+
     general.add_argument(
         "--no_ema",
         action="store_true",
