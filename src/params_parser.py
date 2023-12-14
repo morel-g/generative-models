@@ -131,7 +131,6 @@ def parse_viz() -> argparse.Namespace:
     )
     general.add_argument(
         "-tv",
-        "--nb_time_validation",
         type=int,
         default=None,
         metavar="",
@@ -158,6 +157,12 @@ def parse_viz() -> argparse.Namespace:
         action="store_true",
         default=False,
         help="Compute fid.",
+    )
+    general.add_argument(
+        "--generate_samples",
+        action="store_true",
+        default=False,
+        help="Generate and save samples from the model.",
     )
     general.add_argument(
         "--no_ema",

@@ -78,7 +78,6 @@ DATA_DICT = {
         "ema": not True,
         "ema_rate": 0.999,
         "gradient_clip_val": 0.0,
-        "nb_time_validation": 3,
         "scheduler_dict": {
             "scheduler": Case.cosine_with_warmup,
             # LR scheduler params
@@ -122,9 +121,7 @@ class TestScoreModel(unittest.TestCase):
         data = Params(**DATA_DICT)
         x_init = torch.randn(2)
         train_dataset = DiracDataset(x_init, num_samples=100)
-        train_dataloader = DataLoader(
-            train_dataset, batch_size=32, shuffle=True
-        )
+        train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
         net = DiffusionGenerator(params)
         trainer = pl.Trainer(max_epochs=10)
         trainer.fit(net, train_dataloader)

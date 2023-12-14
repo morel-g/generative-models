@@ -25,7 +25,6 @@ CONFIG = {
         "check_val_every_n_epochs": 20,
         "ema_dict": {"use_ema": False, "decay": 0.9999},
         "gradient_clip_val": 0.0,
-        "nb_time_validation": 3,
         "scheduler_dict": {
             "scheduler": Case.cosine_with_warmup,
             # LR scheduler params

@@ -124,7 +124,6 @@ def configure_viz_infos(
     viz_infos = {
         "adapt_dt": args.adapt_dt,
         "nb_time_steps_eval": args.nb_time_steps_eval,
-        "nb_time_validation": args.nb_time_validation,
         "batch_size_eval": args.batch_size_eval,
         "Backward scheme": args.scheme,
     }
@@ -132,8 +131,6 @@ def configure_viz_infos(
         net.set_adapt_dt(viz_infos["adapt_dt"])
     if viz_infos["nb_time_steps_eval"]:
         net.set_nb_time_steps(viz_infos["nb_time_steps_eval"], eval=True)
-    if viz_infos["nb_time_validation"]:
-        net.nb_time_validation = viz_infos["nb_time_validation"]
     if viz_infos["batch_size_eval"]:
         params.training_params["batch_size_eval"] = viz_infos["batch_size_eval"]
     if viz_infos["Backward scheme"]:
