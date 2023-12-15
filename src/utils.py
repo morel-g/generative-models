@@ -2,8 +2,7 @@ import torch
 import os
 from pathlib import Path
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
-from src.case import Case
-from typing import Optional
+from typing import Tuple
 
 SAVE_STR_NAME = "outputs.txt"
 
@@ -68,6 +67,32 @@ def id_to_device(accelerator: str, device_id: int = 0) -> str:
     else:
         device = "cpu"
     return device
+
+
+def split_train_test(
+    dataset: torch.Tensor, split_ratio: float = 0.9
+) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Splits a dataset into train and test subsets based on a specified split ratio.
+
+    Args:
+    - dataset (torch.Tensor): The dataset to be split.
+    - split_ratio (float, optional): The ratio of the dataset to be used as the training set. Defaults to 0.9.
+
+    Returns:
+    - Tuple[torch.Tensor, torch.Tensor]: A tuple containing the train and test datasets.
+    """
+    train_size = int(split_ratio * len(dataset))
+    test_size = len(dataset) - train_size
+
+    generator = torch.Generator().manual_seed(42)
+    indices = torch.randperm(len(dataset), generator=generator)
+    train_indices = indices[:train_size]
+    test_indices = indices[train_size : train_size + test_size]
+    train_dataset = dataset[train_indices]
+    test_dataset = dataset[test_indices]
+
+    return train_dataset, test_dataset
 
 
 def tanh_deriv(x: torch.Tensor) -> torch.Tensor:
