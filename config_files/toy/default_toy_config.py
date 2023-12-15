@@ -11,13 +11,13 @@ CONFIG = {
     },
     "scheme_params": {
         "T_final": 3.0,
-        "nb_time_steps_train": 200,
-        "nb_time_steps_eval": 200,
+        "nb_time_steps_train": 1000,
+        "nb_time_steps_eval": 1000,
         "adapt_dt": True,
         "decay_case": Case.no_decay,
     },
     "training_params": {
-        "epochs": 100,
+        "epochs": 200,
         "batch_size": 500,
         "batch_size_eval": 500,
         "lr": 5e-3,

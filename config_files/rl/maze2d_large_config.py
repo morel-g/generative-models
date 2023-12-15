@@ -33,7 +33,7 @@ CONFIG["training_params"].update(
 CONFIG["model_params"] = {
     "transition_dim": 6,
     "horizon": 384,
-    "dim": 64,
-    "dim_mults": (1, 4, 8),
+    "dim": 128,
+    "dim_mults": (1, 2, 4),
     "attention": False,
 }
