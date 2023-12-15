@@ -48,6 +48,8 @@ rl_data_type = [
     Case.maze2d_large_v1,
 ]
 
+custom_data_type = [Case.custom_data]
+
 text_data_type = [Case.wiki, Case.lm1b, Case.lm1b_short]
 
 toy_data_type = toy_continuous_data_type + toy_discrete_data_type

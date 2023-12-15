@@ -10,12 +10,14 @@ from src.data_manager.data_type import (
     audio_data_type,
     text_data_type,
     rl_data_type,
+    custom_data_type,
 )
 from src.data_manager.toy_data_utils import ToyDataUtils
 from src.data_manager.img_data_utils import ImgDataUtils
 from src.data_manager.text_data_utils import TextDataUtils
 from src.data_manager.audio_data_utils import AudioDataUtils
 from src.data_manager.rl_data_utils import RLDataUtils
+from src.data_manager.custom_data_utils import CustomDataUtils
 
 
 class DataModule(pl.LightningDataModule):
@@ -69,18 +71,18 @@ class DataModule(pl.LightningDataModule):
         data_type = self.params.data_type
 
         kwargs = {}
-        if self.params.data_type in toy_discrete_data_type:
-            kwargs["nb_tokens"] = self.params.model_params["nb_tokens"]
-        if self.params.data_type in text_data_type:
-            kwargs["seq_length"] = self.params.scheme_params["seq_length"]
-            kwargs["tokenizer_name"] = self.params.scheme_params.get(
-                "tokenizer_name", Case.gpt2
-            )
-        if self.params.data_type in rl_data_type:
-            if "horizon" in self.params.model_params:
-                kwargs["horizon"] = self.params.model_params["horizon"]
 
-        if data_type in toy_continuous_data_type + toy_discrete_data_type:
+        if (
+            hasattr(self.params, "custom_data")
+            and self.params.custom_data["use_custom_data"]
+        ):
+            kwargs["data_dir"] = self.params.custom_data["data_dir"]
+            kwargs["prefix_1"] = self.params.custom_data["prefix_1"]
+            kwargs["prefix_2"] = self.params.custom_data.get("prefix_2", None)
+            return CustomDataUtils.prepare_custom_dataset(**kwargs)
+        elif data_type in toy_continuous_data_type + toy_discrete_data_type:
+            if self.params.data_type in toy_discrete_data_type:
+                kwargs["nb_tokens"] = self.params.model_params["nb_tokens"]
             return ToyDataUtils.prepare_toy_dataset(
                 data_type, n_samples, log_dir, **kwargs
             )
@@ -89,12 +91,18 @@ class DataModule(pl.LightningDataModule):
         elif data_type in img_data_type:
             return ImgDataUtils.prepare_img_dataset(data_type)
         elif data_type in text_data_type:
+            kwargs["seq_length"] = self.params.scheme_params["seq_length"]
+            kwargs["tokenizer_name"] = self.params.scheme_params.get(
+                "tokenizer_name", Case.gpt2
+            )
             return TextDataUtils.prepare_text_dataset(data_type, **kwargs)
         elif data_type in rl_data_type:
-            dataset = RLDataUtils.prepare_rl_dataset(data_type, **kwargs)
+            if "horizon" in self.params.model_params:
+                kwargs["horizon"] = self.params.model_params["horizon"]
+            datasets = RLDataUtils.prepare_rl_dataset(data_type, **kwargs)
             if not "horizon" in self.params.model_params:
                 self.params.model_params["horizon"] = RLDataUtils.horizon
-            return dataset
+            return datasets
         else:
             raise RuntimeError(f"Uknown data_type {data_type}")
 

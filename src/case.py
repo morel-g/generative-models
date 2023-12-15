@@ -51,6 +51,7 @@ class Case:
     maze2d_umaze_v1 = "maze2d-umaze-v1"
     maze2d_medium_v1 = "maze2d-medium-v1"
     maze2d_large_v1 = "maze2d-large-v1"
+    custom_data = "custom_data"
 
     # Tokenizer
     gpt2 = "gpt2"
