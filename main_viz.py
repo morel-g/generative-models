@@ -192,6 +192,19 @@ def compute_fid(
     }
 
 
+def save_samples_from_net(net, output_dir, nb_batch, nb_samples, save_noise=False):
+    sample_dir = os.path.join(output_dir, "samples")
+    ensure_directory_exists(sample_dir)
+    for batch_num in range(nb_batch):
+        if save_noise:
+            x_init = net.get_samples_prior(nb_samples)
+            x = net.sample(x_init=x_init).cpu().numpy()
+            np.save(os.path.join(sample_dir, f"noises_batch_{batch_num}.npy"), x_init)
+        else:
+            x = net.sample(nb_samples).cpu().numpy()
+        np.save(os.path.join(sample_dir, f"samples_batch_{batch_num}.npy"), x)
+
+
 if __name__ == "__main__":
     args = parse_viz()
 
@@ -238,20 +251,9 @@ if __name__ == "__main__":
     elif args.fid:
         compute_fid(net, params, data_module, args, viz_infos, device)
     elif args.save_samples:
-        nb_batch = args.nb_batch_saved
-        save_noise = args.save_noise
-        nb_samples = args.batch_size_eval
-        sample_dir = os.path.join(output_dir, "samples")
-        ensure_directory_exists(sample_dir)
-        for batch_num in range(nb_batch):
-            if save_noise:
-                x_init = net.get_samples_prior(nb_samples)
-                x = net.sample(x_init=x_init).cpu().numpy()
-                np.save(os.path.join(sample_dir, f"noise_batch_{batch_num}.npy"), x)
-            else:
-                x = net.sample(nb_samples).cpu().numpy()
-            np.save(os.path.join(sample_dir, f"sample_batch_{batch_num}.npy"), x)
-
+        save_samples_from_net(
+            net, output_dir, args.nb_batch_saved, args.batch_size_eval, args.save_noise
+        )
     elif params.data_type in toy_continuous_data_type:
         x_val = data_module.val_data.x
         compute_continuous_outputs_2d(net, x_val, output_dir)
