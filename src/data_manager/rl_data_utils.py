@@ -4,14 +4,11 @@ from contextlib import (
     redirect_stderr,
     redirect_stdout,
 )
-import warnings
 import numpy as np
 import torch
-import random
-from torch.utils.data import Dataset, random_split
-
 from src.case import Case
 from src.data_manager.dataset import Dataset
+from src.utils import split_train_test
 
 
 @contextmanager
@@ -81,15 +78,7 @@ class RLDataUtils:
         RLDataUtils.horizon = traj_dataset.shape[1]
         # traj_dataset = traj_dataset[:256]
 
-        train_size = int(0.9 * len(traj_dataset))
-        test_size = len(traj_dataset) - train_size
-
-        generator = torch.Generator().manual_seed(42)
-        indices = torch.randperm(len(traj_dataset), generator=generator)
-        train_indices = indices[:train_size]
-        test_indices = indices[train_size : train_size + test_size]
-        train_dataset = traj_dataset[train_indices]
-        test_dataset = traj_dataset[test_indices]
+        train_dataset, test_dataset = split_train_test(traj_dataset)
 
         RLDataUtils.mean_states = train_dataset.mean(dim=0)
         RLDataUtils.std_states = train_dataset.std(dim=0)
@@ -284,10 +273,6 @@ class RLDataUtils:
     @staticmethod
     def create_random_state(id):
         x = torch.tensor(RLDataUtils.env.reset(), dtype=torch.float)
-        # torch.tensor(
-        #     random.choice(RLDataUtils.env.empty_and_goal_locations), dtype=torch.float
-        # )
-        # torch.nn.functional.pad(x, (0, RLDataUtils.state_dim - x.shape[0]))
         return (
             x - RLDataUtils.get_states(RLDataUtils.mean_states[id])
         ) / RLDataUtils.get_states(RLDataUtils.std_states[id])

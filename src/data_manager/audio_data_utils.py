@@ -43,7 +43,7 @@ class AudioDiffusionDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, audio_path
+        return image  # , audio_path
 
 
 class AudioDataUtils:
