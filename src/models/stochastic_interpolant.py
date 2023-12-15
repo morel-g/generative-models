@@ -146,9 +146,9 @@ class StochasticInterpolant(Model):
                 0.1,
                 20,
             )
-            t_new = b_min * t / (self.T_final * 2.0) + 0.5 * (
-                b_max - b_min
-            ) * (t**2) / (2.0 * self.T_final**2)
+            t_new = b_min * t / (self.T_final * 2.0) + 0.5 * (b_max - b_min) * (
+                t**2
+            ) / (2.0 * self.T_final**2)
         else:
             raise RuntimeError("Unknown beta_case.")
 
@@ -166,9 +166,7 @@ class StochasticInterpolant(Model):
         """
         return self.interpolant == Case.bgk
 
-    def set_nb_time_steps(
-        self, nb_time_steps: int, eval: bool = False
-    ) -> None:
+    def set_nb_time_steps(self, nb_time_steps: int, eval: bool = False) -> None:
         """
         Set the number of time steps for evaluation or training.
 
@@ -254,9 +252,7 @@ class StochasticInterpolant(Model):
         # Not implemented yet
         return torch.zeros_like(x)
 
-    def sample_time_uniform(
-        self, t_shape: Tuple[int], device: str
-    ) -> torch.Tensor:
+    def sample_time_uniform(self, t_shape: Tuple[int], device: str) -> torch.Tensor:
         """
         Sample time uniformly.
 
@@ -269,9 +265,7 @@ class StochasticInterpolant(Model):
         """
         return torch.rand(t_shape, device=device) * self.T_final
 
-    def sample_time_exp(
-        self, t_shape: Tuple[int], device: str
-    ) -> torch.Tensor:
+    def sample_time_exp(self, t_shape: Tuple[int], device: str) -> torch.Tensor:
         """
         Sample time exponentially.
 
@@ -299,12 +293,15 @@ class StochasticInterpolant(Model):
         """
         dim = len(x_shape)
         t_shape = (x_shape[0],) + (dim - 1) * (1,)
-        if self.beta_case == Case.vanilla:
+        if self.interpolant != Case.bgk:
             return self.sample_time_uniform(t_shape, device) + self.T_init
-        elif self.beta_case == Case.constant:
-            return self.sample_time_exp(t_shape, device) + self.T_init
         else:
-            raise NotImplementedError(f"Unkown beta {self.beta_case}")
+            if self.beta_case == Case.constant:
+                return self.sample_time_exp(t_shape, device) + self.T_init
+            elif self.beta_case == Case.vanilla:
+                return self.sample_time_uniform(t_shape, device) + self.T_init
+            else:
+                raise NotImplementedError(f"Unkown beta {self.beta_case}")
 
     def eval_interpolant_path(
         self,
@@ -349,9 +346,7 @@ class StochasticInterpolant(Model):
                 * pi
             )
         else:
-            raise NotImplementedError(
-                f"Unkown interpolant {self.interpolant}."
-            )
+            raise NotImplementedError(f"Unkown interpolant {self.interpolant}.")
 
         It_noise, dt_It_noise = self._compute_noise_addition(x0, t)
         It += It_noise
@@ -405,20 +400,27 @@ class StochasticInterpolant(Model):
         """
         return self.eval_interpolant_path(x0, x1, t, self.interpolant)
 
-    def loss(self, x0: torch.Tensor, x1: torch.Tensor = None) -> torch.Tensor:
+    def loss(self, x: torch.Tensor) -> torch.Tensor:
         """
         Compute the loss based on the interpolant path and velocity.
 
         Parameters:
-        - x0 (torch.Tensor): Initial tensor.
-        - x1 (torch.Tensor, optional): Final tensor. If not provided, noise is used.
+        - x (torch.Tensor or tuple of torch.Tensor): This parameter can be
+        either a single torch.Tensor, representing the initial tensor, or a
+        tuple of two torch.Tensor objects, representing the initial and final
+        tensors respectively. If only the initial tensor is provided, noise is
+        used for the final tensor.
 
         Returns:
         - torch.Tensor: Computed loss.
         """
-        t = self.sample_time(x0.shape, x0.device)
-        if x1 is None:
+        if isinstance(x, list):
+            x0, x1 = x
+        else:
+            x0 = x
             x1 = self._get_noise_like(x0)
+        t = self.sample_time(x0.shape, x0.device)
+
         It, dt_It = self.eval_path(x0, x1, t)
         v = self.velocity_eval(It, t)
         sum_dims = list(range(1, x0.dim()))
@@ -444,9 +446,9 @@ class StochasticInterpolant(Model):
                 0.1,
                 20,
             )
-            return b_min * dt / (2.0 * self.T_final) + 0.5 * (
-                b_max - b_min
-            ) * (t2**2 - t1**2) / (2.0 * self.T_final**2)
+            return b_min * dt / (2.0 * self.T_final) + 0.5 * (b_max - b_min) * (
+                t2**2 - t1**2
+            ) / (2.0 * self.T_final**2)
         else:
             raise RuntimeError("beta_case not implemented.")
 
@@ -473,8 +475,6 @@ class StochasticInterpolant(Model):
 
             x = x + int_coef * v
         else:
-            raise RuntimeError(
-                "Unknown backward scheme: ", self.backward_scheme
-            )
+            raise RuntimeError("Unknown backward scheme: ", self.backward_scheme)
 
         return x

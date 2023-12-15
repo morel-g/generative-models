@@ -139,10 +139,11 @@ class DiffusionGenerator(pl.LightningModule):
         Returns:
             loss: The computed loss.
         """
-        if self.params.data_type in img_data_type and len(batch) == 2:
-            x, _ = batch
-        else:
-            x = batch
+        # if self.params.data_type in img_data_type and len(batch) == 2:
+        #     x, _ = batch
+        # else:
+        #     x = batch
+        x = batch
         model = self.get_model()
         loss = model.loss(x)
 
@@ -164,10 +165,11 @@ class DiffusionGenerator(pl.LightningModule):
             batch_idx: Index of the batch.
         """
         model = self.get_model()
-        if self.params.data_type in img_data_type and len(batch) == 2:
-            x, _ = batch
-        else:
-            x = batch
+        x = batch
+        # if self.params.data_type in img_data_type and len(batch) == 2:
+        #     x, _ = batch
+        # else:
+        #     x = batch
         loss = model.loss(x).cpu().item()
         self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
