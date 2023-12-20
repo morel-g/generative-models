@@ -90,7 +90,7 @@ class MarkovHandler(torch.nn.Module):
         elif transition_case == Case.absorbing:
             get_transition_matrix = self._get_absorbing_transition_matrix
         else:
-            raise ValueError("Unkown transition case {transition_case}")
+            raise ValueError(f"Unkown transition case {transition_case}")
 
         beta_0 = time_scheduler[0]
         Q0 = get_transition_matrix(beta_0, N)
@@ -340,8 +340,7 @@ class MarkovHandler(torch.nn.Module):
         self, t_id: torch.Tensor, x_id: torch.Tensor
     ) -> torch.Tensor:
         """
-        Extract rows (or equivalently a columns) given by x_id of the matrix M
-        defined by M = (a_coef/nb_tokens) * 1 1^T + id_coef*Id
+        Extract the rows given by x_id of the transition matrix Qt.
 
         Parameters:
         - t_id (torch.Tensor): The time index to extract the row from.
@@ -366,8 +365,10 @@ class MarkovHandler(torch.nn.Module):
         ) == x_id.unsqueeze(-1)
 
         if self.transition_case == Case.uniform:
-            return id_coef * id_mask.float() + a_coef  # broadcasted
+            # Qt = id_coef*Id + a_coef * 1 1^T
+            return id_coef * id_mask.float() + a_coef
         elif self.transition_case == Case.absorbing:
+            # Qt = id_coef*Id + a_coef * e_0 1^T
             absorbing_mask = torch.zeros(
                 (1, 1, self.nb_tokens), device=x_id.device
             ) == x_id.unsqueeze(-1)
@@ -380,8 +381,7 @@ class MarkovHandler(torch.nn.Module):
         self, t_id: torch.Tensor, x_id: torch.Tensor
     ) -> torch.Tensor:
         """
-        Extract rows (or equivalently a columns) given by x_id of the matrix M
-        defined by M = (a_coef/nb_tokens) * 1 1^T + id_coef*Id
+        Extract the columns given by x_id of Qt_bar.
 
         Parameters:
         - t_id (torch.Tensor): The time index to extract the row from.
@@ -407,8 +407,10 @@ class MarkovHandler(torch.nn.Module):
         ) == x_id.unsqueeze(-1)
 
         if self.transition_case == Case.uniform:
-            return id_coef * id_mask.float() + a_coef  # broadcasted
+            # Qt = id_coef*Id + a_coef * 1 1^T
+            return id_coef * id_mask.float() + a_coef
         elif self.transition_case == Case.absorbing:
+            # Qt = id_coef*Id + a_coef * e_0 1^T
             absorbing_part = torch.zeros(
                 (x_id.shape[0], 1, self.nb_tokens), device=x_id.device
             )

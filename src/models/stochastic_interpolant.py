@@ -427,6 +427,13 @@ class StochasticInterpolant(Model):
 
         return (-2.0 * dt_It * v + v**2).sum(sum_dims).mean()
 
+    # def peanlize_lagrange_derivative(self, x0, x1, t):
+    #     epsilon = torch.finfo(torch.float32).eps
+    #     dt = 2 * torch.sqrt(epsilon)
+    #     It1, _ = self.eval_path(x0, x1, t)
+    #     v1 = self.velocity_eval(It, t)
+    #     v2 = self.velocity_eval(It, t + dt)
+
     def integral_time_coef(self, t1: float, t2: float) -> float:
         """
         Integration in time of the coefficients.
