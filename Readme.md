@@ -131,7 +131,7 @@ Here the D3PM model is applied to a shortened version of the [lm1b](https://www.
 
 [Diffusion models for reinforcement learning](https://arxiv.org/abs/2205.09991) is a trajectory-level diffusion probabilistic model that enables effective, flexible trajectory optimization by generating globally coherent plans through iterative denoising, demonstrating significant advantages in long-horizon decision-making and adaptability in various control settings.
 
-The trajectories of the model are shown here on some 2d mazes
+Below are examples of some trajectories on 2d mazes examples
 
 
  <div align="center">
