@@ -13,9 +13,10 @@ from src.utils import time_dependent_var
 
 
 class NeuralNetwork(torch.nn.Module):
-    def __init__(self, model_type, params, add_time=True):
+    def __init__(self, model_type, params, stationary=False):
         super(NeuralNetwork, self).__init__()
         params_net = params.copy()
+        self.stationary = stationary
         self.model_type = model_type
         if self.model_type == Case.ncsnpp:
             self.net = NCSNpp(**params_net)
@@ -28,7 +29,7 @@ class NeuralNetwork(torch.nn.Module):
             params_net["batch_first"] = True
             self.net = TransformerModel(**params_net)
         elif self.model_type == Case.vector_field:
-            if add_time:
+            if not self.stationary:
                 params_net["dim_in"] += 1
 
             self.net = VectorField(**params_net)
@@ -47,6 +48,9 @@ class NeuralNetwork(torch.nn.Module):
         ):
             return self.net(x, t.view(-1)) if t is not None else self.net(x)
         else:
-            x_t = time_dependent_var(x, t) if t is not None else x
-            x_t = time_dependent_var(x_t, t2) if t2 is not None else x_t
+            if not self.stationary:
+                x_t = time_dependent_var(x, t) if t is not None else x
+                x_t = time_dependent_var(x_t, t2) if t2 is not None else x_t
+            else:
+                x_t = x
             return self.net(x_t)
