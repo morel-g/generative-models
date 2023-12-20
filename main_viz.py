@@ -2,6 +2,7 @@ import os
 import numpy as np
 import torch
 from typing import Dict, Union, Any
+from tqdm import tqdm
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -13,6 +14,7 @@ from src.data_manager.data_module import DataModule
 from src.params_parser import parse_viz
 from src.data_manager.data_type import (
     toy_continuous_data_type,
+    toy_discrete_data_type,
     img_data_type,
     text_data_type,
     rl_data_type,
@@ -26,7 +28,7 @@ from src.eval.plots_img import (
 )
 from src.eval.plots_text import compute_text_outputs
 from src.eval.plots_rl import compute_rl_outputs
-from src.eval.plots_2d import compute_continuous_outputs_2d
+from src.eval.plots_2d import compute_continuous_outputs_2d, compute_discrete_outputs_2d
 from src.save_load_obj import load_obj
 from src.training.diffusion_generator import DiffusionGenerator
 
@@ -195,7 +197,7 @@ def compute_fid(
 def save_samples_from_net(net, output_dir, nb_batch, nb_samples, save_noise=False):
     sample_dir = os.path.join(output_dir, "samples")
     ensure_directory_exists(sample_dir)
-    for batch_num in range(nb_batch):
+    for batch_num in tqdm(range(nb_batch), desc="Generating samples"):
         if save_noise:
             x_init = net.get_samples_prior(nb_samples)
             x = net.sample(x_init=x_init).cpu().numpy()
@@ -257,6 +259,9 @@ if __name__ == "__main__":
     elif params.data_type in toy_continuous_data_type:
         x_val = data_module.val_data.x
         compute_continuous_outputs_2d(net, x_val, output_dir)
+    elif params.data_type in toy_discrete_data_type:
+        x_val = data_module.train_data.x
+        compute_discrete_outputs_2d(net, x_val, output_dir)
     elif params.data_type in img_data_type:
         nb_rows, nb_cols = args.nb_imgs[0], args.nb_imgs[1]
         compute_imgs_outputs(net, val_dataset, output_dir, nb_rows, nb_cols)
