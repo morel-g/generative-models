@@ -160,4 +160,10 @@ Below are examples of some trajectories on 2d mazes examples
  <img src="docs/assets/maze2d_umaze_1.png" alt="UMaze sample 1" width="200" style="margin-right: 20px;" />   <img src="docs/assets/maze2d_large_1.png" alt="Large maze sample 1" width="200" /> 
  </div>
 
+Here are samples obtained after training a score-based model on the hopper RL dataset
+
+<div align="center">
+ <img src="docs/assets/hopper_samples.gif" alt="Hopper samples" width="2000"/> 
+ </div>
+
 ---
