@@ -106,8 +106,8 @@ We focus on earthquake, fire, and flood datasets, employing the generative proce
 
 | **Earthquake** |    **Fire**    |    **Flood**    |
 |:--------------:|:--------:|:---------:|
-| <img src="docs/assets/earthquake_traj.gif" alt="Earthquake traj" width="225" /> | <img src="docs/assets/fire_traj.gif" alt="Fire traj" width="225" /> | <img src="docs/assets/flood_traj.gif" alt="Flood traj" width="225" /> |
-| <img src="docs/assets/earthquake_samples.png" alt="Earthquake samples" width="225" /> | <img src="docs/assets/fire_samples.png" alt="Fire samples" width="225" /> | <img src="docs/assets/flood_samples.png" alt="Flood samples" width="225" /> |
+| <img src="docs/assets/earthquake_traj.gif" alt="Earthquake traj" width="250" /> | <img src="docs/assets/fire_traj.gif" alt="Fire traj" width="250" /> | <img src="docs/assets/flood_traj.gif" alt="Flood traj" width="250" /> |
+| <img src="docs/assets/earthquake_samples.png" alt="Earthquake samples" width="250" /> | <img src="docs/assets/fire_samples.png" alt="Fire samples" width="250" /> | <img src="docs/assets/flood_samples.png" alt="Flood samples" width="250" /> |
 
 </div>
 
