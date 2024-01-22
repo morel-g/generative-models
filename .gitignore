@@ -1,6 +1,5 @@
 outputs/*
 datasets/*
-
 __pycache__/
 */lightning_logs/
 .vscode/
