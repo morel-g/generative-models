@@ -1,7 +1,5 @@
 import torch
 import pytorch_lightning as pl
-import os
-import gym
 from torch.utils.data import DataLoader
 
 from src.utils import ensure_directory_exists
