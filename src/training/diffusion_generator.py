@@ -13,15 +13,18 @@ from src.data_manager.data_type import (
     audio_data_type,
     text_data_type,
     rl_data_type,
+    manifold_data_type,
 )
 from src.models.score_model import ScoreModel
 from src.models.score_model_critical_damped import ScoreModelCriticalDamped
 from src.models.stochastic_interpolant import StochasticInterpolant
 from src.models.d3pm import D3PM
+from src.models.manifold_interpolant import ManifoldInterpolant
 from src.eval.plots_2d import sample_2d
 from src.eval.plots_img import sample_img
 from src.eval.plots_text import sample_text
 from src.eval.plots_rl import sample_rl
+from src.eval.plot_manifold import sample_manifold
 from src.training.opt_utils import create_optimizer, create_scheduler
 from src.training.ema_handler import EMAHandler
 from src.data_manager.rl_data_utils import RLDataUtils
@@ -78,19 +81,30 @@ class DiffusionGenerator(pl.LightningModule):
                 zeros_S0_vv=params.scheme_params.get("zeros_S0_vv", False),
             )
         elif params.model_type == Case.stochastic_interpolant:
-            self.base_model = StochasticInterpolant(
-                params.data_type,
-                params.model_params,
-                params.scheme_params["nb_time_steps_eval"],
-                params.scheme_params["nb_time_steps_train"],
-                T_final=params.scheme_params["T_final"],
-                beta_case=params.scheme_params["beta_case"],
-                adapt_dt=params.scheme_params["adapt_dt"],
-                decay_case=params.scheme_params.get("decay_case", Case.exp),
-                interpolant=params.scheme_params["interpolant"],
-                img_model_case=params.scheme_params.get("img_model_case", Case.u_net),
-                noise_addition=params.scheme_params.get("noise_addition", None),
-            )
+            if params.data_type not in manifold_data_type:
+                self.base_model = StochasticInterpolant(
+                    params.data_type,
+                    params.model_params,
+                    params.scheme_params["nb_time_steps_eval"],
+                    params.scheme_params["nb_time_steps_train"],
+                    T_final=params.scheme_params["T_final"],
+                    beta_case=params.scheme_params["beta_case"],
+                    adapt_dt=params.scheme_params["adapt_dt"],
+                    decay_case=params.scheme_params.get("decay_case", Case.exp),
+                    interpolant=params.scheme_params["interpolant"],
+                    img_model_case=params.scheme_params.get(
+                        "img_model_case", Case.u_net
+                    ),
+                    noise_addition=params.scheme_params.get("noise_addition", None),
+                )
+            else:
+                self.base_model = ManifoldInterpolant(
+                    params.data_type,
+                    params.model_params,
+                    params.scheme_params["nb_time_steps_eval"],
+                    params.scheme_params["nb_time_steps_train"],
+                    noise_addition=params.scheme_params.get("noise_addition", None),
+                )
         elif params.model_type == Case.d3pm:
             self.base_model = D3PM(
                 params.data_type,
@@ -377,6 +391,8 @@ class DiffusionGenerator(pl.LightningModule):
             sample_text(self, sample_path, sample_name, nb_samples=5)
         elif self.params.data_type in rl_data_type:
             sample_rl(self, sample_path, sample_name, nb_samples=6)
+        elif self.params.data_type in manifold_data_type:
+            sample_manifold(self, sample_path, sample_name, nb_samples=6000)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:
         """
