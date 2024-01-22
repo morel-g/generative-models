@@ -52,6 +52,9 @@ class Case:
     maze2d_medium_v1 = "maze2d-medium-v1"
     maze2d_large_v1 = "maze2d-large-v1"
     custom_data = "custom_data"
+    earthquake = "earthquake"
+    fire = "fire"
+    flood = "flood"
 
     # Tokenizer
     gpt2 = "gpt2"
@@ -141,3 +144,6 @@ class Case:
     # EMA interval
     step = "step"
     epoch = "epoch"
+
+    # Manifold case
+    sphere = "sphere"

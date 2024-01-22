@@ -11,6 +11,7 @@ from src.data_manager.data_type import (
     text_data_type,
     rl_data_type,
     custom_data_type,
+    manifold_data_type,
 )
 from src.data_manager.toy_data_utils import ToyDataUtils
 from src.data_manager.img_data_utils import ImgDataUtils
@@ -18,6 +19,7 @@ from src.data_manager.text_data_utils import TextDataUtils
 from src.data_manager.audio_data_utils import AudioDataUtils
 from src.data_manager.rl_data_utils import RLDataUtils
 from src.data_manager.custom_data_utils import CustomDataUtils
+from src.data_manager.manifold_data_utils import ManifoldDataUtils
 
 
 class DataModule(pl.LightningDataModule):
@@ -103,6 +105,8 @@ class DataModule(pl.LightningDataModule):
             if not "horizon" in self.params.model_params:
                 self.params.model_params["horizon"] = RLDataUtils.horizon
             return datasets
+        elif data_type in manifold_data_type:
+            return ManifoldDataUtils.prepare_manifold_dataset(data_type)
         else:
             raise RuntimeError(f"Uknown data_type {data_type}")
 

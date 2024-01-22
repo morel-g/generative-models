@@ -57,3 +57,5 @@ toy_data_type = toy_continuous_data_type + toy_discrete_data_type
 audio_data_type = [Case.audio_diffusion_256, Case.audio_diffusion_64]
 
 discrete_data_type = toy_discrete_data_type + text_data_type
+
+manifold_data_type = [Case.earthquake, Case.fire, Case.flood]
