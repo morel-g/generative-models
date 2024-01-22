@@ -52,10 +52,12 @@ def figure_to_data(fig: plt.Figure) -> np.ndarray:
     """
     canvas = FigureCanvasAgg(fig)
     canvas.draw()
-    buf = np.frombuffer(canvas.tostring_rgb(), dtype=np.uint8)
+    # buf = np.frombuffer(canvas.tostring_rgb(), dtype=np.uint8)
+    buf = np.frombuffer(canvas.buffer_rgba(), dtype=np.uint8)
+    buf = buf.reshape(canvas.get_width_height()[::-1] + (4,))[:, :, :3]
     width, height = fig.canvas.get_width_height()
     X = buf.reshape((height, width, 3))
-    # X = buf.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
     return np.transpose(X, (2, 0, 1))
 
 
