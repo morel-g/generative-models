@@ -100,12 +100,15 @@ Generative modeling and in particular [flow matching](https://arxiv.org/abs/2302
 
 We focus on earthquake, fire, and flood datasets, employing the generative process on a spherical manifold to better reflect the Earth's surface where these phenomena occur. Here all the generative process happens on the sphere.
 
+ <div align="center">
 
 
 | **Earthquake** |    **Fire**    |    **Flood**    |
 |:--------------:|:--------:|:---------:|
-| <img src="docs/assets/earthquake_traj.gif" alt="Earthquake traj" width="160" /> | <img src="docs/assets/fire_traj.gif" alt="Fire traj" width="160" /> | <img src="docs/assets/flood_traj.gif" alt="Flood traj" width="160" /> |
-| <img src="docs/assets/earthquake_samples.png" alt="Earthquake samples" width="160" /> | <img src="docs/assets/fire_samples.png" alt="Fire samples" width="160" /> | <img src="docs/assets/flood_samples.png" alt="Flood samples" width="160" /> |
+| <img src="docs/assets/earthquake_traj.gif" alt="Earthquake traj" width="175" /> | <img src="docs/assets/fire_traj.gif" alt="Fire traj" width="175" /> | <img src="docs/assets/flood_traj.gif" alt="Flood traj" width="175" /> |
+| <img src="docs/assets/earthquake_samples.png" alt="Earthquake samples" width="175" /> | <img src="docs/assets/fire_samples.png" alt="Fire samples" width="175" /> | <img src="docs/assets/flood_samples.png" alt="Flood samples" width="175" /> |
+
+</div>
 
 ## Audio datasets
 
