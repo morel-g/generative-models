@@ -86,7 +86,6 @@ DATA_DICT = {
             # Cosine with warmup params
             "num_warmup_epochs": 1,
         },
-        "grad_reg_dict": {"apply": False, "coef": 0.0},
     },
     "checkpoint_dict": {
         "restore_training": False,
