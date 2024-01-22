@@ -7,6 +7,7 @@ The implemented models are sourced from the following research papers:
 - [Score based models](https://arxiv.org/abs/2011.13456) / [Diffusion models](https://arxiv.org/abs/2006.11239)
 - [Critically-Damped Langevin Diffusion](https://arxiv.org/abs/2112.07068)
 - [Stochastic interpolants](https://arxiv.org/abs/2303.08797) / [Flow matching](https://arxiv.org/pdf/2210.02747.pdf)
+- [Riemannian Flow Matching on General Geometries](https://arxiv.org/abs/2302.03660)
 - [ Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006)
 - [Planning with Diffusion for Flexible Behavior Synthesis](https://arxiv.org/abs/2205.09991)
 
@@ -92,6 +93,19 @@ Applying diffusion models to image data with experiments on Fashion MNIST and CI
 | ![Diffusion samples](docs/assets/cifar_score_sample.png) | ![CLD samples](docs/assets/cifar_cld_sample.png) | ![Stochastic interpolant samples](docs/assets/cifar_stochastic_interpolant_sample.png) |
 
 ---
+
+# Manifold datasets
+
+Generative modeling and in particular [flow matching](https://arxiv.org/abs/2302.03660) can be extended to manifold environments. Unlike traditional generative modeling in Euclidean space, this approach offers a more accurate representation for complex, real-world data. It is particularly effective for datasets that naturally reside on these manifolds, offering a more accurate and realistic representation of the data. 
+
+We focus on earthquake, fire, and flood datasets, employing the generative process on a spherical manifold to better reflect the Earth's surface where these phenomena occur. Here all the generative process happens on the sphere.
+
+
+
+| **Earthquake** |    **Fire**    |    **Flood**    |
+|:--------------:|:--------:|:---------:|
+| <img src="docs/assets/earthquake_traj.gif" alt="Earthquake traj" width="160" /> | <img src="docs/assets/fire_traj.gif" alt="Fire traj" width="160" /> | <img src="docs/assets/flood_traj.gif" alt="Flood traj" width="160" /> |
+| <img src="docs/assets/earthquake_samples.png" alt="Earthquake samples" width="160" /> | <img src="docs/assets/fire_samples.png" alt="Fire samples" width="160" /> | <img src="docs/assets/flood_samples.png" alt="Flood samples" width="160" /> |
 
 ## Audio datasets
 
