@@ -8,6 +8,7 @@ from src.data_manager.data_type import (
     img_data_type,
     discrete_data_type,
     rl_data_type,
+    manifold_data_type,
 )
 from src.neural_networks.neural_network import NeuralNetwork
 from src.models.helpers.model_utils import (
@@ -73,7 +74,7 @@ class Model(torch.nn.Module):
             self.nb_time_steps_train = None
 
         if use_neural_net:
-            if data_type in toy_continuous_data_type:
+            if data_type in toy_continuous_data_type + manifold_data_type:
                 model_case = Case.vector_field
             elif data_type in discrete_data_type:
                 model_case = Case.transformer
@@ -312,9 +313,7 @@ class Model(torch.nn.Module):
         """
         Returns the dimensions of particles based on data type.
         """
-        if self.data_type in toy_continuous_data_type:
-            return (self.model_params["dim_out"],)
-        elif self.data_type in discrete_data_type:
+        if self.data_type in discrete_data_type:
             return (self.seq_length,)
         elif self.data_type in img_data_type:
             return (
@@ -328,7 +327,7 @@ class Model(torch.nn.Module):
                 RLDataUtils.get_total_dim(),
             )
         else:
-            raise ValueError(f"Unknown data type {self.data_type}")
+            return (self.model_params["dim_out"],)
 
     @torch.no_grad()
     def sample(
