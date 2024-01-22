@@ -1,10 +1,12 @@
 outputs/*
 datasets/*
-data/*
+
 __pycache__/
 */lightning_logs/
 .vscode/
 *~
 .ipynb_checkpoints/
 data/
+data/*
 docs/*
+docs/
