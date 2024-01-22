@@ -1,8 +1,10 @@
 import torch
 import os
+import numpy as np
+from torch.utils.data import Dataset, random_split
 from pathlib import Path
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
-from typing import Tuple
+from typing import Tuple, Union
 
 SAVE_STR_NAME = "outputs.txt"
 
@@ -70,27 +72,44 @@ def id_to_device(accelerator: str, device_id: int = 0) -> str:
 
 
 def split_train_test(
-    dataset: torch.Tensor, split_ratio: float = 0.9
-) -> Tuple[torch.Tensor, torch.Tensor]:
+    x, split_ratio: float = 0.9
+) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[Dataset, Dataset]]:
     """
     Splits a dataset into train and test subsets based on a specified split ratio.
 
     Args:
-    - dataset (torch.Tensor): The dataset to be split.
+    - x: The dataset to be split. Can be either a Dataset, a numpy array or a pytorch tensor.
     - split_ratio (float, optional): The ratio of the dataset to be used as the training set. Defaults to 0.9.
 
     Returns:
-    - Tuple[torch.Tensor, torch.Tensor]: A tuple containing the train and test datasets.
+    - Union[Tuple[torch.Tensor, torch.Tensor], Tuple[Dataset, Dataset]]:
+      A tuple which type depends on the input type: it returns tensors
+      if x is a tensor or numpy array, and datasets if x is a PyTorch
+      Dataset.
     """
-    train_size = int(split_ratio * len(dataset))
-    test_size = len(dataset) - train_size
+    if not (0.0 < split_ratio < 1.0):
+        raise ValueError("split_ratio must be between 0 and 1.")
 
+    train_size = int(split_ratio * len(x))
+    test_size = len(x) - train_size
     generator = torch.Generator().manual_seed(42)
-    indices = torch.randperm(len(dataset), generator=generator)
-    train_indices = indices[:train_size]
-    test_indices = indices[train_size : train_size + test_size]
-    train_dataset = dataset[train_indices]
-    test_dataset = dataset[test_indices]
+
+    if isinstance(x, Dataset):
+        train_dataset, test_dataset = random_split(
+            x, [train_size, test_size], generator=generator
+        )
+    elif isinstance(x, np.ndarray) or isinstance(x, torch.Tensor):
+        if isinstance(x, np.ndarray):
+            x = torch.from_numpy(x)
+        indices = torch.randperm(len(x), generator=generator)
+        train_indices = indices[:train_size]
+        test_indices = indices[train_size:]
+        train_dataset = x[train_indices]
+        test_dataset = x[test_indices]
+    else:
+        raise TypeError(
+            "x should be either a PyTorch Dataset, a NumPy array, or a PyTorch tensor."
+        )
 
     return train_dataset, test_dataset
 

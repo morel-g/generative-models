@@ -1,10 +1,12 @@
 import torch
-from torch.utils.data import Dataset, random_split
+from torch.utils.data import Dataset
 from torchvision import transforms
 from datasets import load_dataset
 from diffusers import Mel
 from typing import Tuple
+
 from src.case import Case
+from src.utils import split_train_test
 
 
 class AudioDiffusionDataset(Dataset):
@@ -77,13 +79,7 @@ class AudioDataUtils:
 
         if name in [Case.audio_diffusion_256, Case.audio_diffusion_64]:
             dataset = load_dataset("teticio/audio-diffusion-256")["train"]
-            train_size = int(0.9 * len(dataset))
-            test_size = len(dataset) - train_size
-
-            generator = torch.Generator().manual_seed(42)
-            train_dataset, test_dataset = random_split(
-                dataset, [train_size, test_size], generator=generator
-            )
+            train_dataset, test_dataset = split_train_test(dataset)
         else:
             raise RuntimeError(f"Unkwown audio dataset {name}")
 
