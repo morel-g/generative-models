@@ -4,6 +4,7 @@ from typing import Tuple, Optional
 from src.models.model import Model
 from src.case import Case
 from src.models.helpers.adapt_dt import adapt_dt_pdf
+from src.data_manager.data_type import manifold_data_type
 
 
 class StochasticInterpolant(Model):
@@ -62,8 +63,12 @@ class StochasticInterpolant(Model):
             adapt_dt=adapt_dt,
             img_model_case=img_model_case,
         )
+        if data_type in manifold_data_type:
+            self.manifold = Manifold(data_type)
+        else:
+            self.manifold = None
         self.backward_scheme = Case.euler_explicit
-        self.exp_T = torch.exp(-torch.tensor(self.T_final))
+
         self.default_times_eval = self.times_eval.clone()
         self.T_init = 0.0
         self.exp_weight = exp_weight
@@ -277,7 +282,8 @@ class StochasticInterpolant(Model):
         - torch.Tensor: Sampled time tensor.
         """
         y = torch.rand(t_shape, device=device)
-        C = 1 - self.exp_T
+        exp_T = torch.exp(-torch.tensor(self.T_final))
+        C = 1 - exp_T
         return -torch.log(1 - C * y)
 
     def sample_time(self, x_shape: Tuple[int], device: str) -> torch.Tensor:
