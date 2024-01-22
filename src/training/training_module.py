@@ -15,12 +15,14 @@ from src.eval.plots_2d import (
     compute_continuous_outputs_2d,
     compute_discrete_outputs_2d,
 )
+from src.eval.plot_manifold import compute_manifold_outputs
 from src.data_manager.data_type import (
     toy_continuous_data_type,
     toy_discrete_data_type,
     img_data_type,
     text_data_type,
     rl_data_type,
+    manifold_data_type,
 )
 from src.save_load_obj import save_obj, load_obj
 from src.params import Params
@@ -228,6 +230,8 @@ def run_sim(params: Params) -> Tuple[DiffusionGenerator, TensorBoardLogger]:
             compute_text_outputs(net, val_dataset, logger.log_dir)
         elif params.data_type in rl_data_type:
             compute_rl_outputs(net, val_dataset, logger.log_dir)
+        elif params.data_type in manifold_data_type:
+            compute_manifold_outputs(net, val_dataset, logger.log_dir)
         else:
             raise RuntimeError(f"Uknown data_type {params.data_type}")
 

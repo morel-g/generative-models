@@ -18,6 +18,7 @@ from src.data_manager.data_type import (
     img_data_type,
     text_data_type,
     rl_data_type,
+    manifold_data_type,
 )
 from src.params import Params
 from src.eval.fid.fid_utils import compute_fid_v1, compute_fid_v3
@@ -29,6 +30,7 @@ from src.eval.plots_img import (
 from src.eval.plots_text import compute_text_outputs
 from src.eval.plots_rl import compute_rl_outputs
 from src.eval.plots_2d import compute_continuous_outputs_2d, compute_discrete_outputs_2d
+from src.eval.plot_manifold import compute_manifold_outputs
 from src.save_load_obj import load_obj
 from src.training.diffusion_generator import DiffusionGenerator
 
@@ -269,5 +271,7 @@ if __name__ == "__main__":
         compute_text_outputs(net, val_dataset, output_dir)
     elif params.data_type in rl_data_type:
         compute_rl_outputs(net, val_dataset, output_dir)
+    elif params.data_type in manifold_data_type:
+        compute_manifold_outputs(net, val_dataset, output_dir)
 
     save_viz_infos(viz_infos, os.path.join(output_dir, "viz_infos"))
