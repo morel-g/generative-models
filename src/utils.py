@@ -3,9 +3,9 @@ import os
 import numpy as np
 from torch.utils.data import Dataset, random_split
 from pathlib import Path
-from pytorch_lightning.loggers import MLFlowLogger
-from pytorch_lightning.loggers.logger import Logger
+from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, Logger
 from typing import Tuple, Union
+from src.case import Case
 
 SAVE_STR_NAME = "outputs.txt"
 
@@ -38,7 +38,37 @@ def write_to_file(file_path: str, content_to_write: str) -> None:
         print(f"An error occurred while writing to the file: {e}")
 
 
-def get_logger(logger_path: str, model_name: str = "") -> Logger:
+class LoggerFactory:
+    @staticmethod
+    def create_logger(logger_case, model_name, logger_path):
+        if logger_case == Case.mlflow_logger:
+            logger_class = MLFlowLogger
+        elif logger_case == Case.tensorboard_logger:
+            logger_class = TensorBoardLogger
+        else:
+            raise RuntimeError(f"Unknown logger type {logger_case}")
+
+        class CustomLogger(logger_class):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+
+            def get_log_dir(self):
+                if isinstance(self, MLFlowLogger):
+                    return self.save_dir
+                elif isinstance(self, TensorBoardLogger):
+                    return self.log_dir
+                else:
+                    return None
+
+        if logger_case == Case.mlflow_logger:
+            return CustomLogger(model_name, save_dir=logger_path)
+        elif logger_case == Case.tensorboard_logger:
+            return CustomLogger(logger_path, name=model_name, default_hp_metric=False)
+
+
+def get_logger(
+    logger_path: str, model_name: str = "", logger_case: str = Case.mlflow_logger
+) -> Logger:
     """
     Creates and returns a Logger instance.
 
@@ -46,9 +76,9 @@ def get_logger(logger_path: str, model_name: str = "") -> Logger:
     - logger_path (str): The base path for the logger files.
     - model_name (str, optional): The name of the model for logging. Defaults to an empty string.
     """
-    logger = MLFlowLogger(logger_path, name=model_name, default_hp_metric=False)
-    log_dir = logger.log_dir
 
+    logger = LoggerFactory.create_logger(logger_case, model_name, logger_path)
+    log_dir = logger.get_log_dir()
     os.makedirs(log_dir, exist_ok=True)
     print("log dir: ", log_dir)
     return logger

@@ -147,3 +147,7 @@ class Case:
 
     # Manifold case
     sphere = "sphere"
+
+    # logger type
+    tensorboard_logger = "tensorboard_logger"
+    mlflow_logger = "mlflow_logger"

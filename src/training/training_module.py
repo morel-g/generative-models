@@ -146,13 +146,13 @@ def train_model(
     startTime = datetime.now()
 
     net = initialize_or_load_model(params)
-    callbacks = setup_callbacks(params, logger.log_dir)
+    callbacks = setup_callbacks(params, logger.get_log_dir())
 
     # Set device for training
     device = params.device if params.accelerator == "gpu" else "auto"
 
     # Print and save params
-    params.write(logger.log_dir + "/params.txt", should_print=True)
+    params.write(logger.get_log_dir() + "/params.txt", should_print=True)
 
     # Initialize trainer and start training
     trainer = pl.Trainer(
@@ -209,9 +209,10 @@ def run_sim(params: Params) -> Tuple[DiffusionGenerator, Logger]:
         Tuple[DiffusionGenerator, Logger]: The trained network and logger used.
     """
     logger = get_logger(params.logger_path)
-    save_obj(params, logger.log_dir + "/params.obj")
+    log_dir = logger.get_log_dir()
+    save_obj(params, log_dir + "/params.obj")
 
-    data_module = DataModule(params, logger.log_dir)
+    data_module = DataModule(params, log_dir)
     net = train_model(params, data_module, logger)
 
     # Evaluate the model
@@ -220,18 +221,18 @@ def run_sim(params: Params) -> Tuple[DiffusionGenerator, Logger]:
     with torch.no_grad():
         if params.data_type in toy_continuous_data_type:
             x_val = data_module.train_data.x
-            compute_continuous_outputs_2d(net, x_val, logger.log_dir)
+            compute_continuous_outputs_2d(net, x_val, log_dir)
         elif params.data_type in toy_discrete_data_type:
             x_val = data_module.train_data.x
-            compute_discrete_outputs_2d(net, x_val, logger.log_dir)
+            compute_discrete_outputs_2d(net, x_val, log_dir)
         elif params.data_type in img_data_type:
-            compute_imgs_outputs(net, val_dataset, logger.log_dir, nb_rows=5, nb_cols=5)
+            compute_imgs_outputs(net, val_dataset, log_dir, nb_rows=5, nb_cols=5)
         elif params.data_type in text_data_type:
-            compute_text_outputs(net, val_dataset, logger.log_dir)
+            compute_text_outputs(net, val_dataset, log_dir)
         elif params.data_type in rl_data_type:
-            compute_rl_outputs(net, val_dataset, logger.log_dir)
+            compute_rl_outputs(net, val_dataset, log_dir)
         elif params.data_type in manifold_data_type:
-            compute_manifold_outputs(net, val_dataset, logger.log_dir)
+            compute_manifold_outputs(net, val_dataset, log_dir)
         else:
             raise RuntimeError(f"Uknown data_type {params.data_type}")
 
