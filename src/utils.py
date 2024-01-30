@@ -51,19 +51,16 @@ class LoggerFactory:
         class CustomLogger(logger_class):
             def __init__(self, *args, **kwargs):
                 super().__init__(*args, **kwargs)
+                if isinstance(self, MLFlowLogger):
+                    # Create a temporary TensorBoardLogger to get its log_dir
+                    temp_logger = TensorBoardLogger(logger_path, name="")
+                    self.log_dir = temp_logger.log_dir
 
             def get_log_dir(self):
-                if isinstance(self, MLFlowLogger):
-                    return self.save_dir
-                elif isinstance(self, TensorBoardLogger):
-                    return self.log_dir
-                else:
-                    return None
+                return self.log_dir
 
         if logger_case == Case.mlflow_logger:
-            return CustomLogger(
-                "mlflow_exp", save_dir=TensorBoardLogger(logger_path, name="").log_dir
-            )
+            return CustomLogger("mlflow_exp", save_dir=logger_path)
         elif logger_case == Case.tensorboard_logger:
             return CustomLogger(logger_path, name=model_name, default_hp_metric=False)
 
