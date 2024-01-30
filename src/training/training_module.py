@@ -209,6 +209,7 @@ def run_sim(params: Params) -> Tuple[DiffusionGenerator, Logger]:
         Tuple[DiffusionGenerator, Logger]: The trained network and logger used.
     """
     logger = get_logger(params.logger_path)
+    logger.log_hyperparams(params.__dict__)
     log_dir = logger.get_log_dir()
     save_obj(params, log_dir + "/params.obj")
 
