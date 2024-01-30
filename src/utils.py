@@ -61,7 +61,9 @@ class LoggerFactory:
                     return None
 
         if logger_case == Case.mlflow_logger:
-            return CustomLogger(model_name, save_dir=logger_path)
+            return CustomLogger(
+                "mlflow_exp", save_dir=TensorBoardLogger(logger_path, name="").log_dir
+            )
         elif logger_case == Case.tensorboard_logger:
             return CustomLogger(logger_path, name=model_name, default_hp_metric=False)
 
