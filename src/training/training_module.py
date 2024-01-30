@@ -1,7 +1,7 @@
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
-from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
+from pytorch_lightning.loggers.logger import Logger
 from datetime import datetime
 from typing import Optional, Tuple
 
@@ -128,14 +128,14 @@ def initialize_or_load_model(params: Params) -> DiffusionGenerator:
 def train_model(
     params: Params,
     data_module: DataModule,
-    logger: Optional[TensorBoardLogger] = None,
+    logger: Optional[Logger] = None,
 ) -> DiffusionGenerator:
     """Main training function.
 
     Args:
         params (Params): Input params object.
         data_module (DataModule): Data module for loading training and validation datasets.
-        logger (Optional[TensorBoardLogger], optional): Logger used to save the results. Defaults to None.
+        logger (Optional[Logger], optional): Logger used to save the results. Defaults to None.
 
     Returns:
         DiffusionGenerator: The trained network.
@@ -199,14 +199,14 @@ def train_model(
     return net
 
 
-def run_sim(params: Params) -> Tuple[DiffusionGenerator, TensorBoardLogger]:
+def run_sim(params: Params) -> Tuple[DiffusionGenerator, Logger]:
     """Runs the complete simulation including training and evaluation.
 
     Args:
         params (Params): Input params object.
 
     Returns:
-        Tuple[DiffusionGenerator, TensorBoardLogger]: The trained network and logger used.
+        Tuple[DiffusionGenerator, Logger]: The trained network and logger used.
     """
     logger = get_logger(params.logger_path)
     save_obj(params, logger.log_dir + "/params.obj")

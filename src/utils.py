@@ -3,7 +3,8 @@ import os
 import numpy as np
 from torch.utils.data import Dataset, random_split
 from pathlib import Path
-from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
+from pytorch_lightning.loggers import MLFlowLogger
+from pytorch_lightning.loggers.logger import Logger
 from typing import Tuple, Union
 
 SAVE_STR_NAME = "outputs.txt"
@@ -37,15 +38,15 @@ def write_to_file(file_path: str, content_to_write: str) -> None:
         print(f"An error occurred while writing to the file: {e}")
 
 
-def get_logger(logger_path: str, model_name: str = "") -> TensorBoardLogger:
+def get_logger(logger_path: str, model_name: str = "") -> Logger:
     """
-    Creates and returns a TensorBoardLogger instance.
+    Creates and returns a Logger instance.
 
     Parameters:
     - logger_path (str): The base path for the logger files.
     - model_name (str, optional): The name of the model for logging. Defaults to an empty string.
     """
-    logger = TensorBoardLogger(logger_path, name=model_name, default_hp_metric=False)
+    logger = MLFlowLogger(logger_path, name=model_name, default_hp_metric=False)
     log_dir = logger.log_dir
 
     os.makedirs(log_dir, exist_ok=True)
