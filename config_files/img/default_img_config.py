@@ -45,7 +45,6 @@ CONFIG = {
         "save_top": 5,
     },
     "print_opt": {
-        "ot_costs": False,
         "enable_progress_bar": True,
     },
     "logger_path": "../outputs/",

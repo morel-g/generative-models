@@ -36,12 +36,11 @@ CONFIG = {
     },
     "checkpoint_dict": {
         "restore_training": False,
-        "training_ckpt_path": "../outputs/version_76/last.ckpt",
+        "training_ckpt_path": "",
         "load_data": False,
         "save_top": 5,
     },
     "print_opt": {
-        "ot_costs": False,
         "enable_progress_bar": True,
     },
     "logger_path": "../outputs/",
