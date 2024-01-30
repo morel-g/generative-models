@@ -89,7 +89,7 @@ DATA_DICT = {
     },
     "checkpoint_dict": {
         "restore_training": False,
-        "training_ckpt_path": "outputs/tensorboard_logs/version_134/Checkpoint_epoch=28-val_loss=0.032.ckpt",
+        "training_ckpt_path": "../outputs/",
         "load_data": False,
         "save_top": 5,
     },
