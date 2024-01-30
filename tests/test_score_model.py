@@ -93,7 +93,6 @@ DATA_DICT = {
         "load_data": False,
         "save_top": 5,
     },
-    "print_opt": {"ot_costs": False},
     "logger_path": "../outputs/",
     "accelerator": "cpu",
     "device": [0],
