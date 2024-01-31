@@ -140,8 +140,6 @@ def train_model(
     Returns:
         DiffusionGenerator: The trained network.
     """
-    if logger is None:
-        logger = get_logger(params.logger_path)
 
     startTime = datetime.now()
 
@@ -208,7 +206,11 @@ def run_sim(params: Params) -> Tuple[DiffusionGenerator, Logger]:
     Returns:
         Tuple[DiffusionGenerator, Logger]: The trained network and logger used.
     """
-    logger = get_logger(params.logger_path)
+    logger = get_logger(
+        params.logger_opt["logger_path"],
+        params.logger_opt["logger_case"],
+        **params.logger_opt["kwargs"],
+    )
     logger.log_hyperparams(params.__dict__)
     log_dir = logger.get_log_dir()
     save_obj(params, log_dir + "/params.obj")

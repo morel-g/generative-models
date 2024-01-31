@@ -47,10 +47,13 @@ CONFIG = {
     "print_opt": {
         "enable_progress_bar": True,
     },
-    "logger_path": "../outputs/",
+    "logger_opt": {
+        "logger_path": "../outputs/",
+        "logger_case": Case.mlflow_logger,
+        "kwargs": {"experiment_name": "ml_exp", "save_dir": "../mlruns"},
+    },
     "accelerator": "gpu",
     "device": [0],
-    "seed": torch.seed(),
 }
 
 

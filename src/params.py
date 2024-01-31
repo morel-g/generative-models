@@ -48,7 +48,6 @@ class Params:
         Args:
         kwargs: A variable number of keyword arguments.
         """
-        self.logger_path = "../outputs/"
         for key, value in kwargs.items():
             self.__setattr__(key, value)
 

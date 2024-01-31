@@ -93,7 +93,11 @@ DATA_DICT = {
         "load_data": False,
         "save_top": 5,
     },
-    "logger_path": "../outputs/",
+    "logger_opt": {
+        "logger_path": "../outputs/",
+        "logger_case": Case.mlflow_logger,
+        "kwargs": {"experiment_name": "ml_exp", "save_dir": "../mlruns"},
+    },
     "accelerator": "cpu",
     "device": [0],
     # "precision": "32",

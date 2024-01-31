@@ -40,7 +40,7 @@ def write_to_file(file_path: str, content_to_write: str) -> None:
 
 class LoggerFactory:
     @staticmethod
-    def create_logger(logger_case, model_name, logger_path):
+    def create_logger(logger_case, logger_path, **kwargs):
         if logger_case == Case.mlflow_logger:
             logger_class = MLFlowLogger
         elif logger_case == Case.tensorboard_logger:
@@ -50,33 +50,44 @@ class LoggerFactory:
 
         class CustomLogger(logger_class):
             def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
                 if isinstance(self, MLFlowLogger):
                     # Create a temporary TensorBoardLogger to get its log_dir
-                    temp_logger = TensorBoardLogger(logger_path, name="")
-                    self.log_dir = temp_logger.log_dir
+                    # temp_logger = TensorBoardLogger(logger_path, name="")
+                    log_dir = kwargs.pop("log_dir")
+                    kwargs["run_name"] = log_dir.rsplit("/", 1)[-1]
+                    super().__init__(*args, **kwargs)
+                    self.ml_log_dir = log_dir
+                else:
+                    super().__init__(*args, **kwargs)
 
             def get_log_dir(self):
-                return self.log_dir
+                if isinstance(self, MLFlowLogger):
+                    return self.ml_log_dir
+                else:
+                    return self.log_dir
 
         if logger_case == Case.mlflow_logger:
-            return CustomLogger("mlflow_exp", save_dir=logger_path)
+            log_dir = TensorBoardLogger(logger_path, name="").log_dir  # logger_path
+            return CustomLogger(
+                log_dir=log_dir, **kwargs
+            )  # "mlflow_exp", save_dir="../mlruns",
         elif logger_case == Case.tensorboard_logger:
-            return CustomLogger(logger_path, name=model_name, default_hp_metric=False)
+            return CustomLogger(logger_path, **kwargs)  # , default_hp_metric=False)
 
 
 def get_logger(
-    logger_path: str, model_name: str = "", logger_case: str = Case.mlflow_logger
+    logger_path: str,
+    logger_case: str = Case.mlflow_logger,
+    **kwargs,
 ) -> Logger:
     """
     Creates and returns a Logger instance.
 
     Parameters:
     - logger_path (str): The base path for the logger files.
-    - model_name (str, optional): The name of the model for logging. Defaults to an empty string.
     """
 
-    logger = LoggerFactory.create_logger(logger_case, model_name, logger_path)
+    logger = LoggerFactory.create_logger(logger_case, logger_path, **kwargs)
     log_dir = logger.get_log_dir()
     os.makedirs(log_dir, exist_ok=True)
     print("log dir: ", log_dir)
