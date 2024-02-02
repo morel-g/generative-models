@@ -76,7 +76,7 @@ def get_render():
 #     net.set_trajectory_length(4)
 #     x_traj = net.sample(nb_samples=nb_samples, return_trajectories=True).cpu().numpy()
 #     save_rl_samples(
-#         net.params.data_type,
+#         net.config.data_type,
 #         x_traj[-1],
 #         output_dir,
 #         name=name + "_samples.gif",
@@ -87,7 +87,7 @@ def get_render():
 #     titles = get_titles(net, forward=False)
 #     for i, xi in enumerate(x_traj):
 #         save_rl_samples(
-#             net.params.data_type,
+#             net.config.data_type,
 #             xi,
 #             output_dir,
 #             name=name + f"_traj_{i}.gif",

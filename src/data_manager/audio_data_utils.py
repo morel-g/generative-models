@@ -77,7 +77,7 @@ class AudioDataUtils:
 
         transform.transforms.append(transforms.Lambda(AudioDataUtils.scale_imgs))
 
-        if name in [Case.audio_diffusion_256, Case.audio_diffusion_64]:
+        if name in [Case.audio_diffusion_256]:
             dataset = load_dataset("teticio/audio-diffusion-256")["train"]
             train_dataset, test_dataset = split_train_test(dataset)
         else:

@@ -108,8 +108,8 @@ class ToyDiscreteDataUtils:
         """
         Returns the indices of the cells that have density (samples within them).
         """
-        params = ToyDiscreteDataUtils.get_toy_discrete_params()
-        x_min, x_max = params["min"], params["max"]
+        config = ToyDiscreteDataUtils.get_toy_discrete_params()
+        x_min, x_max = config["min"], config["max"]
 
         dx = (x_max - x_min) / N
         dy = (x_max - x_min) / N
@@ -137,8 +137,8 @@ class ToyDiscreteDataUtils:
         """
         Returns the center coordinates of the cell with indices (i, j).
         """
-        params = ToyDiscreteDataUtils.get_toy_discrete_params()
-        x_min, x_max = params["min"], params["max"]
+        config = ToyDiscreteDataUtils.get_toy_discrete_params()
+        x_min, x_max = config["min"], config["max"]
         # Calculate the size of each cell
         dx = (x_max - x_min) / N
         dy = (x_max - x_min) / N

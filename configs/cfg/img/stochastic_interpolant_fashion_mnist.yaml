@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - img/img_base
+  - _self_
+
+model_type: stochastic_interpolant
+
+scheme_params:
+  interpolant: trigonometric
+  beta_case: constant
+  
+model_params:
+  ch_mult: [1,2,4]
+  n_channels: 16
+  embedding_type: fourier  
+  n_resblocks: 2
+

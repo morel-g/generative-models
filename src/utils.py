@@ -1,7 +1,10 @@
+import sys
 import torch
 import os
 import numpy as np
+from omegaconf import OmegaConf
 from torch.utils.data import Dataset, random_split
+from datasets import Dataset as HFDataset
 from pathlib import Path
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, Logger
 from typing import Tuple, Union
@@ -135,7 +138,7 @@ def split_train_test(
     test_size = len(x) - train_size
     generator = torch.Generator().manual_seed(42)
 
-    if isinstance(x, Dataset):
+    if isinstance(x, Dataset) or isinstance(x, HFDataset):
         train_dataset, test_dataset = random_split(
             x, [train_size, test_size], generator=generator
         )
@@ -149,7 +152,7 @@ def split_train_test(
         test_dataset = x[test_indices]
     else:
         raise TypeError(
-            "x should be either a PyTorch Dataset, a NumPy array, or a PyTorch tensor."
+            f"x should be either a PyTorch Dataset, a NumPy array, or a PyTorch tensor but is {type(x)}."
         )
 
     return train_dataset, test_dataset
@@ -228,3 +231,48 @@ def time_dependent_var(x: torch.Tensor, t: torch.Tensor) -> torch.Tensor:
         x = torch.cat((x, t), 0)
 
     return x
+
+
+def dict_to_str(d, indent=0, s="-"):
+    """
+    Returns a string representation of a dictionary, where nested dictionaries
+    are indented and lists are printed without newline characters inside them.
+
+    Args:
+        d (dict): The dictionary to convert to a string.
+        indent (int): The number of spaces to indent each level of the dictionary.
+
+    Returns:
+        str: A string representation of the dictionary.
+    """
+    result = ""
+    for key, value in d.items():
+        if isinstance(value, dict):
+            result += f"\n{' ' * indent}{s} {key}:"
+            result += dict_to_str(value, indent + 4, s="")
+        elif isinstance(value, list):
+            result += f"\n{' ' * indent}{s} {key}: ["
+            for i, item in enumerate(value):
+                result += str(item)
+                if i != len(value) - 1:
+                    result += ", "
+            result += "]"
+        else:
+            if isinstance(d[key], dict):
+                result += f"\n{' ' * indent}{key}:"
+                result += dict_to_str(d[key], indent + 4)
+            else:
+                result += f"\n{' ' * indent}{s} {key}: {value}"
+    return result
+
+
+def print_params(config):
+    params_dict = OmegaConf.to_container(config, resolve=True)
+    params_str = "-" * 50 + "  \n"
+    params_str += " Params values" + "  \n"
+    params_str += "-" * 50 + " "
+    params_str += dict_to_str(params_dict)
+    params_str += "  \n  "
+    params_str += "-" * 50 + "  \n  "
+
+    print(params_str, file=sys.stdout)

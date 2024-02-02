@@ -1,0 +1,18 @@
+  # @package _global_
+defaults:
+  - img/img_base
+  - _self_
+
+data_type: fashion_mnist
+model_type: score_model_critical_damped
+
+scheme_params:
+  decay_case: vanilla_sigma
+
+model_params:
+  ch_mult: [1,2,4]
+  n_channels: 16
+  embedding_type: no_embedding
+  n_resblocks: 2
+  # attn_resolutions:
+  #   - 14

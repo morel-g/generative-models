@@ -1,16 +1,14 @@
 import torch
-import importlib
-import sys
+import hydra
+import os
+from omegaconf import DictConfig, OmegaConf
 from typing import Dict, Any
 
-from src.params import Params
 from src.case import Case
 from src.precision import torch_float_precision
-from src.params_parser import parse_main
 from src.data_manager.data_type import img_data_type, text_data_type, rl_data_type
 from src.training.training_module import run_sim
 from src.data_manager.text_data_utils import TextDataUtils
-from src.data_manager.rl_data_utils import RLDataUtils
 
 # Constants
 MNIST_DIM = 28
@@ -68,63 +66,40 @@ def set_img_default_params(data_type: str) -> Dict[str, int]:
         raise ValueError(f"Unknown data type {data_type}")
 
 
-def update_params_with_defaults(params: Dict[str, Any]) -> None:
+def update_params_with_defaults(config: Dict[str, Any]) -> None:
     """
     Update the given parameters with defaults if necessary.
 
     Args:
-    - params: dictionary of parameters
+    - config: dictionary of parameters
 
     Returns:
     - None
     """
-    if params["data_type"] in img_data_type:
-        params["model_params"].update(set_img_default_params(params["data_type"]))
-    elif params["data_type"] in text_data_type:
-        params["model_params"].update(
+    if config["data_type"] in img_data_type:
+        config["model_params"].update(set_img_default_params(config["data_type"]))
+    elif config["data_type"] in text_data_type:
+        config["model_params"].update(
             {
                 "nb_tokens": TextDataUtils.get_nb_tokens(
-                    params["scheme_params"]["tokenizer_name"]
+                    config["scheme_params"]["tokenizer_name"]
                 )
             }
         )
 
 
-def get_params(args: Any) -> Dict[str, Any]:
-    """
-    Get parameters from the provided arguments and dynamically import modules.
-
-    Args:
-    - args: command line arguments
-
-    Returns:
-    - dict: dictionary of parameters
-    """
-    try:
-        config_module = importlib.import_module(args.config_file.replace("/", "."))
-        params = getattr(config_module, "CONFIG")
-    except ImportError:
-        print(f"Error importing configuration module: {args.config_file}")
-        sys.exit(1)
-    except AttributeError:
-        # Handle attribute error
-        print(f"CONFIG not found in {args.config_file}")
-        sys.exit(1)
-
-    if args.gpu is not None:
-        params["device"] = [args.gpu] if isinstance(args.gpu, int) else list(args.gpu)
-    if args.restore:
-        params["checkpoint_dict"].update(
-            {"restore_training": True, "training_ckpt_path": args.restore}
+@hydra.main(version_base=None, config_path="configs", config_name="default_config")
+def launch_sim(config: DictConfig) -> DictConfig:
+    OmegaConf.set_struct(config, False)
+    if "gpu" in config:
+        config["device"] = (
+            [config.gpu] if isinstance(config.gpu, int) else list(config.gpu)
         )
 
-    update_params_with_defaults(params)
-    return Params(**params)
+    update_params_with_defaults(config)
+    run_sim(config)
 
 
 if __name__ == "__main__":
     torch.set_default_dtype(torch_float_precision)
-    args = parse_main()
-    params = get_params(args)
-
-    run_sim(params)
+    launch_sim()

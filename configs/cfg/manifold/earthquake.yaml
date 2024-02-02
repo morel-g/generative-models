@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - manifold/manifold_base
+  - _self_
+
+data_type: "earthquake"
+
+training_params:
+  epochs: 20000
+  check_val_every_n_epochs: 1000

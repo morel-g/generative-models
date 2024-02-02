@@ -29,7 +29,7 @@ def compute_text_outputs(
     ensure_directory_exists(output_dir)
     val_dataloader = DataLoader(val_dataset, batch_size=5)
 
-    tokenizer_name = net.params.scheme_params.get("tokenizer_name", Case.gpt2)
+    tokenizer_name = net.config.scheme_params.get("tokenizer_name", Case.gpt2)
     for x in val_dataloader:
         list_str = TextDataUtils.decode_tokens(x, tokenizer_name)
         save_strings_to_png(list_str, output_dir, name="True_samples.png")
@@ -84,6 +84,6 @@ def sample_text(
     """
     ensure_directory_exists(output_dir)
     x = net.sample(nb_samples)
-    tokenizer_name = net.params.scheme_params.get("tokenizer_name", Case.gpt2)
+    tokenizer_name = net.config.scheme_params.get("tokenizer_name", Case.gpt2)
     samples_str = TextDataUtils.decode_tokens(x, tokenizer_name)
     save_strings_to_png(samples_str, output_dir, name=name)

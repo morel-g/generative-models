@@ -5,7 +5,7 @@ from torch.optim.swa_utils import AveragedModel
 from typing import Union, Tuple, Any, List, Dict, Optional
 
 # from .probability_distribution import ProbabilityDistribution
-from src.params import Params
+from omegaconf import DictConfig
 from src.case import Case
 from src.data_manager.data_type import (
     toy_data_type,
@@ -37,86 +37,86 @@ class DiffusionGenerator(pl.LightningModule):
 
     def __init__(
         self,
-        params: Params,
+        config: DictConfig,
     ) -> None:
         """
         Initialize the DiffusionGenerator model.
 
         Parameters:
-            params: Configuration and scheme parameters for the diffusion generator.
+            config: Configuration and scheme parameters for the diffusion generator.
         """
         super(DiffusionGenerator, self).__init__()
         self.save_hyperparameters()
-        self.params = params
-        self.ema_dict = params.training_params.get("ema_dict", {"use_ema": False})
+        self.config = config
+        self.ema_dict = config.training_params.get("ema_dict", {"use_ema": False})
         self.ema = self.ema_dict["use_ema"]
-        if params.model_type == Case.score_model:
+        if config.model_type == Case.score_model:
             self.base_model = ScoreModel(
-                params.data_type,
-                params.model_params,
-                params.scheme_params["nb_time_steps_eval"],
-                params.scheme_params["nb_time_steps_train"],
-                T_final=params.scheme_params["T_final"],
-                beta_case=params.scheme_params.get("beta_case", Case.vanilla),
-                adapt_dt=params.scheme_params["adapt_dt"],
-                pde_coefs=params.scheme_params.get(
+                config.data_type,
+                config.model_params,
+                config.scheme_params["nb_time_steps_eval"],
+                config.scheme_params["nb_time_steps_train"],
+                T_final=config.scheme_params["T_final"],
+                beta_case=config.scheme_params.get("beta_case", Case.vanilla),
+                adapt_dt=config.scheme_params["adapt_dt"],
+                pde_coefs=config.scheme_params.get(
                     "pde_coefs",
                     {"gamma": 1.0},
                 ),
-                decay_case=params.scheme_params.get("decay_case", Case.vanilla_sigma),
-                img_model_case=params.scheme_params.get("img_model_case", Case.u_net),
-                conditioning_case=params.scheme_params.get("conditioning_case", None),
+                decay_case=config.scheme_params.get("decay_case", Case.vanilla_sigma),
+                img_model_case=config.scheme_params.get("img_model_case", Case.ncsnpp),
+                conditioning_case=config.scheme_params.get("conditioning_case", None),
             )
-        elif params.model_type == Case.score_model_critical_damped:
+        elif config.model_type == Case.score_model_critical_damped:
             self.base_model = ScoreModelCriticalDamped(
-                params.data_type,
-                params.model_params,
-                params.scheme_params["nb_time_steps_eval"],
-                params.scheme_params["nb_time_steps_train"],
-                T_final=params.scheme_params["T_final"],
-                adapt_dt=params.scheme_params["adapt_dt"],
-                decay_case=params.scheme_params.get("decay_case", Case.vanilla_sigma),
-                img_model_case=params.scheme_params.get("img_model_case", Case.u_net),
-                init_var_v=params.scheme_params.get("init_var_v", 0.04),
-                zeros_S0_vv=params.scheme_params.get("zeros_S0_vv", False),
+                config.data_type,
+                config.model_params,
+                config.scheme_params["nb_time_steps_eval"],
+                config.scheme_params["nb_time_steps_train"],
+                T_final=config.scheme_params["T_final"],
+                adapt_dt=config.scheme_params["adapt_dt"],
+                decay_case=config.scheme_params.get("decay_case", Case.vanilla_sigma),
+                img_model_case=config.scheme_params.get("img_model_case", Case.u_net),
+                init_var_v=config.scheme_params.get("init_var_v", 0.04),
+                zeros_S0_vv=config.scheme_params.get("zeros_S0_vv", False),
             )
-        elif params.model_type == Case.stochastic_interpolant:
-            if params.data_type not in manifold_data_type:
+        elif config.model_type == Case.stochastic_interpolant:
+            if config.data_type not in manifold_data_type:
                 self.base_model = StochasticInterpolant(
-                    params.data_type,
-                    params.model_params,
-                    params.scheme_params["nb_time_steps_eval"],
-                    params.scheme_params["nb_time_steps_train"],
-                    T_final=params.scheme_params["T_final"],
-                    beta_case=params.scheme_params["beta_case"],
-                    adapt_dt=params.scheme_params["adapt_dt"],
-                    decay_case=params.scheme_params.get("decay_case", Case.exp),
-                    interpolant=params.scheme_params["interpolant"],
-                    img_model_case=params.scheme_params.get(
+                    config.data_type,
+                    config.model_params,
+                    config.scheme_params["nb_time_steps_eval"],
+                    config.scheme_params["nb_time_steps_train"],
+                    T_final=config.scheme_params["T_final"],
+                    beta_case=config.scheme_params["beta_case"],
+                    adapt_dt=config.scheme_params["adapt_dt"],
+                    decay_case=config.scheme_params.get("decay_case", Case.exp),
+                    interpolant=config.scheme_params["interpolant"],
+                    img_model_case=config.scheme_params.get(
                         "img_model_case", Case.u_net
                     ),
-                    noise_addition=params.scheme_params.get("noise_addition", None),
+                    noise_addition=config.scheme_params.get("noise_addition", None),
                 )
             else:
                 self.base_model = ManifoldInterpolant(
-                    params.data_type,
-                    params.model_params,
-                    params.scheme_params["nb_time_steps_eval"],
-                    params.scheme_params["nb_time_steps_train"],
-                    noise_addition=params.scheme_params.get("noise_addition", None),
+                    config.data_type,
+                    config.model_params,
+                    config.scheme_params["nb_time_steps_eval"],
+                    config.scheme_params["nb_time_steps_train"],
+                    noise_addition=config.scheme_params.get("noise_addition", None),
                 )
-        elif params.model_type == Case.d3pm:
+        elif config.model_type == Case.d3pm:
             self.base_model = D3PM(
-                params.data_type,
-                params.model_params,
-                seq_length=params.scheme_params["seq_length"],
-                nb_time_steps_eval=params.scheme_params["nb_time_steps_eval"],
-                nb_time_steps_train=params.scheme_params["nb_time_steps_train"],
-                T_final=params.scheme_params["T_final"],
-                transition_case=params.scheme_params.get(
+                config.data_type,
+                config.model_params,
+                seq_length=config.scheme_params["seq_length"],
+                nb_time_steps_eval=config.scheme_params["nb_time_steps_eval"],
+                nb_time_steps_train=config.scheme_params["nb_time_steps_train"],
+                T_final=config.scheme_params["T_final"],
+                transition_case=config.scheme_params.get(
                     "transition_case", Case.uniform
                 ),
-                store_transition_matrices=params.scheme_params.get(
+                store_transition_matrices=config.scheme_params.get(
                     "store_transition_matrices", False
                 ),
             )
@@ -153,7 +153,7 @@ class DiffusionGenerator(pl.LightningModule):
         Returns:
             loss: The computed loss.
         """
-        # if self.params.data_type in img_data_type and len(batch) == 2:
+        # if self.config.data_type in img_data_type and len(batch) == 2:
         #     x, _ = batch
         # else:
         #     x = batch
@@ -180,7 +180,7 @@ class DiffusionGenerator(pl.LightningModule):
         """
         model = self.get_model()
         x = batch
-        # if self.params.data_type in img_data_type and len(batch) == 2:
+        # if self.config.data_type in img_data_type and len(batch) == 2:
         #     x, _ = batch
         # else:
         #     x = batch
@@ -219,14 +219,14 @@ class DiffusionGenerator(pl.LightningModule):
             x_cond=x_cond,
         )
 
-        if self.params.data_type in img_data_type:
+        if self.config.data_type in img_data_type:
             if model.is_augmented():
                 x, v = x
                 x, v = (x + 1.0) / 2.0, (v + 1.0) / 2.0
                 x = x, v
             else:
                 x = (x + 1.0) / 2.0
-        elif self.params.data_type in rl_data_type:
+        elif self.config.data_type in rl_data_type:
             x = RLDataUtils.denormalize(x)
 
         return x
@@ -320,10 +320,10 @@ class DiffusionGenerator(pl.LightningModule):
         - Either a single optimizer or a tuple containing a list of
         optimizers and a list of scheduler dictionaries.
         """
-        optimizer = create_optimizer(self.base_model, self.params.training_params)
+        optimizer = create_optimizer(self.base_model, self.config.training_params)
         scheduler = create_scheduler(
             optimizer,
-            self.params.training_params,
+            self.config.training_params,
             data_module=self.trainer.datamodule,
         )
 
@@ -370,10 +370,10 @@ class DiffusionGenerator(pl.LightningModule):
         )
 
         # Check the data type and call the appropriate sampling function
-        if self.params.data_type in toy_data_type:
+        if self.config.data_type in toy_data_type:
             sample_2d(self, sample_path, sample_name)
-        elif self.params.data_type in img_data_type:
-            if self.params.data_type in audio_data_type:
+        elif self.config.data_type in img_data_type:
+            if self.config.data_type in audio_data_type:
                 nb_rows = 2
                 nb_cols = 3
             else:
@@ -387,11 +387,11 @@ class DiffusionGenerator(pl.LightningModule):
                 nb_cols=nb_cols,
                 save_gifs=False,
             )
-        elif self.params.data_type in text_data_type:
+        elif self.config.data_type in text_data_type:
             sample_text(self, sample_path, sample_name, nb_samples=5)
-        elif self.params.data_type in rl_data_type:
+        elif self.config.data_type in rl_data_type:
             sample_rl(self, sample_path, sample_name, nb_samples=6)
-        elif self.params.data_type in manifold_data_type:
+        elif self.config.data_type in manifold_data_type:
             sample_manifold(self, sample_path, sample_name, nb_samples=6000)
 
     def on_save_checkpoint(self, checkpoint: Dict[str, Any]) -> None:

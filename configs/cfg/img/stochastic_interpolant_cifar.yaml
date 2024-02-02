@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - img/img_base
+  - _self_
+
+data_type: cifar10
+model_type: stochastic_interpolant
+
+scheme_params:
+  interpolant: trigonometric
+  beta_case: constant
+
+training_params:
+  epochs: 750
+  batch_size: 128
+  batch_size_eval: 256
+  lr: 0.0002
+  check_val_every_n_epochs: 10
+  
+model_params:
+  embedding_type: positional
+  n_channels: 128
+  ch_mult: [1, 2, 2, 2]
+  n_resblocks: 4

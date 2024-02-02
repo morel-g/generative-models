@@ -1,0 +1,26 @@
+# @package _global_
+defaults:
+  - rl/rl_base
+  - _self_
+
+data_type: "hopper_medium_v2"
+
+training_params:
+  epochs: 50
+  check_val_every_n_epochs: 10
+  batch_size: 256
+  batch_size_eval: 256
+  weight_decay: 0.0
+  ema_dict:
+    use_ema: True
+    decay: 0.999
+    use_ema_warmup: True
+    power: 0.66666
+  gradient_clip_val: 1.0
+
+model_params:
+  transition_dim: 14
+  horizon: 128
+  dim: 128
+  dim_mults: [1, 2, 4]
+  attention: False

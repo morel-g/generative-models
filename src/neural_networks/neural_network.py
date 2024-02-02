@@ -13,9 +13,9 @@ from src.utils import time_dependent_var
 
 
 class NeuralNetwork(torch.nn.Module):
-    def __init__(self, model_type, params, stationary=False):
+    def __init__(self, model_type, config, stationary=False):
         super(NeuralNetwork, self).__init__()
-        params_net = params.copy()
+        params_net = config.copy()
         self.stationary = stationary
         self.model_type = model_type
         if self.model_type == Case.ncsnpp:

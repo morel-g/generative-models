@@ -1,0 +1,24 @@
+# @package _global_
+defaults:
+  - img/img_base
+  - _self_
+
+data_type: cifar10
+model_type: score_model
+
+scheme_params:
+    beta_case: vanilla
+    decay_case: vanilla_sigma
+
+training_params:
+    epochs: 750
+    batch_size: 128
+    batch_size_eval: 256
+    lr: 0.0002
+    check_val_every_n_epochs: 10
+
+model_params:
+    embedding_type: fourier
+    n_channels: 128
+    ch_mult: [1, 2, 2, 2]
+    n_resblocks: 4

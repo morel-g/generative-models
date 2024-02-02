@@ -1,0 +1,18 @@
+# @package _global_
+model_type: "score_model"
+
+scheme_params:
+  nb_time_steps_train: 1000
+  nb_time_steps_eval: 1000
+  beta_case: "vanilla"
+  decay_case: "vanilla_sigma"  
+
+training_params:
+  lr: 2e-4
+  weight_decay: 0.0
+  ema_dict:
+    use_ema: True
+    decay: 0.9999
+    use_ema_warmup: True
+    power: 0.6666666
+  gradient_clip_val: 1.0

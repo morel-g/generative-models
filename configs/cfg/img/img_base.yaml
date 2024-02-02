@@ -1,0 +1,27 @@
+# @package _global_
+model_type: score_model
+
+scheme_params:
+  T_final: 3.0
+  nb_time_steps_train: 1000
+  nb_time_steps_eval: 1000
+  adapt_dt: true
+  beta_case: constant
+  decay_case: no_decay
+  img_model_case: ncsnpp
+
+training_params:
+  epochs: 100
+  batch_size: 64
+  batch_size_eval: 64
+  lr: 0.0003
+  check_val_every_n_epochs: 10
+  weight_decay: 0.0
+  ema_dict:
+    use_ema: true
+    decay: 0.9999
+    use_ema_warmup: true
+    power: 0.75
+  gradient_clip_val: 1.0
+
+  save_top: 5

@@ -1,14 +1,14 @@
 import os
 import numpy as np
 import torch
+from omegaconf import DictConfig
 from typing import Dict, Union, Any
 from tqdm import tqdm
-
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from src.utils import ensure_directory_exists
-from src.params import dict_to_str
+from src.utils import ensure_directory_exists, dict_to_str
+
 from src.case import Case
 from src.data_manager.data_module import DataModule
 from src.params_parser import parse_viz
@@ -20,7 +20,6 @@ from src.data_manager.data_type import (
     rl_data_type,
     manifold_data_type,
 )
-from src.params import Params
 from src.eval.fid.fid_utils import compute_fid_v1, compute_fid_v3
 from src.eval.plots_img import (
     compute_imgs_outputs,
@@ -112,7 +111,7 @@ def save_viz_infos(viz_dict: Dict[str, Union[str, int, float]], directory: str) 
 
 
 def configure_viz_infos(
-    args: Any, net: DiffusionGenerator, params: Params
+    args: Any, net: DiffusionGenerator, config: DictConfig
 ) -> Dict[str, Any]:
     """
     Configures the visualization information based on the provided arguments.
@@ -120,7 +119,7 @@ def configure_viz_infos(
     Parameters:
     - args (Any): Arguments containing parameters for the visualization.
     - net (DiffusionGenerator): Neural network model.
-    - params (Params): Parameters used for the model.
+    - config (DictConfig): Parameters used for the model.
 
     Returns:
     - Dict[str, Any]: Dictionary containing visualization information.
@@ -137,7 +136,7 @@ def configure_viz_infos(
     if viz_infos["nb_time_steps_eval"]:
         net.set_nb_time_steps(viz_infos["nb_time_steps_eval"], eval=True)
     if viz_infos["batch_size_eval"]:
-        params.training_params["batch_size_eval"] = viz_infos["batch_size_eval"]
+        config.training_params["batch_size_eval"] = viz_infos["batch_size_eval"]
     if viz_infos["Backward scheme"]:
         net.set_backward_scheme(viz_infos["Backward scheme"])
 
@@ -146,7 +145,7 @@ def configure_viz_infos(
 
 def compute_fid(
     net: DiffusionGenerator,
-    params: Params,
+    config: DictConfig,
     data_module: DataModule,
     args: Any,
     viz_infos: Dict[str, Any],
@@ -157,7 +156,7 @@ def compute_fid(
 
     Parameters:
     - net (DiffusionGenerator): Neural network model.
-    - params (Params): Parameters used for the model.
+    - config (DictConfig): Parameters used for the model.
     - data_module (DataModule): Data loading and processing module.
     - args (Any): Arguments containing parameters for computing FID.
     - viz_infos (Dict[str, Any]): Dictionary containing visualization information.
@@ -179,7 +178,7 @@ def compute_fid(
         fid = compute_fid_v1(
             net,
             path_to_stats,
-            params.data_type,
+            config.data_type,
             batch_size=fid_batch_size,
             inceptionv3=inceptionv3,
         )
@@ -220,16 +219,15 @@ if __name__ == "__main__":
     device = torch.device("cuda:" + str(gpu) if gpu != -1 else "cpu")
     load_path = os.path.dirname(ckpt_path)
     output_dir = load_path if output_dir is None else output_dir
-    params = load_obj(load_path + "/params.obj")
+    config = load_obj(load_path + "/config.obj")
 
-    data_type = params.data_type
-    data_module = DataModule(params)
-    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, params=params)
+    data_type = config.data_type
+    data_module = DataModule(config)
+    net = DiffusionGenerator.load_from_checkpoint(ckpt_path, config=config)
 
-    viz_infos = configure_viz_infos(args, net, params)
+    viz_infos = configure_viz_infos(args, net, config)
 
     if args.no_ema:
-        print("Ema model not used.")
         net.ema = False
     net.prepare_for_inference(data_module.train_dataloader(), device)
 
@@ -253,25 +251,25 @@ if __name__ == "__main__":
         }
 
     elif args.fid:
-        compute_fid(net, params, data_module, args, viz_infos, device)
+        compute_fid(net, config, data_module, args, viz_infos, device)
     elif args.save_samples:
         save_samples_from_net(
             net, output_dir, args.nb_batch_saved, args.batch_size_eval, args.save_noise
         )
-    elif params.data_type in toy_continuous_data_type:
+    elif config.data_type in toy_continuous_data_type:
         x_val = data_module.val_data.x
         compute_continuous_outputs_2d(net, x_val, output_dir)
-    elif params.data_type in toy_discrete_data_type:
+    elif config.data_type in toy_discrete_data_type:
         x_val = data_module.train_data.x
         compute_discrete_outputs_2d(net, x_val, output_dir)
-    elif params.data_type in img_data_type:
+    elif config.data_type in img_data_type:
         nb_rows, nb_cols = args.nb_imgs[0], args.nb_imgs[1]
         compute_imgs_outputs(net, val_dataset, output_dir, nb_rows, nb_cols)
-    elif params.data_type in text_data_type:
+    elif config.data_type in text_data_type:
         compute_text_outputs(net, val_dataset, output_dir)
-    elif params.data_type in rl_data_type:
+    elif config.data_type in rl_data_type:
         compute_rl_outputs(net, val_dataset, output_dir)
-    elif params.data_type in manifold_data_type:
+    elif config.data_type in manifold_data_type:
         compute_manifold_outputs(net, val_dataset, output_dir)
 
     save_viz_infos(viz_infos, os.path.join(output_dir, "viz_infos"))

@@ -1,0 +1,9 @@
+# @package _global_
+n_samples: 400000
+data_type: swissroll
+accelerator: cpu
+
+model_params:
+  dim: 2
+  nb_neurons: [64, 64, 64]
+  activation: silu

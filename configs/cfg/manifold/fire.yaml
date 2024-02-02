@@ -1,0 +1,12 @@
+# @package _global_
+defaults:
+  - manifold/manifold_base
+  - _self_
+
+data_type: "fire"
+
+training_params:
+  epochs: 10000
+  check_val_every_n_epochs: 1000
+
+

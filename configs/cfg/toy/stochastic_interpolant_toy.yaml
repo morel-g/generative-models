@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - toy/toy_base
+  - _self_
+  
+model_type: "stochastic_interpolant"
+
+scheme_params:
+  interpolant: "trigonometric"
+  beta_case: "constant"

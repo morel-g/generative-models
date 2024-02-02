@@ -57,42 +57,6 @@ def init_parser(description: str) -> argparse.ArgumentParser:
     )
 
 
-def parse_main() -> argparse.Namespace:
-    """Parses arguments for the main parser.
-
-    Returns:
-        Parsed arguments.
-    """
-    parser = init_parser(
-        description="Train a generative model with a specific config file."
-    )
-
-    # General parser
-    general = parser.add_argument_group("General options")
-    general.add_argument(
-        "--config_file",
-        type=str,
-        default=None,
-        metavar="",
-        help="The config file used during for the training.",
-    )
-    general.add_argument(
-        "--gpu",
-        type=int,
-        default=None,
-        metavar="",
-        help="GPU id used.",
-    )
-    general.add_argument(
-        "--restore",
-        type=str,
-        metavar="",
-        help="Path to restore the simulation from.",
-    )
-
-    return parser.parse_args()
-
-
 def parse_viz() -> argparse.Namespace:
     """Parses arguments for the visualization parser.
 

@@ -1,0 +1,42 @@
+defaults:
+  - _self_
+  - cfg: null
+
+#data_type: swissroll
+model_type: 'score_model'
+accelerator: gpu
+device: [0]
+restore_ckpt_path: null
+
+scheme_params:
+  T_final: 3.0
+  nb_time_steps_train: 1000
+  nb_time_steps_eval: 1000
+  adapt_dt: true
+  decay_case: no_decay
+
+training_params:
+  epochs: 200
+  batch_size: 500
+  batch_size_eval: 500
+  lr: 0.005
+  weight_decay: 0.001
+  check_val_every_n_epochs: 20
+  ema_dict:
+    use_ema: false
+  gradient_clip_val: 0.0
+  scheduler_dict:
+    scheduler: cosine_with_warmup
+    gamma: 0.99
+    every_n_epochs: 1
+    num_warmup_epochs: 1
+
+print_opt:
+  enable_progress_bar: true
+
+logger_opt:
+  logger_path: "../outputs/"
+  logger_case: "mlflow_logger"
+  kwargs:
+    experiment_name: "ml_exp"
+    save_dir: "../mlruns"

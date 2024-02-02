@@ -327,8 +327,8 @@ def plot_discrete_density(cells, N):
         samples/density.
         - N: The number of cells for both x and y axis.
     """
-    params = ToyDiscreteDataUtils.get_toy_discrete_params()
-    x_min, x_max = params["min"], params["max"]
+    config = ToyDiscreteDataUtils.get_toy_discrete_params()
+    x_min, x_max = config["min"], config["max"]
     dx = (x_max - x_min) / N
     dy = (x_max - x_min) / N
 

@@ -47,7 +47,7 @@ def sample_2d(
     ensure_directory_exists(output_dir)
 
     x = net.sample(nb_samples)
-    data_type = net.params.data_type
+    data_type = net.config.data_type
 
     if data_type in toy_continuous_data_type:
         # Check if net is augmented and unpack values accordingly
@@ -60,7 +60,7 @@ def sample_2d(
             s=3.0,
         )
     elif data_type in toy_discrete_data_type:
-        nb_tokens = net.params.model_params["nb_tokens"]
+        nb_tokens = net.config.model_params["nb_tokens"]
         save_discrete_density(
             x.cpu().numpy(),
             nb_tokens,
@@ -92,7 +92,7 @@ def compute_discrete_outputs_2d(
     original_font_size = plt.rcParams["font.size"]
     plt.rcParams.update({"font.size": 18})
 
-    nb_tokens = net.params.model_params["nb_tokens"]
+    nb_tokens = net.config.model_params["nb_tokens"]
 
     sampled_traj = net.sample(nb_samples=10000, return_trajectories=True)
     titles = get_titles(net, forward=False)
@@ -150,8 +150,8 @@ def compute_continuous_outputs_2d(
     """
     ensure_directory_exists(output_dir)
     # Initialize
-    params = net.params
-    bound, s = get_bounds_and_s(params.data_type)
+    config = net.config
+    bound, s = get_bounds_and_s(config.data_type)
     bounds = (-bound, bound, -bound, bound)
 
     # Save velocities for non-augmented networks
@@ -161,7 +161,7 @@ def compute_continuous_outputs_2d(
     nb_samples = 10000
     X = X.to(net.device)
 
-    if net.params.model_type in (
+    if net.config.model_type in (
         Case.score_model,
         Case.score_model_critical_damped,
     ):

@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - manifold/manifold_base
+  - _self_
+
+data_type: "flood"
+
+training_params:
+  epochs: 30000
+  check_val_every_n_epochs: 3000

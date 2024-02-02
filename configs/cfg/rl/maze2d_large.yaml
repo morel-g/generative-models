@@ -1,0 +1,22 @@
+# @package _global_
+defaults:
+  - rl/rl_base
+  - _self_
+
+data_type: maze2d_large_v1
+
+scheme_params:
+  conditioning_case: conditioning_rl_first_last
+
+training_params:
+  epochs: 5000
+  check_val_every_n_epochs: 50
+  batch_size: 64
+  batch_size_eval: 64
+
+model_params:
+  transition_dim: 6
+  horizon: 384
+  dim: 128
+  dim_mults: [1, 2, 4]
+  attention: False

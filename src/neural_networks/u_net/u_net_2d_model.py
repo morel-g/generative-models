@@ -25,7 +25,7 @@ from diffusers.models.embeddings import (
     Timesteps,
 )
 from diffusers.models.modeling_utils import ModelMixin
-from diffusers.models.unet_2d_blocks import (
+from diffusers.models.unets.unet_2d_blocks import (
     UNetMidBlock2D,
     get_down_block,
     get_up_block,
@@ -155,9 +155,7 @@ class UNet2DModel(ModelMixin, ConfigMixin):
             time_embed_dim = None
 
         if time_embedding_type != "no_embedding":
-            self.time_embedding = TimestepEmbedding(
-                timestep_input_dim, time_embed_dim
-            )
+            self.time_embedding = TimestepEmbedding(timestep_input_dim, time_embed_dim)
 
         # input
         self.conv_in = nn.Conv2d(
@@ -166,13 +164,9 @@ class UNet2DModel(ModelMixin, ConfigMixin):
 
         # class embedding
         if class_embed_type is None and num_class_embeds is not None:
-            self.class_embedding = nn.Embedding(
-                num_class_embeds, time_embed_dim
-            )
+            self.class_embedding = nn.Embedding(num_class_embeds, time_embed_dim)
         elif class_embed_type == "timestep":
-            self.class_embedding = TimestepEmbedding(
-                timestep_input_dim, time_embed_dim
-            )
+            self.class_embedding = TimestepEmbedding(timestep_input_dim, time_embed_dim)
         elif class_embed_type == "identity":
             self.class_embedding = nn.Identity(time_embed_dim, time_embed_dim)
         else:
@@ -350,9 +344,7 @@ class UNet2DModel(ModelMixin, ConfigMixin):
                     hidden_states=sample, temb=emb, skip_sample=skip_sample
                 )
             else:
-                sample, res_samples = downsample_block(
-                    hidden_states=sample, temb=emb
-                )
+                sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
 
             down_block_res_samples += res_samples
 
@@ -362,9 +354,7 @@ class UNet2DModel(ModelMixin, ConfigMixin):
         # 5. up
         skip_sample = None
         for upsample_block in self.up_blocks:
-            res_samples = down_block_res_samples[
-                -len(upsample_block.resnets) :
-            ]
+            res_samples = down_block_res_samples[-len(upsample_block.resnets) :]
             down_block_res_samples = down_block_res_samples[
                 : -len(upsample_block.resnets)
             ]

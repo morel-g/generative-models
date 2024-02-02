@@ -1,0 +1,21 @@
+# @package _global_
+model_type: "stochastic_interpolant"
+
+model_params:
+  dim: 3
+  nb_neurons: [128, 128, 128, 128, 128]
+  activation: "silu"
+
+training_params:
+  epochs: 10000
+  check_val_every_n_epochs: 1000
+  batch_size: 128
+  batch_size_eval: 128
+  lr: 0.001
+  weight_decay: 0.0
+  ema_dict:
+    use_ema: true
+    decay: 0.999
+    use_ema_warmup: true
+    power: 0.666666666
+  gradient_clip_val: 1.0

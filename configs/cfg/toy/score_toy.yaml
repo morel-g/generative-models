@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - toy/toy_base
+  - _self_
+  
+model_type: 'score_model'
+
+scheme_params:
+  beta_case: "vanilla"
+  decay_case: "vanilla_sigma"

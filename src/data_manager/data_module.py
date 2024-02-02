@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 from src.utils import id_to_device
+from omegaconf import DictConfig
 from torch.utils.data import default_collate, Dataset as TorchDataset, DataLoader
-from src.params import Params
 from src.case import Case
 from src.data_manager.data_type import (
     toy_continuous_data_type,
@@ -23,30 +23,30 @@ from src.data_manager.manifold_data_utils import ManifoldDataUtils
 
 
 class DataModule(pl.LightningDataModule):
-    def __init__(self, params: Params, log_dir: str = None):
+    def __init__(self, config: DictConfig, log_dir: str = None):
         """
         Initialize the data module.
 
         Parameters:
-        - params (Params): A Params object containing all the parameters of the
+        - config (DictConfig): A DictConfig object containing all the parameters of the
         simulation.
         - log_dir (str, optional): Directory for logs. Defaults to None.
         """
         super().__init__()
 
-        self.params = params
+        self.config = config
         self.device = (
-            id_to_device(params.accelerator, params.device)
-            if isinstance(params.device, list)
+            id_to_device(config.accelerator, config.device)
+            if isinstance(config.device, list)
             else None
         )
-        self.batch_size = params.training_params["batch_size"]
-        self.batch_size_eval = params.training_params.get(
+        self.batch_size = config.training_params["batch_size"]
+        self.batch_size_eval = config.training_params.get(
             "batch_size_eval", self.batch_size
         )
         self.pin_memory = self.device != "cpu"
         self.train_img_data, self.val_img_data = None, None
-        n_samples = getattr(params, "n_samples", None)
+        n_samples = getattr(config, "n_samples", None)
 
         self.train_data, self.val_data = self.get_dataset(
             log_dir=log_dir,
@@ -70,21 +70,21 @@ class DataModule(pl.LightningDataModule):
         Returns:
         - TorchDataset: The prepared dataset.
         """
-        data_type = self.params.data_type
+        data_type = self.config.data_type
 
         kwargs = {}
 
         if (
-            hasattr(self.params, "custom_data")
-            and self.params.custom_data["use_custom_data"]
+            hasattr(self.config, "custom_data")
+            and self.config.custom_data["use_custom_data"]
         ):
-            kwargs["data_dir"] = self.params.custom_data["data_dir"]
-            kwargs["prefix_1"] = self.params.custom_data["prefix_1"]
-            kwargs["prefix_2"] = self.params.custom_data.get("prefix_2", None)
+            kwargs["data_dir"] = self.config.custom_data["data_dir"]
+            kwargs["prefix_1"] = self.config.custom_data["prefix_1"]
+            kwargs["prefix_2"] = self.config.custom_data.get("prefix_2", None)
             return CustomDataUtils.prepare_custom_dataset(**kwargs)
         elif data_type in toy_continuous_data_type + toy_discrete_data_type:
-            if self.params.data_type in toy_discrete_data_type:
-                kwargs["nb_tokens"] = self.params.model_params["nb_tokens"]
+            if self.config.data_type in toy_discrete_data_type:
+                kwargs["nb_tokens"] = self.config.model_params["nb_tokens"]
             return ToyDataUtils.prepare_toy_dataset(
                 data_type, n_samples, log_dir, **kwargs
             )
@@ -93,17 +93,17 @@ class DataModule(pl.LightningDataModule):
         elif data_type in img_data_type:
             return ImgDataUtils.prepare_img_dataset(data_type)
         elif data_type in text_data_type:
-            kwargs["seq_length"] = self.params.scheme_params["seq_length"]
-            kwargs["tokenizer_name"] = self.params.scheme_params.get(
+            kwargs["seq_length"] = self.config.scheme_params["seq_length"]
+            kwargs["tokenizer_name"] = self.config.scheme_params.get(
                 "tokenizer_name", Case.gpt2
             )
             return TextDataUtils.prepare_text_dataset(data_type, **kwargs)
         elif data_type in rl_data_type:
-            if "horizon" in self.params.model_params:
-                kwargs["horizon"] = self.params.model_params["horizon"]
+            if "horizon" in self.config.model_params:
+                kwargs["horizon"] = self.config.model_params["horizon"]
             datasets = RLDataUtils.prepare_rl_dataset(data_type, **kwargs)
-            if not "horizon" in self.params.model_params:
-                self.params.model_params["horizon"] = RLDataUtils.horizon
+            if not "horizon" in self.config.model_params:
+                self.config.model_params["horizon"] = RLDataUtils.horizon
             return datasets
         elif data_type in manifold_data_type:
             return ManifoldDataUtils.prepare_manifold_dataset(data_type)

@@ -1,9 +1,42 @@
 import torch
+from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.transforms import Compose
 from torchvision.datasets import CIFAR10, FashionMNIST, MNIST
 
+
 from src.case import Case
+
+
+class ImageOnlyDataset(Dataset):
+    """A custom dataset that returns only images from an underlying dataset."""
+
+    def __init__(self, base_dataset):
+        """
+        Initializes the ImageOnlyDataset.
+
+        Parameters:
+            base_dataset (Dataset): The original dataset.
+        """
+        self.base_dataset = base_dataset
+
+    def __len__(self):
+        """Returns the number of items in the dataset."""
+        return len(self.base_dataset)
+
+    def __getitem__(self, idx):
+        """
+        Retrieves the image at the specified index.
+
+        Parameters:
+            idx (int): The index of the item.
+
+        Returns:
+            Tensor: The image tensor.
+        """
+        # Retrieve the image and ignore the label
+        image, _ = self.base_dataset[idx]
+        return image
 
 
 class ImgDataUtils:
@@ -64,4 +97,4 @@ class ImgDataUtils:
         else:
             raise RuntimeError("Unknown dataset.")
 
-        return train_data, val_data
+        return ImageOnlyDataset(train_data), ImageOnlyDataset(val_data)
