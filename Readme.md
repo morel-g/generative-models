@@ -27,16 +27,17 @@ The implemented models are sourced from the following research papers:
 
 ## Running the models
 
-The configuration files can be found in the `config_files` directory. Use the following command to run a specific model based on the desired configuration:
+The configuration files can be found in the `configs` directory. Use the following command to run a specific model based on the desired configuration:
 
 ```bash
-python main.py --config_file "config_files/toy/score_toy_config"
+python main.py cfg=<cfg>
 ```
+where `<cfg>` is one of the settings in `configs/cfg/*/*.yaml`.
 
 It is also possible to generate the outputs from a checkpoint using the `main_viz` file
 
 ```bash
-python main_viz.py -c path/to/checkpoint/last.ckpt -gpu 0 
+python main_viz.py -c path/to/checkpoint/last.ckpt
 ```
 
 Examples are provided in the **`notebook/`** directory. 
@@ -45,7 +46,7 @@ Examples are provided in the **`notebook/`** directory.
 
 ## Toy datasets
 
-Experiments with continuous and discrete toy datasets for general diffusion models.
+Experiments with continuous and discrete toy datasets for general diffusion models. The config files are available in `configs/cfg/toy/*.yaml`.
 
 ### Continuous datasets:
 
@@ -74,6 +75,8 @@ Experiments with continuous and discrete toy datasets for general diffusion mode
 
 Applying diffusion models to image data with experiments on Fashion MNIST and CIFAR datasets. Three continuous models are considered: diffusion / score based model, critical-damped Langevin and stochastic interpolants / flow matching.
 
+The corresponding config files are available in `configs/cfg/img/*.yaml`.
+
 ### Sampling from the models for the Fashion MNIST dataset:
 
 
@@ -99,7 +102,7 @@ Applying diffusion models to image data with experiments on Fashion MNIST and CI
 
 Generative modeling and in particular [flow matching](https://arxiv.org/abs/2302.03660) can be extended to manifold environments. Unlike traditional generative modeling in Euclidean space, this approach offers a more accurate representation for complex, real-world data. It is particularly effective for datasets that naturally reside on these manifolds, offering a more accurate and realistic representation of the data. 
 
-We focus on earthquake, fire, and flood datasets, employing the generative process on a spherical manifold to better reflect the Earth's surface where these phenomena occur. Here all the generative process happens on the sphere.
+We focus on earthquake, fire, and flood datasets, employing the generative process on a spherical manifold to better reflect the Earth's surface where these phenomena occur. Here all the generative process happens on the sphere. The config files are available in `configs/cfg/manifold/*.yaml`.
 
  <div align="center">
 
@@ -115,6 +118,8 @@ We focus on earthquake, fire, and flood datasets, employing the generative proce
 
 In this section continuous generative models are applied to mel spectrograms of audio signals, trained on music samples from the [**audio-diffusion-256**](https://huggingface.co/datasets/teticio/audio-diffusion-256) dataset see also the original [audio-diffusion](https://github.com/teticio/audio-diffusion) repository.
 
+
+The config files are available in `configs/cfg/audio/*.yaml`.
 
 <div align="center">
 <img src="docs/assets/sample_mel_spectrogram.png" alt="Mel spectrograms" width="434" height="250">
@@ -137,7 +142,7 @@ https://github.com/morel-g/generative-models/assets/123385560/9662a7f2-19f5-4527
 
 [Discrete Denoising Diffusion Probabilistic Model (D3PM)](https://arxiv.org/abs/2107.03006) architecture introduces advanced generative models for discrete data, enhancing image and text generation by employing diverse Markov transition matrices.
 
-Here the D3PM model is applied to a shortened version of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset with uniform transition matrix. Below are selected visual representations of the model trajectories
+Here the D3PM model is applied to a shortened version of the [lm1b](https://www.statmt.org/lm-benchmark/) dataset with uniform transition matrix. The corresponding config file is available in `configs/cfg/text/*.yaml`. Below are selected visual representations of the model trajectories
 
 ![Text trajectories 1](docs/assets/text_traj_1.gif)
 
@@ -149,7 +154,7 @@ Here the D3PM model is applied to a shortened version of the [lm1b](https://www.
 
 [Diffusion models for reinforcement learning](https://arxiv.org/abs/2205.09991) is a trajectory-level diffusion probabilistic model that enables effective, flexible trajectory optimization by generating globally coherent plans through iterative denoising, demonstrating significant advantages in long-horizon decision-making and adaptability in various control settings.
 
-Below are examples of some trajectories on 2d mazes examples
+The config files are available in `configs/cfg/rl/*.yaml`.  Below are examples of some trajectories on 2d mazes examples
 
 
  <div align="center">
