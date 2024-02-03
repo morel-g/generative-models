@@ -1,6 +1,4 @@
 # @package _global_
-model_type: score_model
-
 scheme_params:
   T_final: 3.0
   nb_time_steps_train: 1000

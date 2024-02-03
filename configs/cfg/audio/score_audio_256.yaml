@@ -28,6 +28,3 @@ model_params:
   n_channels: 128
   ch_mult: [1, 1, 2, 2, 4, 4]
   n_resblocks: 2
-
-checkpoint_dict:
-  save_top: 3
