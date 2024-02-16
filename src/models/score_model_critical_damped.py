@@ -25,7 +25,6 @@ class ScoreModelCriticalDamped(Model):
         img_model_case: str = Case.u_net,
         init_var_v: float = 0.04,
         zeros_S0_vv: bool = False,
-        use_vanilla_cov=False,
     ) -> None:
         """
         Initializes the ScoreModelCriticalDamped instance.
@@ -53,9 +52,6 @@ class ScoreModelCriticalDamped(Model):
         self.add_numerical_eps_to_sigma = not zeros_S0_vv
         self.numerical_eps = 1e-9
         self.decay_case = decay_case
-        self.use_vanilla_cov = use_vanilla_cov
-        print(f"use vanilla cov = {self.use_vanilla_cov}")
-        print("Using original cov")
 
         super(ScoreModelCriticalDamped, self).__init__(
             data_type,
@@ -67,13 +63,6 @@ class ScoreModelCriticalDamped(Model):
             img_model_case=img_model_case,
         )
         self.backward_scheme = Case.euler_explicit
-
-    # def register_buffers(self):
-    #     super(ScoreModelCriticalDamped, self).register_buffers()
-    #     self.register_buffer("times_1", None)
-    #     self.register_buffer("dt_1", None)
-    #     self.register_buffer("times_2", None)
-    #     self.register_buffer("dt_2", None)
 
     def get_initial_var(self) -> torch.Tensor:
         """
@@ -177,8 +166,7 @@ class ScoreModelCriticalDamped(Model):
         S0_vv = (
             torch.tensor(0.0, dtype=torch.float64)
             if self.zeros_S0_vv
-            else self.get_initial_var()
-            * torch.ones_like(t, dtype=torch.float64)
+            else self.get_initial_var() * torch.ones_like(t, dtype=torch.float64)
         )
         t = self._convert_tensor(t, torch.float64)
         exp_eval = torch.exp(-4 * t / gamma)
@@ -222,21 +210,12 @@ class ScoreModelCriticalDamped(Model):
                     S0_vv
                     + ((gamma**2) * t**2) / (9 * S0_vv)
                     - (2 * (gamma**3) * t**3) / (27 * (S0_vv**2))
-                    - (
-                        4
-                        * S0_vv
-                        * t
-                        * (6 * (gamma**2) - 21 * gamma * t + 44 * (t**2))
-                    )
+                    - (4 * S0_vv * t * (6 * (gamma**2) - 21 * gamma * t + 44 * (t**2)))
                     / (3 * (gamma**3))
-                    + (2.0 / 15)
-                    * t
-                    * (10 * gamma - 55 * t + (136 * t**2) / gamma)
+                    + (2.0 / 15) * t * (10 * gamma - 55 * t + (136 * t**2) / gamma)
                 )
             else:
-                ratio_limit = (
-                    1.5 * gamma * t - 7.5 * t**2 + (18.3 * t**3) / gamma
-                )
+                ratio_limit = 1.5 * gamma * t - 7.5 * t**2 + (18.3 * t**3) / gamma
             ratio = torch.where(t > eps_ratio, ratio, ratio_limit)
 
         S_xx, S_xv, S_vv = (
@@ -326,9 +305,7 @@ class ScoreModelCriticalDamped(Model):
         else:
             t, exp_eval = -torch.log(t), t ** (2.0 / gamma)
 
-        mu_1 = (
-            x0 * (1 + 2 * t / gamma) + v0 * 4 * t / (gamma**2)
-        ) * exp_eval
+        mu_1 = (x0 * (1 + 2 * t / gamma) + v0 * 4 * t / (gamma**2)) * exp_eval
         mu_2 = (-x0 * t + v0 * (-2 * t / gamma + 1)) * exp_eval
 
         return mu_1, mu_2
@@ -342,9 +319,7 @@ class ScoreModelCriticalDamped(Model):
         """
         return True
 
-    def set_nb_time_steps(
-        self, nb_time_steps: int, eval: bool = False
-    ) -> None:
+    def set_nb_time_steps(self, nb_time_steps: int, eval: bool = False) -> None:
         """
         Set the number of time steps.
 
@@ -372,9 +347,7 @@ class ScoreModelCriticalDamped(Model):
             )
             self.nb_time_steps_train = nb_time_steps
 
-    def velocity_eval(
-        self, x: torch.Tensor, v: torch.Tensor, t: float
-    ) -> torch.Tensor:
+    def velocity_eval(self, x: torch.Tensor, v: torch.Tensor, t: float) -> torch.Tensor:
         """
         Evaluate the velocity.
 
@@ -395,10 +368,7 @@ class ScoreModelCriticalDamped(Model):
             if not self.zeros_S0_vv:
                 return self.neural_network(x_v, t) / sigma - inv_S_vv * v
             else:
-                return (
-                    self.neural_network(x_v, t) / sigma
-                    - (4.0 / (gamma**2)) * v
-                )
+                return self.neural_network(x_v, t) / sigma - (4.0 / (gamma**2)) * v
         elif self.decay_case == Case.exp:
             return (
                 self.neural_network(x_v, t) * torch.exp(-(2.0 / gamma) * t)
@@ -443,11 +413,7 @@ class ScoreModelCriticalDamped(Model):
         )
 
         x = mu_x + torch.sqrt(S_xx) * noise_x
-        v = (
-            mu_v
-            + torch.sqrt(ratio) * noise_x
-            + torch.sqrt(S_vv - ratio) * noise_v
-        )
+        v = mu_v + torch.sqrt(ratio) * noise_x + torch.sqrt(S_vv - ratio) * noise_v
 
         x = self._convert_tensor(x, torch.float32)
         v = self._convert_tensor(v, torch.float32)
@@ -484,9 +450,7 @@ class ScoreModelCriticalDamped(Model):
             apply_log=apply_log,
         )
 
-    def sample_time(
-        self, x_shape: Tuple[int, ...], device: str
-    ) -> torch.Tensor:
+    def sample_time(self, x_shape: Tuple[int, ...], device: str) -> torch.Tensor:
         """
         Samples time tensor.
 
@@ -519,9 +483,7 @@ class ScoreModelCriticalDamped(Model):
         if self.decay_case == Case.vanilla_sigma and self.zeros_S0_vv:
             x_v = torch.cat((x, v), dim=1)
             loss = (
-                self.neural_network(x_v, t)
-                - sigma * (4.0 / (gamma**2)) * v
-                + noise
+                self.neural_network(x_v, t) - sigma * (4.0 / (gamma**2)) * v + noise
             ) ** 2
         else:
             s = self.velocity_eval(x, v, t)
