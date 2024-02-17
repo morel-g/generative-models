@@ -60,6 +60,7 @@ class LoggerFactory:
                     kwargs["run_name"] = log_dir.rsplit("/", 1)[-1]
                     super().__init__(*args, **kwargs)
                     self.ml_log_dir = log_dir
+                    os.environ["MLFLOW_LOG_DIR"] = log_dir
                 else:
                     super().__init__(*args, **kwargs)
 
