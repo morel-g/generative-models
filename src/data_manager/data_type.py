@@ -5,6 +5,7 @@ toy_continuous_data_type = [
     Case.moons,
     Case.cross_gaussians,
     Case.swissroll,
+    Case.swissroll_space_and_velocity,
     Case.joint_gaussian,
     Case.eight_gaussians,
     Case.pinwheel,
@@ -14,6 +15,13 @@ toy_continuous_data_type = [
     Case.conditionnal8gaussians,
     Case.multimodal_swissroll,
 ]
+
+# Add possibility for space and velocity data type for all toy models
+toy_space_and_velocity_data_type = [
+    d + "_space_and_velocity" for d in toy_continuous_data_type
+]
+
+toy_continuous_data_type += toy_space_and_velocity_data_type
 
 toy_discrete_data_type = [
     Case.two_spirals_discrete,
@@ -29,6 +37,7 @@ toy_discrete_data_type = [
     Case.conditionnal8gaussians_discrete,
     Case.multimodal_swissroll_discrete,
 ]
+
 
 img_data_type = [
     Case.mnist,
@@ -48,6 +57,7 @@ rl_data_type = [
     Case.maze2d_large_v1,
 ]
 
+
 custom_data_type = [Case.custom_data]
 
 text_data_type = [Case.wiki, Case.lm1b, Case.lm1b_short]
@@ -59,3 +69,5 @@ audio_data_type = [Case.audio_diffusion_256, Case.audio_diffusion_64]
 discrete_data_type = toy_discrete_data_type + text_data_type
 
 manifold_data_type = [Case.earthquake, Case.fire, Case.flood]
+
+space_and_velocity_data_type = toy_space_and_velocity_data_type

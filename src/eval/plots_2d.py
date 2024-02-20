@@ -15,8 +15,10 @@ from src.utils import ensure_directory_exists
 from src.data_manager.data_type import (
     toy_discrete_data_type,
     toy_continuous_data_type,
+    space_and_velocity_data_type,
 )
 from src.eval.plot_utils import get_titles
+from src.data_manager.toy_data_utils import ToyDataUtils
 
 # import ot
 import pytorch_lightning as pl
@@ -52,13 +54,23 @@ def sample_2d(
     if data_type in toy_continuous_data_type:
         # Check if net is augmented and unpack values accordingly
         x, v = (x, None) if not net.is_augmented() else x
+        if net.config.data_type in space_and_velocity_data_type:
+            x, v = ToyDataUtils.viz_space_and_velocity(x, v)
         save_scatter(
             x.cpu().numpy(),
             output_dir,
             color="blue",
-            name=name,
+            name=name + "_x",
             s=3.0,
         )
+        if v is not None:
+            save_scatter(
+                v.cpu().numpy(),
+                output_dir,
+                color="blue",
+                name=name + "_v",
+                s=3.0,
+            )
     elif data_type in toy_discrete_data_type:
         nb_tokens = net.config.model_params["nb_tokens"]
         save_discrete_density(
@@ -164,8 +176,9 @@ def compute_continuous_outputs_2d(
     if net.config.model_type in (
         Case.score_model,
         Case.score_model_critical_damped,
+        Case.stochastic_interpolant,
     ):
-        compute_velocity_outputs(net, X, output_dir, bounds, s, nb_samples=nb_samples)
+        compute_score_outputs(net, X, output_dir, bounds, s, nb_samples=nb_samples)
     else:
         compute_general_outputs(net, X, output_dir, bounds, s, nb_samples=nb_samples)
 
@@ -258,7 +271,6 @@ def save_trajectories(
     # Ensure output directory exists
     ensure_directory_exists(output_dir)
 
-    # Separate trajectory and velocity if network is augmented
     x_traj, v_traj = (x_traj, None) if not net.is_augmented() else x_traj
 
     # Get time values
@@ -321,6 +333,9 @@ def save_trajectories_infos(
     # Convert to NumPy arrays and separate x and v if augmented
     if net.is_augmented():
         x_traj, v_traj = map(lambda x: x.cpu().numpy(), sampled_traj)
+        if net.config.data_type in space_and_velocity_data_type:
+            x_traj, v_traj = ToyDataUtils.viz_space_and_velocity(x_traj, v_traj)
+
     else:
         x_traj = sampled_traj.cpu().numpy()
         v_traj = None
@@ -334,15 +349,24 @@ def save_trajectories_infos(
         s,
         name_suffix,
     )
-    final_x_traj = x_traj[-1]
+
     save_scatter(
-        final_x_traj,
+        x_traj[-1],
         output_dir,
         color="blue",
-        name="Samples" + name_suffix,
+        name="Samples_x" + name_suffix,
         extent=bounds,
         s=s,
     )
+    if v_traj is not None:
+        save_scatter(
+            v_traj[-1],
+            output_dir,
+            color="blue",
+            name="Samples_v" + name_suffix,
+            extent=bounds,
+            s=s,
+        )
 
 
 # -----------------------------------------------------------------------------
@@ -350,7 +374,7 @@ def save_trajectories_infos(
 # -----------------------------------------------------------------------------
 
 
-def compute_velocity_outputs(
+def compute_score_outputs(
     net: pl.LightningModule,
     X: torch.Tensor,
     output_dir: str,

@@ -13,6 +13,7 @@ class Case:
     gaussian = "gaussian"
     cross_gaussians = "cross gaussians"
     swissroll = "swissroll"
+    swissroll_space_and_velocity = "swissroll_space_and_velocity"
     joint_gaussian = "joint_gaussian"
     eight_gaussians = "eight_gaussians"
     conditionnal8gaussians = "conditionnal8gaussians"

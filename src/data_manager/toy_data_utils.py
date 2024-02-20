@@ -1,11 +1,14 @@
 import torch
+import numpy as np
+from math import sqrt
 from sklearn.model_selection import train_test_split
+
 from src.data_manager.create_data_toy import inf_train_gen
 from src.data_manager.data_type import (
     toy_discrete_data_type,
+    space_and_velocity_data_type,
 )
 from src.data_manager.dataset import Dataset
-import numpy as np
 
 
 class ToyDataUtils:
@@ -31,18 +34,35 @@ class ToyDataUtils:
         """
 
         discrete = data_type in toy_discrete_data_type
-        if discrete:
-            data_type = data_type.replace("_discrete", "")
-        X = inf_train_gen(data_type, batch_size=n_samples, path=path)
-        if discrete:
-            X = ToyDiscreteDataUtils.continuous_to_discrete_2d(X, nb_tokens)
-            X = torch.tensor(X, dtype=torch.int32)
-            # X = torch.zeros_like(X, dtype=torch.int32)
+        if not data_type in space_and_velocity_data_type:
+            if discrete:
+                data_type = data_type.replace("_discrete", "")
+            X = inf_train_gen(data_type, batch_size=n_samples, path=path)
+            if discrete:
+                X = ToyDiscreteDataUtils.continuous_to_discrete_2d(X, nb_tokens)
+                X = torch.tensor(X, dtype=torch.int32)
+                # X = torch.zeros_like(X, dtype=torch.int32)
+            else:
+                X = torch.tensor(X, dtype=torch.float32)
         else:
-            X = torch.tensor(X, dtype=torch.float32)
+            X = ToyDataUtils.gen_shift_space_and_velocity(data_type, n_samples, path)
         x_y = list(train_test_split(X, test_size=0.20, random_state=42))
 
         return x_y
+
+    @staticmethod
+    def gen_shift_space_and_velocity(data_type, n_samples, path):
+        n_samples = int(sqrt(n_samples))
+        init_data_type = data_type[: -len("_space_and_velocity")]
+        X_init = inf_train_gen(init_data_type, batch_size=n_samples, path=path)
+        X_init = torch.tensor(X_init, dtype=torch.float32)
+        x, v = X_init.repeat(n_samples, 1), X_init.repeat(n_samples, 1)
+        # x = x - v
+        return torch.cat((x, v), dim=1)
+
+    @staticmethod
+    def viz_space_and_velocity(x, v):
+        return x, v
 
     @staticmethod
     def prepare_discrete_toy_data(
@@ -73,7 +93,7 @@ class ToyDataUtils:
         n_samples: int,
         log_dir: str,
         **kwargs,
-    ) -> (torch.utils.data.Dataset, torch.utils.data.Dataset):
+    ) -> tuple[torch.utils.data.Dataset, torch.utils.data.Dataset]:
         """
         Load/construct the dataset.
 

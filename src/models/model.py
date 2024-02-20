@@ -9,6 +9,7 @@ from src.data_manager.data_type import (
     discrete_data_type,
     rl_data_type,
     manifold_data_type,
+    space_and_velocity_data_type,
 )
 from src.neural_networks.neural_network import NeuralNetwork
 from src.models.helpers.model_utils import (
@@ -291,7 +292,7 @@ class Model(torch.nn.Module):
             self.dt_eval,
             self.nb_time_steps_eval,
         )
-        x = self._augment_input(x)
+        x = self._augment_input(x, forward=True)
         x_traj = self._initialize_trajectories(x, return_trajectories)
         save_idx_times = self._get_traj_idx() if return_trajectories else []
         # if return_trajectories:
@@ -442,9 +443,13 @@ class Model(torch.nn.Module):
                 "Both return_velocities and return_neural_net cannot be True at the same time"
             )
 
-    def _augment_input(self, x: torch.Tensor) -> torch.Tensor:
+    def _augment_input(self, x: torch.Tensor, forward: bool = False) -> torch.Tensor:
         if self.is_augmented():
-            v = self.sample_prior_v(x)
+            if self.data_type in space_and_velocity_data_type and forward:
+                x, v = torch.chunk(x, 2, dim=1)
+            else:
+                v = self.sample_prior_v(x)
+
             return x, v
 
         return x
