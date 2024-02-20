@@ -74,6 +74,7 @@ class DiffusionGenerator(pl.LightningModule):
                 config.scheme_params["nb_time_steps_eval"],
                 config.scheme_params["nb_time_steps_train"],
                 T_final=config.scheme_params["T_final"],
+                beta_case=config.scheme_params.get("beta_case", Case.constant),
                 adapt_dt=config.scheme_params["adapt_dt"],
                 decay_case=config.scheme_params.get("decay_case", Case.vanilla_sigma),
                 img_model_case=config.scheme_params.get("img_model_case", Case.u_net),
