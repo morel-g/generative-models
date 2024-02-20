@@ -63,10 +63,7 @@ class StochasticInterpolant(Model):
             adapt_dt=adapt_dt,
             img_model_case=img_model_case,
         )
-        if data_type in manifold_data_type:
-            self.manifold = Manifold(data_type)
-        else:
-            self.manifold = None
+
         self.backward_scheme = Case.euler_explicit
 
         self.default_times_eval = self.times_eval.clone()
