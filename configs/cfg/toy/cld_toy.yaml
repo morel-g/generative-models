@@ -6,4 +6,4 @@ defaults:
 model_type: 'score_model_critical_damped'
 
 scheme_params:
-  decay_case: "vanilla_sigma"
+  decay_case: vanilla_sigma
