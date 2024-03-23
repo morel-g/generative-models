@@ -8,12 +8,12 @@ data_type: swissroll_discrete
 accelerator: cpu
 
 training_params:
-  epochs: 200  
-  check_val_every_n_epochs: 20
+  epochs: 100  
+  check_val_every_n_epochs: 50
 
 scheme_params:
-  nb_time_steps_train: 800
-  nb_time_steps_eval: 800
+  nb_time_steps_train: 400
+  nb_time_steps_eval: 400
   transition_case: uniform
   store_transition_matrices: False
   seq_length: 2
