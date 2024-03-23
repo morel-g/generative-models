@@ -1,19 +1,19 @@
 # @package _global_
 defaults:
-  - toy/toy_base
   - _self_
   
 model_type: d3pm
 n_samples: 100000
 data_type: swissroll_discrete
+accelerator: cpu
 
 training_params:
   epochs: 200  
   check_val_every_n_epochs: 10
 
 scheme_params:
-  nb_time_steps_train: 400
-  nb_time_steps_eval: 400
+  nb_time_steps_train: 800
+  nb_time_steps_eval: 800
   transition_case: uniform
   store_transition_matrices: False
   seq_length: 2
