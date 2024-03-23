@@ -9,7 +9,7 @@ accelerator: cpu
 
 training_params:
   epochs: 200  
-  check_val_every_n_epochs: 10
+  check_val_every_n_epochs: 20
 
 scheme_params:
   nb_time_steps_train: 800
