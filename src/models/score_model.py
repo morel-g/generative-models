@@ -334,17 +334,17 @@ class ScoreModel(Model):
         - torch.Tensor: Computed loss value.
         """
         t = self._sample_time(x.shape, x.device)
+        sigma = self.sigma_eval(t)
         noise = self._get_noise_like(x)
-        x_n = self.mean_eval(t) * x + self.sigma_eval(t) * noise
+        x_n = self.mean_eval(t) * x + sigma * noise
         x_n = self._apply_conditioning(x_n, x, noise=noise)
-        nn = self.eval_nn(x_n, t)
 
         loss = F.mse_loss
         if self.decay_case == Case.vanilla_sigma:
+            nn = self.eval_nn(x_n, t)
             return loss(-noise, nn)
         else:
             score = self.velocity_eval(x_n, t)
-            sigma = self.sigma_eval(t)
             return loss(-noise, sigma * score)
 
     def velocity_step(
