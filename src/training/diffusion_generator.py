@@ -155,7 +155,7 @@ class DiffusionGenerator(pl.LightningModule):
             loss: The computed loss.
         """
         # if self.config.data_type in img_data_type and len(batch) == 2:
-        #     x, _ = batch
+        #     x, _ = batchloss
         # else:
         #     x = batch
         x = batch

@@ -327,8 +327,13 @@ def save_trajectories_infos(
     # Prepare the name suffix
     name_suffix = f"_{name}" if name else ""
 
+    if hasattr(net.config, "custom_data") and net.config.custom_data["use_custom_data"]:
+        x_init = X[min(nb_samples, X.shape[0]) :]
+    else:
+        x_init = None
+
     # Sample trajectories from the model
-    sampled_traj = net.sample(nb_samples, return_trajectories=True)
+    sampled_traj = net.sample(nb_samples, return_trajectories=True, x_init=x_init)
 
     # Convert to NumPy arrays and separate x and v if augmented
     if net.is_augmented():
