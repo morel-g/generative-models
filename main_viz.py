@@ -257,10 +257,10 @@ if __name__ == "__main__":
             net, output_dir, args.nb_batch_saved, args.batch_size_eval, args.save_noise
         )
     elif config.data_type in toy_continuous_data_type:
-        x_val = data_module.val_data.x
+        x_val = data_module.get_x_val()
         compute_continuous_outputs_2d(net, x_val, output_dir)
     elif config.data_type in toy_discrete_data_type:
-        x_val = data_module.train_data.x
+        x_val = data_module.get_x_val()
         compute_discrete_outputs_2d(net, x_val, output_dir)
     elif config.data_type in img_data_type:
         nb_rows, nb_cols = args.nb_imgs[0], args.nb_imgs[1]

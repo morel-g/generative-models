@@ -218,11 +218,10 @@ def run_sim(config: DictConfig) -> Tuple[DiffusionGenerator, Logger]:
     net.eval()
     val_dataset = data_module.val_data
     with torch.no_grad():
+        x_val = data_module.get_x_val()
         if config.data_type in toy_continuous_data_type:
-            x_val = data_module.train_data.x
             compute_continuous_outputs_2d(net, x_val, log_dir)
         elif config.data_type in toy_discrete_data_type:
-            x_val = data_module.train_data.x
             compute_discrete_outputs_2d(net, x_val, log_dir)
         elif config.data_type in img_data_type:
             compute_imgs_outputs(net, val_dataset, log_dir, nb_rows=5, nb_cols=5)
