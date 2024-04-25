@@ -14,7 +14,6 @@ class Dataset(TorchDataset):
         x,
         y: torch.Tensor = None,
         transform: transforms.Compose = None,
-        random_y_idx=False,
     ):
         """
         Initializes the Dataset object.
@@ -27,7 +26,6 @@ class Dataset(TorchDataset):
         self.x = x
         self.y = y
         self.transform = transform
-        self.random_y_idx = random_y_idx
 
     def __len__(self) -> int:
         """
@@ -53,14 +51,14 @@ class Dataset(TorchDataset):
         x_idx = self.x[index] if self.x is not None else None
 
         if self.y is not None:
-            if self.random_y_idx:
-                y_indices = list(range(len(self.y)))
-                random.shuffle(y_indices)
-                y_idx = self.y[y_indices[index]]
-            else:
-                y_idx = self.y[index]
+            y_idx = self.y[index]
             return (
                 self.transform(x_idx) if self.transform else x_idx,
                 self.transform(y_idx) if self.transform else y_idx,
             )
         return self.transform(x_idx) if self.transform else x_idx
+
+    def shuffle_y(self):
+        if self.y is not None:
+            indices = torch.randperm(len(self.y))
+            self.y = self.y[indices]

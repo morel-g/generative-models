@@ -17,7 +17,7 @@ class CustomDataUtils:
 
     @staticmethod
     def prepare_custom_dataset(
-        data_dir, prefix_1, prefix_2=None, random_y_idx=False
+        data_dir, prefix_1, prefix_2=None
     ) -> (torch.utils.data.Dataset, torch.utils.data.Dataset):
         x1 = CustomDataUtils.load_and_concatenate(data_dir, prefix_1)
         if prefix_2 is not None:
@@ -29,6 +29,4 @@ class CustomDataUtils:
             x1_train, x1_test = split_train_test(x1)
             x2_train, x2_test = None, None
 
-        return Dataset(x1_train, x2_train, random_y_idx=random_y_idx), Dataset(
-            x1_test, x2_test, random_y_idx=random_y_idx
-        )
+        return Dataset(x1_train, x2_train), Dataset(x1_test, x2_test)

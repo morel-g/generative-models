@@ -347,6 +347,10 @@ class DiffusionGenerator(pl.LightningModule):
                 self.trainer.datamodule.train_dataloader(), self.ema_model
             )
 
+    def on_train_epoch_start(self):
+        # Shuffle y at the start of each epoch
+        self.trainer.datamodule.update()
+
     def prepare_for_inference(self, train_dataloader, device: str) -> None:
         """
         Prepares the model for inference by updating BatchNorm statistics.

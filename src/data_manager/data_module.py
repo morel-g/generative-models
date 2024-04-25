@@ -81,7 +81,7 @@ class DataModule(pl.LightningDataModule):
             kwargs["data_dir"] = self.config.custom_data["data_dir"]
             kwargs["prefix_1"] = self.config.custom_data["prefix_1"]
             kwargs["prefix_2"] = self.config.custom_data.get("prefix_2", None)
-            kwargs["random_y_idx"] = self.config.custom_data.get("random_y_idx", False)
+
             return CustomDataUtils.prepare_custom_dataset(**kwargs)
         elif data_type in toy_continuous_data_type + toy_discrete_data_type:
             if self.config.data_type in toy_discrete_data_type:
@@ -183,3 +183,11 @@ class DataModule(pl.LightningDataModule):
 
     def get_x_val(self):
         return self.val_data.x
+
+    def update(self):
+        if (
+            hasattr(self.config, "custom_data")
+            and self.config.custom_data["use_custom_data"]
+            and self.config.custom_data.get("random_y_idx", False)
+        ):
+            self.train_data.shuffle_y()
