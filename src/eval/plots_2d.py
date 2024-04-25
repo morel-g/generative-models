@@ -328,7 +328,7 @@ def save_trajectories_infos(
     name_suffix = f"_{name}" if name else ""
 
     if hasattr(net.config, "custom_data") and net.config.custom_data["use_custom_data"]:
-        x_init = X[min(nb_samples, X.shape[0]) :]
+        x_init = X[: min(nb_samples, X.shape[0])]
     else:
         x_init = None
 
