@@ -449,7 +449,7 @@ class StochasticInterpolant(Model):
     #     v1 = self.velocity_eval(It, t)
     #     v2 = self.velocity_eval(It, t + dt)
 
-    def integral_time_coef(self, t1: float, t2: float) -> float:
+    def integral_dt(self, t1: float, t2: float) -> float:
         """
         Integration in time of the coefficients.
 
@@ -460,19 +460,7 @@ class StochasticInterpolant(Model):
         Returns:
         - float: Coefficient after integration.
         """
-        dt = t2 - t1
-        if self.beta_case == Case.constant:
-            return dt
-        elif self.beta_case == Case.vanilla:
-            b_min, b_max = (
-                0.1,
-                20,
-            )
-            return b_min * dt / (2.0 * self.T_final) + 0.5 * (b_max - b_min) * (
-                t2**2 - t1**2
-            ) / (2.0 * self.T_final**2)
-        else:
-            raise RuntimeError("beta_case not implemented.")
+        return self.change_time_var(t2) - self.change_time_var(t1)
 
     def velocity_step(
         self, x: float, t: float, dt: float, backward: bool = False
@@ -492,7 +480,7 @@ class StochasticInterpolant(Model):
         v = self.velocity_eval(x, t)
 
         if self.backward_scheme == Case.euler_explicit:
-            int_coef = self.integral_time_coef(t, t + dt)
+            int_coef = self.integral_dt(t, t + dt)
             int_coef = -int_coef if backward else int_coef
 
             x = x + int_coef * v
