@@ -196,12 +196,24 @@ class StochasticInterpolant(Model):
                     nb_time_steps, eval=eval
                 )
         else:
-            self.nb_time_steps_train = nb_time_steps
-            self.dt_train, self.times_train = self.compute_uniform_times(
-                nb_time_steps,
-                t0=self.T_init,
-                t1=Tf,
-            )
+            if eval:
+                if self.exponential_times_eval():
+                    self.nb_time_steps_train = nb_time_steps
+                    self.dt_train, self.times_train = adapt_dt_pdf(
+                        lambda t: torch.exp(-self.change_time_var(t)),
+                        self.nb_time_steps_eval,
+                        self.T_init,
+                        Tf,
+                        start_left=False,
+                        x0=None if self.beta_case != Case.vanilla else Tf / 2.0,
+                    )
+            else:
+                self.nb_time_steps_train = nb_time_steps
+                self.dt_train, self.times_train = self.compute_uniform_times(
+                    nb_time_steps,
+                    t0=self.T_init,
+                    t1=Tf,
+                )
 
     def eval_nn(self, x, t: float) -> torch.Tensor:
         """
@@ -418,7 +430,7 @@ class StochasticInterpolant(Model):
         - torch.Tensor: Computed loss.
         """
         if isinstance(x, list):
-            x1, x0 = x
+            x0, x1 = x
         else:
             x0 = x
             x1 = self._get_noise_like(x0)
