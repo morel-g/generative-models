@@ -430,7 +430,7 @@ class StochasticInterpolant(Model):
         - torch.Tensor: Computed loss.
         """
         if isinstance(x, list):
-            x0, x1 = x
+            x1, x0 = x
         else:
             x0 = x
             x1 = self._get_noise_like(x0)

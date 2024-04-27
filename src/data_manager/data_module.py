@@ -182,15 +182,7 @@ class DataModule(pl.LightningDataModule):
         return self.val_dataloader()
 
     def get_x_val(self):
-        if (
-            hasattr(self.config, "custom_data")
-            and self.config.custom_data["use_custom_data"]
-            and self.config.model_type == Case.stochastic_interpolant
-            and self.val_data.y is not None
-        ):
-            return self.val_data.y
-        else:
-            return self.val_data.x
+        return self.val_data.x
 
     def update(self):
         if (
