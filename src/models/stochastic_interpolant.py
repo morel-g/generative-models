@@ -156,7 +156,7 @@ class StochasticInterpolant(Model):
 
         return t_new
 
-    def exponential_times_eval(self) -> bool:
+    def exponential_times(self) -> bool:
         """
         Check if times evaluation should be exponentially distributed.
 
@@ -181,7 +181,7 @@ class StochasticInterpolant(Model):
         """
         Tf = self.T_final
         if eval:
-            if self.exponential_times_eval():
+            if self.exponential_times():
                 self.nb_time_steps_eval = nb_time_steps
                 self.dt_eval, self.times_eval = adapt_dt_pdf(
                     lambda t: torch.exp(-self.change_time_var(t)),
@@ -197,7 +197,7 @@ class StochasticInterpolant(Model):
                 )
         else:
             if eval:
-                if self.exponential_times_eval():
+                if self.exponential_times():
                     self.nb_time_steps_train = nb_time_steps
                     self.dt_train, self.times_train = adapt_dt_pdf(
                         lambda t: torch.exp(-self.change_time_var(t)),
