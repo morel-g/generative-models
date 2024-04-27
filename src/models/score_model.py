@@ -101,7 +101,7 @@ class ScoreModel(Model):
             raise RuntimeError("Unknown beta_case.")
         return t_new
 
-    def integral_dt(self, t1: float, t2: float) -> float:
+    def get_dt(self, t1: float, t2: float) -> float:
         """
         Integrate in time the coefficients 'b' from the Fokker Planck equation:
         ∂_t p = b(t)∇ · (p * x + ∇p).
@@ -372,12 +372,12 @@ class ScoreModel(Model):
 
         gamma = self.pde_coefs["gamma"]
         if self.backward_scheme == Case.euler_explicit:
-            int_coef = self.integral_dt(t, t + dt)
+            int_coef = self.get_dt(t, t + dt)
             int_coef = -int_coef if backward else int_coef
             x = x - int_coef * (x + score)
         elif self.backward_scheme == Case.anderson:
             l = 1.0
-            int_coef = self.integral_dt(t, t + dt)
+            int_coef = self.get_dt(t, t + dt)
             int_coef = -int_coef if backward else int_coef
             z = self._get_noise_like(x)
             if t[0] + 1e-7 > self.times_eval[2]:
