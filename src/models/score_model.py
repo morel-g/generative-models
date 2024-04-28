@@ -372,22 +372,22 @@ class ScoreModel(Model):
 
         gamma = self.pde_coefs["gamma"]
         if self.backward_scheme == Case.euler_explicit:
-            int_coef = self.get_dt(t, t + dt)
-            int_coef = -int_coef if backward else int_coef
-            x = x - int_coef * (x + score)
+            dt_coef = self.get_dt(t, t + dt)
+            dt_coef = -dt_coef if backward else dt_coef
+            x = x - dt_coef * (x + score)
         elif self.backward_scheme == Case.anderson:
             l = 1.0
-            int_coef = self.get_dt(t, t + dt)
-            int_coef = -int_coef if backward else int_coef
+            dt_coef = self.get_dt(t, t + dt)
+            dt_coef = -dt_coef if backward else dt_coef
             z = self._get_noise_like(x)
             if t[0] + 1e-7 > self.times_eval[2]:
                 x = (
                     x
-                    - int_coef * (x + (1 + l) * score)
-                    + torch.sqrt(2 * l * abs(int_coef) * gamma) * z
+                    - dt_coef * (x + (1 + l) * score)
+                    + torch.sqrt(2 * l * abs(dt_coef) * gamma) * z
                 )
             else:
-                x = x - int_coef * (x + score)
+                x = x - dt_coef * (x + score)
         else:
             raise RuntimeError("Unknown backward scheme: ", self.backward_scheme)
 

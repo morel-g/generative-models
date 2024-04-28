@@ -26,6 +26,7 @@ class StochasticInterpolant(Model):
         img_model_case: str = Case.u_net,
         noise_addition: Optional[str] = None,
         exp_weight: float = 1.0,
+        learn_score: bool = False,
     ) -> None:
         """
         Initializes the StochasticInterpolant model.
@@ -69,6 +70,7 @@ class StochasticInterpolant(Model):
         self.default_times_eval = self.times_eval.clone()
         self.T_init = 0.0
         self.exp_weight = exp_weight
+        self.learn_score = learn_score
 
     def _get_final_time(self, T_final: float) -> float:
         """
@@ -473,10 +475,10 @@ class StochasticInterpolant(Model):
         v = self.velocity_eval(x, t)
 
         if self.backward_scheme == Case.euler_explicit:
-            int_coef = self.get_dt(t, t + dt)
-            int_coef = -int_coef if backward else int_coef
+            dt_coef = self.get_dt(t, t + dt)
+            dt_coef = -dt_coef if backward else dt_coef
 
-            x = x + int_coef * v
+            x = x + dt_coef * v
         else:
             raise RuntimeError("Unknown backward scheme: ", self.backward_scheme)
 
