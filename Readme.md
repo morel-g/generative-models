@@ -1,4 +1,4 @@
-# Unified implementation for various generative diffusion models (work in progress)
+# Unified implementation for various generative diffusion models
 
 This repository provides implementations of several generative models applied to a broad spectrum of data types, including images, text, audio signals, and reinforcement learning scenarios. These models are primed for understanding and experimenting with advanced data generation techniques.
 
